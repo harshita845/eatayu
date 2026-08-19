@@ -102,9 +102,9 @@ export const initRazorpayPayment = async (options) => {
       order_id: options.order_id,
       name: options.name || 'EatAyu',
       description: options.description || 'Order Payment',
-      image: (options.image && !options.image.startsWith('/') && !options.image.includes('localhost'))
+      image: (options.image && !options.image.startsWith('/'))
         ? options.image
-        : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&h=100&fit=crop',
+        : (window.location.origin + '/EatAyu-logo.png'),
       prefill: options.prefill || {},
       notes: options.notes || {},
       theme: {

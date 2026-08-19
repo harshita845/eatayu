@@ -2710,7 +2710,7 @@ export default function Cart() {
                   ) : (
                     <div className="flex gap-2.5 md:gap-3 overflow-x-auto pb-2 -mx-4 md:-mx-6 px-4 md:px-6 scrollbar-hide">
                       {suggestedAddons.map((addon) => (
-                        <div key={addon.id} className="flex-shrink-0 w-[84px] md:w-[92px]">
+                        <div key={addon._id || addon.id} className="flex-shrink-0 w-[84px] md:w-[92px]">
                           <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden aspect-square">
                             <img
                               src={addon.image || (addon.images && addon.images[0]) || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop"}
@@ -2751,7 +2751,7 @@ export default function Cart() {
                                 }
 
                                 addToCart({
-                                  id: addon.id,
+                                  id: addon._id || addon.id,
                                   name: addon.name,
                                   price: addon.price,
                                   image: addon.image || (addon.images && addon.images[0]) || "",

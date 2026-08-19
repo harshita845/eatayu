@@ -489,10 +489,14 @@ export default function CategoryPage() {
         if (response.data && response.data.success && response.data.data && response.data.data.categories) {
           const categoriesArray = response.data.data.categories
 
-          // Transform API categories to match expected format
+          // Transform API categories to match expected format, excluding any duplicate "All" categories from the backend
+          const filteredCategoriesArray = categoriesArray.filter(
+            (cat) => (cat.slug || cat.id || "").toLowerCase() !== "all" && (cat.name || "").toLowerCase() !== "all"
+          )
+
           const transformedCategories = [
             { id: 'all', name: "All", image: null, slug: 'all' },
-            ...categoriesArray.map((cat) => ({
+            ...filteredCategoriesArray.map((cat) => ({
               id: cat.slug || cat.id,
               name: cat.name,
               image: cat.image || foodImages[0],
@@ -830,10 +834,11 @@ export default function CategoryPage() {
       return true;
     })
 
-    // Filter by availability
-    filtered = filtered.filter(row => {
-      const availability = getRestaurantAvailabilityStatus(row, new Date(availabilityTick));
-      return availability.isOpen;
+    // Sort by availability (open first, closed last)
+    filtered.sort((a, b) => {
+      const aOpen = getRestaurantAvailabilityStatus(a, new Date(availabilityTick)).isOpen ? 1 : 0
+      const bOpen = getRestaurantAvailabilityStatus(b, new Date(availabilityTick)).isOpen ? 1 : 0
+      return bOpen - aOpen
     })
 
     return applyFiltersAndSorting(filtered)
@@ -860,10 +865,11 @@ export default function CategoryPage() {
       return true;
     })
 
-    // Filter by availability
-    filtered = filtered.filter(row => {
-      const availability = getRestaurantAvailabilityStatus(row, new Date(availabilityTick));
-      return availability.isOpen;
+    // Sort by availability (open first, closed last)
+    filtered.sort((a, b) => {
+      const aOpen = getRestaurantAvailabilityStatus(a, new Date(availabilityTick)).isOpen ? 1 : 0
+      const bOpen = getRestaurantAvailabilityStatus(b, new Date(availabilityTick)).isOpen ? 1 : 0
+      return bOpen - aOpen
     })
 
     return applyFiltersAndSorting(filtered)
@@ -1073,15 +1079,24 @@ export default function CategoryPage() {
                   ? filteredRecommended
                   : filteredRecommended.slice(0, 6)
                 ).map((restaurant) => {
+                  const availability = getRestaurantAvailabilityStatus(restaurant, new Date(availabilityTick))
+                  const isClosed = !availability.isOpen
                   return (
                     <Link
                       key={restaurant.id}
                       to={`/user/restaurants/${restaurant.name.toLowerCase().replace(/\s+/g, '-')}`}
                       className="block"
                     >
-                      <div className={`group ${shouldShowGrayscale ? 'grayscale opacity-75' : ''}`}>
+                      <div className={`group ${shouldShowGrayscale || isClosed ? 'grayscale opacity-75' : ''}`}>
                         {/* Image Container */}
                         <div className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden mb-2">
+                          {isClosed && (
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-10">
+                              <span className="bg-red-600 text-white px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-md">
+                                Closed
+                              </span>
+                            </div>
+                          )}
                           {/* Use category dish image if available, otherwise restaurant image */}
                           {restaurant.categoryDishImage ? (
                             <img
@@ -1184,13 +1199,22 @@ export default function CategoryPage() {
               {filteredAllRestaurants.map((restaurant) => {
                 const restaurantSlug = restaurant.name.toLowerCase().replace(/\s+/g, "-")
                 const isFavorite = favorites.has(restaurant.id)
+                const availability = getRestaurantAvailabilityStatus(restaurant, new Date(availabilityTick))
+                const isClosed = !availability.isOpen
 
                 return (
                   <Link key={restaurant.id} to={`/user/restaurants/${restaurantSlug}`} className="h-full flex">
-                    <Card className={`overflow-hidden cursor-pointer gap-0 border-0 dark:border-gray-800 group bg-white dark:bg-[#1a1a1a] shadow-md hover:shadow-xl transition-all duration-300 py-0 rounded-md h-full flex flex-col w-full ${shouldShowGrayscale ? 'grayscale opacity-75' : ''
+                    <Card className={`overflow-hidden cursor-pointer gap-0 border-0 dark:border-gray-800 group bg-white dark:bg-[#1a1a1a] shadow-md hover:shadow-xl transition-all duration-300 py-0 rounded-md h-full flex flex-col w-full ${shouldShowGrayscale || isClosed ? 'grayscale opacity-75' : ''
                       }`}>
                       {/* Image Section */}
                       <div className="relative h-44 sm:h-52 md:h-60 lg:h-64 xl:h-72 w-full overflow-hidden rounded-t-md flex-shrink-0">
+                        {isClosed && (
+                          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-10">
+                            <span className="bg-red-600 text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
+                              Closed
+                            </span>
+                          </div>
+                        )}
                         {/* Use category dish image if available, otherwise restaurant image */}
                         {restaurant.categoryDishImage ? (
                           <img

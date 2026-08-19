@@ -112,7 +112,8 @@ const normalizeCartData = (rawCart) => {
           currentFoodType = "Non-Veg";
         }
         
-        const finalFoodType = currentFoodType || (item.isVeg === true ? "Veg" : "Non-Veg");
+        const rawFoodType = currentFoodType || (item.isVeg === true ? "Veg" : "Non-Veg");
+        const finalFoodType = String(rawFoodType).trim().toLowerCase() === "veg" ? "Veg" : "Non-Veg";
 
         return {
           ...item,
@@ -333,13 +334,15 @@ export function CartProvider({ children }) {
         }
       }
       
-      const existing = safePrev.find((i) => i.id === item.id)
+      const targetItemId = item.id || item.itemId || item._id
+      const resolvedItemId = resolveCartEntryId(safePrev, targetItemId, item.variantId)
+      const existing = safePrev.find((i) => i.id === resolvedItemId)
       if (existing) {
         // Set last add event for animation when incrementing existing item
         if (sourcePosition) {
           setLastAddEvent({
             product: {
-              id: item.id,
+              id: resolvedItemId,
               name: item.name,
               imageUrl: item.image || item.imageUrl,
             },
@@ -349,7 +352,7 @@ export function CartProvider({ children }) {
           setTimeout(() => setLastAddEvent(null), 1500)
         }
         return safePrev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + addQuantity } : i
+          i.id === resolvedItemId ? { ...i, quantity: i.quantity + addQuantity } : i
         )
       }
       
