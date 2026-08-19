@@ -105,7 +105,6 @@ import {
 } from "@food/components/ui/dropdown-menu";
 import { useDeliveryLocation } from "@food/context/DeliveryLocationContext";
 import quickSpicyLogo from "@food/assets/EatAyu-logo.png";
-import offerImage from "@food/assets/offerimage.png";
 import api, { restaurantAPI, adminAPI } from "@food/api";
 import { usePublicAppConfig } from "@food/context/PublicAppConfigContext";
 import { API_BASE_URL } from "@food/api/config";
@@ -573,6 +572,18 @@ const RestaurantCard = React.memo(({
               onIndexChange={setSlideIndex}
             />
 
+            {/* Overlapping Profile Image Circle - Bottom Left */}
+            {restaurant.profileImage && (
+              <div className="absolute bottom-3 left-3 w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-md z-10 bg-white">
+                <img
+                  src={restaurant.profileImage}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              </div>
+            )}
+
             {/* Recommended Dish Badge - Top Left */}
             {hasRecommended && (
               <div className="absolute top-4 left-4 flex items-center z-10 transform transition-transform duration-300 group-hover:scale-105">
@@ -684,7 +695,7 @@ const RestaurantCard = React.memo(({
                 </div>
 
                 {/* Delivery Time & Distance */}
-                <div className="flex items-center gap-1 text-sm lg:text-base text-gray-500 mb-2 lg:mb-3 transition-opacity duration-300 opacity-70 group-hover:opacity-100">
+                <div className="flex items-center gap-1 text-sm lg:text-base text-gray-500 mb-1 lg:mb-2 transition-opacity duration-300 opacity-70 group-hover:opacity-100">
                   <Clock
                     className="h-4 w-4 lg:h-5 lg:w-5 text-gray-500 dark:text-gray-400"
                     strokeWidth={1.5}
@@ -699,6 +710,22 @@ const RestaurantCard = React.memo(({
                   />
                   <span className="font-medium dark:text-gray-300 text-gray-700">
                     {restaurant.distance}
+                  </span>
+                </div>
+
+                {/* Free Delivery status and Cost for Two */}
+                <div className="flex items-center gap-1.5 mt-0.5 mb-2 lg:mb-3">
+                  <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-black shadow-sm border border-emerald-100/50 dark:border-emerald-900/30">
+                    <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
+                      <circle cx="5.5" cy="17.5" r="2.5" />
+                      <circle cx="18.5" cy="17.5" r="2.5" />
+                      <path d="M15 17.5H8.5M12 17.5V11M10.5 7.5c1.5 0 2.5 1 3.5 2h4M12 11h3.5l1.5 3H8M10 5.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                    </svg>
+                    <span>Free</span>
+                  </div>
+                  <span className="text-[10px] font-black text-gray-300 dark:text-gray-600">•</span>
+                  <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-semibold">
+                    ₹{restaurant.costForTwo || restaurant.featuredPrice || 200} for two
                   </span>
                 </div>
 
@@ -2031,6 +2058,7 @@ export default function Home() {
                 distance: distance,
                 distanceInKm: distanceInKm, // Store numeric distance for sorting
                 image: image,
+                profileImage: normalizeImageUrl(profileImageUrl) || "",
                 images: allImages, // Array of cover images for carousel (separate from menu images)
                 priceRange: restaurant.priceRange || "$$", // Use from API or default
                 featuredDish:
@@ -2038,7 +2066,7 @@ export default function Home() {
                   (restaurant.cuisines && restaurant.cuisines.length > 0
                     ? `${restaurant.cuisines[0]} Special`
                     : "Special Dish"),
-                featuredPrice: restaurant.featuredPrice || 249, // Use from API or default
+                featuredPrice: restaurant.featuredPrice || 200, // Use from API or default
                 offer: offerText,
                 activeOffers,
                 offerCount:
@@ -2787,6 +2815,7 @@ export default function Home() {
         distance: liveRestaurant?.distance || "",
         deliveryTime: liveRestaurant?.deliveryTime || restaurant?.estimatedDeliveryTime || "",
         image: normalizeImageUrl(image) || foodImages[0],
+        profileImage: normalizeImageUrl(restaurant?.profileImage || liveRestaurant?.profileImage || ""),
         images: imageCandidates.length > 0 ? imageCandidates : [foodImages[0]],
         slug: restaurant?.slug || restaurant?.restaurantId || restaurantId,
         offer: restaurant?.offer || liveRestaurant?.offer || null,
@@ -3263,6 +3292,18 @@ export default function Home() {
                                 className="h-full w-full object-cover"
                                 roundedClass="rounded-t-2xl"
                               />
+
+                              {/* Overlapping Profile Image Circle - Bottom Left */}
+                              {restaurant.profileImage && (
+                                <div className="absolute bottom-2 left-2 w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-md z-10 bg-white">
+                                  <img
+                                    src={restaurant.profileImage}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                  />
+                                </div>
+                              )}
                               
                               {/* Offer Badge - top left like WEEKEND FEAST */}
                               {restaurant.offer && (

@@ -14,7 +14,7 @@ import { loadBusinessSettings, getModuleLogoUrl } from "@food/utils/businessSett
 import RestaurantPartnerHero from "@food/components/restaurant/auth/RestaurantPartnerHero"
 import quickSpicyLogo from "@food/assets/EatAyu-logo.png"
 
-const THEME = "#FA0272"
+const THEME = "#EB590E"
 
 export default function RestaurantOTP() {
   const companyName = useCompanyName()
@@ -316,7 +316,7 @@ export default function RestaurantOTP() {
                   <img
                     src={logoUrl}
                     alt={`${companyName} logo`}
-                    className="h-full w-full scale-[1.65] object-contain"
+                    className="h-full w-full object-cover"
                     loading="lazy"
                     onError={(e) => {
                       if (e.target.src !== quickSpicyLogo) e.target.src = quickSpicyLogo
@@ -360,7 +360,7 @@ export default function RestaurantOTP() {
                         error
                           ? "border-red-300 bg-red-50"
                           : focusedIndex === index
-                            ? "border-[#FA0272] ring-4 ring-[#FA0272]/15"
+                             ? "border-[#EB590E] ring-4 ring-[#EB590E]/15"
                             : "border-gray-200"
                       }`}
                     />

@@ -11,7 +11,6 @@ import { useSearchOverlay, useLocationSelector } from "@food/components/user/Use
 import { useDeliveryLocation } from "@food/context/DeliveryLocationContext"
 import { useCart } from "@food/context/CartContext"
 import PageNavbar from "@food/components/user/PageNavbar"
-import offerImage from "@food/assets/offerimage.png"
 import EatAyu99PromoBanner1 from "@food/assets/EatAyu99_final_banner.png"
 import EatAyu99PromoBanner2 from "@food/assets/EatAyu99_banner_2.jpg"
 import FloatingHomeDock from "@food/components/user/FloatingHomeDock"
@@ -1092,33 +1091,11 @@ export default function Under250() {
               overflowY: "hidden",
             }}
           >
-            {/* All Button */}
-            <div className="flex-shrink-0 cursor-pointer" onClick={() => setActiveCategory(null)}>
-              <motion.div
-                className="flex flex-col items-center gap-2 w-[62px] sm:w-24 md:w-28"
-                whileHover={{ scale: 1.1, y: -4 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              >
-                <div className={`w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md transition-all ${!activeCategory ? 'ring-2 ring-[#EB590E] ring-offset-2' : ''}`}>
-                  <OptimizedImage
-                    src={offerImage}
-                    alt="All"
-                    className="w-full h-full bg-white rounded-full"
-                    objectFit="cover"
-                    sizes="(max-width: 640px) 62px, (max-width: 768px) 96px, 112px"
-                    placeholder="blur"
-                  />
-                </div>
-                <span className={`text-xs sm:text-sm md:text-base font-semibold text-gray-800 dark:text-gray-200 text-center pb-1 ${!activeCategory ? 'text-[#EB590E]' : ''}`}>
-                  All
-                </span>
-              </motion.div>
-            </div>
             {categories.map((category, index) => {
-              const isActive = activeCategory === category.id
+              const isAll = category.name.toLowerCase() === 'all'
+              const isActive = isAll ? !activeCategory : activeCategory === category.id
               return (
-                <div key={category.id} className="flex-shrink-0 cursor-pointer" onClick={() => setActiveCategory(isActive ? null : category.id)}>
+                <div key={category.id} className="flex-shrink-0 cursor-pointer" onClick={() => setActiveCategory(isAll ? null : (isActive ? null : category.id))}>
                   <motion.div
                     className="flex flex-col items-center gap-2 w-[62px] sm:w-24 md:w-28"
                     whileHover={{ scale: 1.1, y: -4 }}

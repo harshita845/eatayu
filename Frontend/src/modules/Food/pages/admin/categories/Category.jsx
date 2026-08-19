@@ -18,6 +18,17 @@ import { API_BASE_URL } from "@food/api/config"
 import { toast } from "sonner"
 import { canCurrentAdminAction } from "@food/utils/adminRbac"
 
+const normalizeImageUrl = (path) => {
+  if (!path) return ""
+  if (typeof path !== "string") return ""
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
+    return path
+  }
+  const cleanPath = path.replace(/^\//, "")
+  const origin = API_BASE_URL.replace(/\/api\/?$/, "")
+  return `${origin}/${cleanPath}`
+}
+
 const defaultFormData = {
   name: "",
   image: "",
@@ -494,7 +505,7 @@ export default function Category() {
                         <div className="flex items-start gap-3">
                           <div className="h-11 w-11 overflow-hidden rounded-2xl bg-slate-100">
                             {category?.image ? (
-                              <img src={category.image} alt={category.name} className="h-full w-full object-cover" />
+                              <img src={normalizeImageUrl(category.image)} alt={category.name} className="h-full w-full object-cover" />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">
                                 {String(category?.name || "C").slice(0, 1).toUpperCase()}
@@ -702,7 +713,7 @@ export default function Category() {
                             {(imagePreview || formData.image) && (
                               <div className="relative h-32 w-32 overflow-hidden rounded-2xl border border-slate-300">
                                 <img
-                                  src={imagePreview || formData.image}
+                                  src={normalizeImageUrl(imagePreview || formData.image)}
                                   alt="Category preview"
                                   className="h-full w-full object-cover"
                                 />

@@ -90,9 +90,18 @@ export const searchUnified = async (query = {}, options = {}) => {
 
     // 1. Initial Filter (approved status and basic conditions)
     const restaurantFilter = { status: 'approved' };
+    let zoneRestaurantIds = null;
 
     if (zoneId && mongoose.Types.ObjectId.isValid(zoneId)) {
         restaurantFilter.zoneId = new mongoose.Types.ObjectId(zoneId);
+        
+        // Fetch all approved restaurants in this zone to filter food item queries
+        const zoneRestaurants = await FoodRestaurant.find({
+            zoneId: restaurantFilter.zoneId,
+            status: 'approved'
+        }).select('_id').lean();
+        
+        zoneRestaurantIds = zoneRestaurants.map(r => r._id);
     }
 
     if (isVeg === 'true') {
@@ -111,10 +120,17 @@ export const searchUnified = async (query = {}, options = {}) => {
 
     // 2. Handle Category Filtering (Restaurants don't have categoryId, FoodItems do)
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
-        const catFoodItems = await FoodItem.find({
+        const foodQuery = {
             categoryId: new mongoose.Types.ObjectId(categoryId),
             approvalStatus: 'approved'
-        }).select('restaurantId').limit(fetchLimit * 4).lean();
+        };
+        if (zoneRestaurantIds) {
+            foodQuery.restaurantId = { $in: zoneRestaurantIds };
+        }
+        const catFoodItems = await FoodItem.find(foodQuery)
+            .select('restaurantId')
+            .limit(fetchLimit * 4)
+            .lean();
 
         const catRestaurantIds = [...new Set(catFoodItems.map((food) => food.restaurantId.toString()))];
         if (catRestaurantIds.length > 0) {
@@ -147,6 +163,9 @@ export const searchUnified = async (query = {}, options = {}) => {
 
         const foodFilters = { approvalStatus: 'approved' };
         if (isVeg === 'true') foodFilters.foodType = 'Veg';
+        if (zoneRestaurantIds) {
+            foodFilters.restaurantId = { $in: zoneRestaurantIds };
+        }
 
         const matchedFoods = await FoodItem.find({
             ...foodFilters,

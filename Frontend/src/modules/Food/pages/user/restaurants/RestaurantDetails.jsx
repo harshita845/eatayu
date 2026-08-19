@@ -885,9 +885,9 @@ function RestaurantDetailsContent() {
                   menuSections: finalMenuSections,
                 }))
 
-                // Set first 3 sections (Recommended, Starters, Main Course) as expanded by default
+                // Expand all sections by default so every category is visible immediately
                 const defaultExpandedSections = new Set(
-                  Array.from({ length: Math.min(3, finalMenuSections.length) }, (_, idx) => idx)
+                  Array.from({ length: finalMenuSections.length }, (_, idx) => idx)
                 )
                 setExpandedSections(defaultExpandedSections)
 
@@ -1846,7 +1846,8 @@ function RestaurantDetailsContent() {
     filters.sortBy ||
     filters.vegNonVeg ||
     filters.highlyReordered ||
-    filters.spicy
+    filters.spicy ||
+    targetDishId
   )
 
   const filteredSections = useMemo(
@@ -2395,11 +2396,6 @@ function RestaurantDetailsContent() {
                 <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2">
                   Clear filters or try a different combination.
                 </p>
-              </div>
-            )}
-            {filteredSections.length === 0 && (
-              <div className="rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-gray-500">
-                No dishes match the current filters.
               </div>
             )}
 

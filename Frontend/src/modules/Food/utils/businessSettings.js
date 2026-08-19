@@ -13,9 +13,9 @@ import {
 
 const SETTINGS_KEY = 'food_business_settings';
 const DEFAULT_MODULE_POWER_SCANNING = {
-  user: { themeColor: "#FF6F3C", fontFamily: "Poppins" },
-  restaurant: { themeColor: "#2563EB", fontFamily: "Poppins" },
-  delivery: { themeColor: "#00B761", fontFamily: "Poppins" },
+  user: { themeColor: "#EB590E", fontFamily: "Poppins" },
+  restaurant: { themeColor: "#EB590E", fontFamily: "Poppins" },
+  delivery: { themeColor: "#EB590E", fontFamily: "Poppins" },
 };
 
 const FONT_STACKS = {
@@ -506,8 +506,9 @@ export const getModulePowerScanning = (moduleName = "user", settingsOverride = n
   const moduleConfig = settings?.powerScanning?.[moduleKey] || DEFAULT_MODULE_POWER_SCANNING[moduleKey] || DEFAULT_MODULE_POWER_SCANNING.user;
 
   let rawColor = String(moduleConfig?.themeColor || "").trim();
-  if (rawColor.toLowerCase() === "#fa0272") {
-    rawColor = "#FF6F3C";
+  const lowerColor = rawColor.toLowerCase();
+  if (lowerColor === "#fa0272" || lowerColor === "#ff6f3c" || lowerColor === "#00b761" || lowerColor === "#2563eb") {
+    rawColor = "#EB590E";
   }
   const themeColor = /^#[0-9A-Fa-f]{6}$/.test(rawColor) ? rawColor : DEFAULT_MODULE_POWER_SCANNING[moduleKey]?.themeColor || DEFAULT_MODULE_POWER_SCANNING.user.themeColor;
   const fontFamily = String(moduleConfig?.fontFamily || "").trim() || (DEFAULT_MODULE_POWER_SCANNING[moduleKey]?.fontFamily || DEFAULT_MODULE_POWER_SCANNING.user.fontFamily);

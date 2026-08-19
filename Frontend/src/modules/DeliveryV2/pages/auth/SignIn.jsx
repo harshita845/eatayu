@@ -94,7 +94,7 @@ export default function DeliverySignIn() {
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-[#0A0A0B] flex flex-col font-sans overflow-x-hidden overflow-y-auto">
       {/* Top Branding Section - 40% height */}
-      <div className={`relative w-full bg-[#00B761] overflow-hidden flex flex-col items-center justify-center transition-all duration-200 ${keyboardInset > 0 ? "h-[22dvh] min-h-[130px]" : "h-[40dvh] min-h-[260px]"}`}>
+      <div className={`relative w-full bg-[#EB590E] overflow-hidden flex flex-col items-center justify-center transition-all duration-200 ${keyboardInset > 0 ? "h-[22dvh] min-h-[130px]" : "h-[40dvh] min-h-[260px]"}`}>
         {/* Subtle Decorative Elements (No Blur) */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 right-0 w-64 h-64 border-word border-white/20 rounded-full -mr-20 -mt-20" />
@@ -108,7 +108,7 @@ export default function DeliverySignIn() {
           className="relative z-10 flex flex-col items-center gap-4"
         >
           <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl transform -rotate-12 border-4 border-white/30">
-            <Bike className="w-10 h-10 text-[#00B761] rotate-12" />
+            <Bike className="w-10 h-10 text-[#EB590E] rotate-12" />
           </div>
           <div className="text-center text-white">
             <h1 className="font-black text-3xl tracking-tighter leading-none mb-1 italic">
@@ -167,7 +167,7 @@ export default function DeliverySignIn() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#00B761] pl-2"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#EB590E] pl-2"
                   >
                     <AlertCircle className="h-4 w-4" />
                     <span>{error}</span>
@@ -179,7 +179,7 @@ export default function DeliverySignIn() {
             <Button
               onClick={handleSendOTP}
               disabled={isSending || formData.phone.length !== 10}
-              className="w-full h-16 rounded-2xl font-black text-base tracking-widest uppercase transition-all duration-300 bg-[#00B761] hover:bg-[#009049] text-white shadow-[0_12px_24px_rgba(0,183,97,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:grayscale"
+              className="w-full h-16 rounded-2xl font-black text-base tracking-widest uppercase transition-all duration-300 bg-[#EB590E] hover:bg-[#D94F0C] text-white shadow-[0_12px_24px_rgba(235,89,14,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:grayscale"
             >
               {isSending ? (
                 <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ export default function DeliverySignIn() {
               By joining, you agree to our policies
             </p>
             <p className="text-[10px] text-zinc-300 dark:text-zinc-700 font-bold mt-2 uppercase tracking-widest">
-              <Link to="/food/delivery/terms" className="hover:text-[#00B761]">Terms</Link> • <Link to="/food/delivery/profile/privacy" className="hover:text-[#00B761]">Privacy</Link> • <Link to="/food/delivery/help/content" className="hover:text-[#00B761]">Support</Link>
+              <Link to="/food/delivery/terms" className="hover:text-[#EB590E]">Terms</Link> • <Link to="/food/delivery/profile/privacy" className="hover:text-[#EB590E]">Privacy</Link> • <Link to="/food/delivery/help/content" className="hover:text-[#EB590E]">Support</Link>
             </p>
           </footer>
         </div>
