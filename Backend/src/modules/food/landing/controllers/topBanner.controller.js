@@ -1,5 +1,5 @@
 import TopBanner from '../models/topBanner.model.js';
-import { saveImageFile, deleteStoredFile } from '../../../../services/storage.service.js';
+import { saveImageFile, saveVideoFile, deleteStoredFile } from '../../../../services/storage.service.js';
 
 const BANNER_FOLDER = 'food/top-banners';
 
@@ -15,7 +15,7 @@ export const listTopBannersController = async (req, res) => {
 export const uploadTopBannersController = async (req, res) => {
     try {
         if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ success: false, message: 'No images provided' });
+            return res.status(400).json({ success: false, message: 'No files provided' });
         }
 
         const uploadedBanners = [];
@@ -23,7 +23,10 @@ export const uploadTopBannersController = async (req, res) => {
 
         for (const file of req.files) {
             try {
-                const saved = await saveImageFile(file, BANNER_FOLDER);
+                const isVideo = file.mimetype ? file.mimetype.startsWith('video/') : false;
+                const saved = isVideo
+                    ? await saveVideoFile(file, BANNER_FOLDER)
+                    : await saveImageFile(file, BANNER_FOLDER);
 
                 const maxOrderBanner = await TopBanner.findOne().sort('-order');
                 const nextOrder = maxOrderBanner ? maxOrderBanner.order + 1 : 0;
@@ -32,7 +35,8 @@ export const uploadTopBannersController = async (req, res) => {
                     image: saved.url,
                     publicId: saved.path,
                     order: nextOrder,
-                    isActive: true
+                    isActive: true,
+                    isVideo: isVideo
                 });
 
                 await newBanner.save();

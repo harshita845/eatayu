@@ -209,7 +209,16 @@ export default function HomeHeader({
     ? topBanners.map((banner, index) => ({
         id: index,
         bg: "bg-gray-100 dark:bg-gray-800",
-        content: (
+        content: banner.isVideo ? (
+          <video
+            src={banner.image || banner.imageUrl}
+            className="absolute inset-0 w-full h-full object-cover animate-fade-in"
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+        ) : (
           <img 
             src={banner.image || banner.imageUrl} 
             alt={`Banner ${index + 1}`} 
@@ -222,7 +231,7 @@ export default function HomeHeader({
   return (
     <>
       <div
-        className="relative h-[340px] w-full overflow-hidden rounded-b-[2rem] shadow-[0_10px_40px_rgba(250,2,114,0.15)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+        className="relative h-[440px] w-full overflow-hidden rounded-b-[2rem] shadow-[0_10px_40px_rgba(250,2,114,0.15)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -435,15 +444,15 @@ export default function HomeHeader({
 
       {/* Sticky Search Bar wrapper — position adjusts when categories are also stuck */}
       <div
-        className={`relative sticky z-[60] px-3 pb-0 -mt-[256px] mb-[210px] pointer-events-none ${
+        className={`relative sticky z-[60] px-3 pb-0 -mt-[28px] mb-2 pointer-events-none ${
           isCategoryStuck ? 'top-0 pt-2' : 'top-2'
         }`}
       >
         <div 
-          className={`relative z-[60] rounded-[1.5rem] flex items-center px-4 py-3.5 border cursor-pointer active:scale-[0.98] group mx-1 pointer-events-auto ${
+          className={`relative z-[60] rounded-[1.5rem] flex items-center px-4 py-3.5 border cursor-pointer active:scale-[0.98] group mx-1 pointer-events-auto transition-all duration-300 ${
             isCategoryStuck
               ? "bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-xl border-white dark:border-gray-800 shadow-[0_12px_36px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.4)]"
-              : "bg-white dark:bg-[#1a1a1a] border-gray-100 dark:border-gray-800 shadow-sm"
+              : "bg-white/45 dark:bg-black/30 backdrop-blur-md border-white/50 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/55 hover:border-white/70"
           }`}
           onClick={handleSearchFocus}
           onTouchStart={handleSearchFocus}
@@ -456,7 +465,7 @@ export default function HomeHeader({
             }
           }}
         >
-          <Search className="h-5 w-5 text-gray-400 mr-3 group-hover:text-[#FA0272] transition-colors duration-300 dark:text-gray-500" strokeWidth={2.5} />
+          <Search className="h-5 w-5 text-gray-700 dark:text-gray-200 mr-3 group-hover:text-[#FA0272] transition-colors duration-300" strokeWidth={2.5} />
           <div className="flex-1 overflow-hidden relative h-5">
             <input
               type="text"
@@ -472,14 +481,14 @@ export default function HomeHeader({
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -15, opacity: 0 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="absolute inset-0 text-[14px] font-bold text-gray-500 dark:text-gray-400"
+                className="absolute inset-0 text-[14px] font-bold text-gray-800 dark:text-gray-200"
               >
                 {placeholders?.[placeholderIndex] || 'Search "pizza"'}
               </motion.span>
             </AnimatePresence>
           </div>
           <div 
-            className="bg-[#FA0272]/5 dark:bg-[#FA0272]/10 p-2 rounded-full border border-[#FA0272]/10 ml-2 group-hover:bg-[#FA0272]/10 transition-all flex items-center justify-center"
+            className="bg-white/50 dark:bg-black/40 p-2 rounded-full border border-white/40 dark:border-white/10 ml-2 group-hover:bg-[#FA0272]/15 group-hover:border-[#FA0272]/20 transition-all flex items-center justify-center"
             onClick={(e) => {
               e.stopPropagation();
               navigate('/user/search?voice=true');

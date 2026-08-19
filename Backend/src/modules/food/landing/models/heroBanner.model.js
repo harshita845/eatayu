@@ -33,6 +33,10 @@ const foodHeroBannerSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
             index: true
+        },
+        isVideo: {
+            type: Boolean,
+            default: false
         }
     },
     {

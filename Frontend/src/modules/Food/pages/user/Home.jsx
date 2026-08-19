@@ -3178,17 +3178,6 @@ export default function Home() {
             isCategoryStuck={isCategoryStuck}
           />
 
-
-
-          <PromoRow
-            handleVegModeChange={handleVegModeChange}
-            navigate={navigate}
-            isVegMode={vegMode}
-            toggleRef={vegModeToggleRef}
-          />
-
-          <PromotionBannerCarousel zoneId={zoneId} />
-
           {CategoryRailHeader}
 
           {/* Category sticky anchor sentinel — must be immediately before the category rail */}
@@ -3216,6 +3205,14 @@ export default function Home() {
             {CategoryRailSection}
           </div>
 
+          <PromoRow
+            handleVegModeChange={handleVegModeChange}
+            navigate={navigate}
+            isVegMode={vegMode}
+            toggleRef={vegModeToggleRef}
+          />
+
+          <PromotionBannerCarousel zoneId={zoneId} />
 
           {HeroBannerSection}
 

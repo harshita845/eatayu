@@ -14,6 +14,13 @@ const ALLOWED_MIME_TYPES = new Set([
     'image/gif'
 ]);
 
+const ALLOWED_VIDEO_MIME_TYPES = new Set([
+    'video/mp4',
+    'video/webm',
+    'video/ogg',
+    'video/quicktime'
+]);
+
 const WEBP_MIME = 'image/webp';
 const GIF_MIME = 'image/gif';
 const FOLDER_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9/_-]*$/;
@@ -202,6 +209,34 @@ export const saveImageFile = async (file, folder) => {
         filename,
         mimeType: optimized.mimeType,
         size: optimized.buffer.length
+    };
+};
+
+export const saveVideoFile = async (file, folder) => {
+    if (!file?.buffer?.length) {
+        throw new ValidationError('File is required');
+    }
+
+    const mimeType = String(file.mimetype || '').toLowerCase();
+    if (!ALLOWED_VIDEO_MIME_TYPES.has(mimeType)) {
+        throw new ValidationError('Only MP4, WebM, Ogg, and QuickTime videos are allowed');
+    }
+
+    const safeFolder = sanitizeUploadFolder(folder);
+    const ext = path.extname(file.originalname).toLowerCase() || '.mp4';
+    const filename = buildFilename(ext);
+    const relativePath = path.posix.join(safeFolder, filename);
+    const absolutePath = getAbsolutePath(relativePath);
+
+    await ensureUploadStorageReady(safeFolder);
+    await fs.writeFile(absolutePath, file.buffer);
+
+    return {
+        url: buildPublicUrl(relativePath),
+        path: relativePath,
+        filename,
+        mimeType,
+        size: file.buffer.length
     };
 };
 

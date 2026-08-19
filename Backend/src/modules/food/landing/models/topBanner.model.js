@@ -15,6 +15,10 @@ const topBannerSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true,
+    },
+    isVideo: {
+        type: Boolean,
+        default: false,
     }
 }, {
     timestamps: true

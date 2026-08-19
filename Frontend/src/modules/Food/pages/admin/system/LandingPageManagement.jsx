@@ -198,8 +198,19 @@ export default function LandingPageManagement() {
     const files = Array.from(e.target?.files || e.files || [])
     if (files.length === 0) return
     if (files.length > 5) {
-      setError('You can upload a maximum of 5 images at once')
+      setError('You can upload a maximum of 5 files at once')
       return
+    }
+    const invalidFile = files.find(file => {
+      const isImg = file.type.startsWith('image/');
+      const isVid = file.type.startsWith('video/');
+      if (!isImg && !isVid) return true;
+      const limit = isVid ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+      return file.size > limit;
+    });
+    if (invalidFile) {
+      setError('Allowed: images up to 5MB, videos (MP4/WebM/Ogg) up to 50MB.');
+      return;
     }
     uploadTopBanners(files)
   }
@@ -347,8 +358,19 @@ export default function LandingPageManagement() {
     const files = Array.from(e.target?.files || e.files || [])
     if (files.length === 0) return
     if (files.length > 5) {
-      setError('You can upload a maximum of 5 images at once')
+      setError('You can upload a maximum of 5 files at once')
       return
+    }
+    const invalidFile = files.find(file => {
+      const isImg = file.type.startsWith('image/');
+      const isVid = file.type.startsWith('video/');
+      if (!isImg && !isVid) return true;
+      const limit = isVid ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+      return file.size > limit;
+    });
+    if (invalidFile) {
+      setError('Allowed: images up to 5MB, videos (MP4/WebM/Ogg) up to 50MB.');
+      return;
     }
     uploadBanners(files)
   }
@@ -1446,7 +1468,7 @@ export default function LandingPageManagement() {
                 <input
                   ref={topBannersFileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   multiple
                   onChange={handleTopBannerFileSelect}
                   className="hidden"
@@ -1456,7 +1478,7 @@ export default function LandingPageManagement() {
                   <div className="flex flex-col items-center gap-3">
                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                     <p className="text-blue-600 font-medium">
-                      Uploading image {topBannersUploadProgress.current} of {topBannersUploadProgress.total}...
+                      Uploading file {topBannersUploadProgress.current} of {topBannersUploadProgress.total}...
                     </p>
                     {topBannersUploadProgress.total > 0 && (
                       <div className="w-full max-w-xs">
@@ -1482,7 +1504,7 @@ export default function LandingPageManagement() {
                       </button>
                       <span className="text-slate-600"> or drag and drop</span>
                     </div>
-                    <p className="text-xs text-slate-500">PNG, JPG, WEBP up to 5MB each (Max 5 images at once)</p>
+                    <p className="text-xs text-slate-500">PNG, JPG, WEBP (up to 5MB) or MP4, WebM (up to 50MB) (Max 5 files)</p>
                   </div>
                 )}
               </div>
@@ -1505,7 +1527,17 @@ export default function LandingPageManagement() {
                   {topBanners.map((banner, index) => (
                     <div key={banner._id} className="border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative aspect-video bg-slate-100">
-                        <img src={banner.image || banner.imageUrl} alt={`Top Banner ${index + 1}`} className="w-full h-full object-cover" />
+                        {banner.isVideo ? (
+                          <video
+                            src={banner.image || banner.imageUrl}
+                            className="w-full h-full object-cover"
+                            controls
+                            muted
+                            playsInline
+                          />
+                        ) : (
+                          <img src={banner.image || banner.imageUrl} alt={`Top Banner ${index + 1}`} className="w-full h-full object-cover" />
+                        )}
                         <div className="absolute top-2 right-2">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${banner.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                             {banner.isActive ? 'Active' : 'Inactive'}
@@ -1593,7 +1625,7 @@ export default function LandingPageManagement() {
                 <input
                   ref={bannersFileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   multiple
                   onChange={handleBannerFileSelect}
                   className="hidden"
@@ -1603,7 +1635,7 @@ export default function LandingPageManagement() {
                   <div className="flex flex-col items-center gap-3">
                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                     <p className="text-blue-600 font-medium">
-                      Uploading image {bannersUploadProgress.current} of {bannersUploadProgress.total}...
+                      Uploading file {bannersUploadProgress.current} of {bannersUploadProgress.total}...
                     </p>
                     {bannersUploadProgress.total > 0 && (
                       <div className="w-full max-w-xs">
@@ -1629,7 +1661,7 @@ export default function LandingPageManagement() {
                       </button>
                       <span className="text-slate-600"> or drag and drop</span>
                     </div>
-                    <p className="text-xs text-slate-500">PNG, JPG, WEBP up to 5MB each (Max 5 images at once)</p>
+                    <p className="text-xs text-slate-500">PNG, JPG, WEBP (up to 5MB) or MP4, WebM (up to 50MB) (Max 5 files)</p>
                   </div>
                 )}
               </div>
@@ -1652,7 +1684,17 @@ export default function LandingPageManagement() {
                   {banners.map((banner, index) => (
                     <div key={banner._id} className="border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative aspect-video bg-slate-100">
-                        <img src={banner.imageUrl} alt={`Hero Banner ${index + 1}`} className="w-full h-full object-cover" />
+                        {banner.isVideo ? (
+                          <video
+                            src={banner.imageUrl}
+                            className="w-full h-full object-cover"
+                            controls
+                            muted
+                            playsInline
+                          />
+                        ) : (
+                          <img src={banner.imageUrl} alt={`Hero Banner ${index + 1}`} className="w-full h-full object-cover" />
+                        )}
                         <div className="absolute top-2 right-2">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${banner.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                             {banner.isActive ? 'Active' : 'Inactive'}

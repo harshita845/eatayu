@@ -1,5 +1,5 @@
 import { FoodHeroBanner } from '../models/heroBanner.model.js';
-import { saveImageFile, deleteStoredFile } from '../../../../services/storage.service.js';
+import { saveImageFile, saveVideoFile, deleteStoredFile } from '../../../../services/storage.service.js';
 
 const BANNER_FOLDER = 'food/hero-banners';
 
@@ -16,7 +16,10 @@ export const createHeroBannersFromFiles = async (files, meta = {}) => {
 
     for (const file of files) {
         try {
-            const saved = await saveImageFile(file, BANNER_FOLDER);
+            const isVideo = file.mimetype ? file.mimetype.startsWith('video/') : false;
+            const saved = isVideo
+                ? await saveVideoFile(file, BANNER_FOLDER)
+                : await saveImageFile(file, BANNER_FOLDER);
 
             const banner = await FoodHeroBanner.create({
                 imageUrl: saved.url,
@@ -26,7 +29,8 @@ export const createHeroBannersFromFiles = async (files, meta = {}) => {
                 ctaLink: meta.ctaLink,
                 linkedRestaurantIds: meta.linkedRestaurantIds || [],
                 sortOrder: meta.sortOrder ?? 0,
-                isActive: true
+                isActive: true,
+                isVideo: isVideo
             });
 
             results.push({ success: true, banner: banner.toObject() });
