@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Eye, Loader2, Search, Trash2, Pencil } from "lucide-react"
+import { Eye, Loader2, Search, Trash2, Pencil, Camera } from "lucide-react"
 import { Switch } from "@food/components/ui/switch"
 import { adminAPI, uploadAPI } from "@food/api"
 import { toast } from "sonner"
@@ -27,9 +27,11 @@ const getAddonTitle = (addon) => addon?.draft?.name || addon?.name || "Unnamed A
 const getAddonImage = (addon) =>
   addon?.draft?.image ||
   addon?.draft?.images?.[0] ||
+  addon?.image ||
+  addon?.images?.[0] ||
   addon?.published?.image ||
   addon?.published?.images?.[0] ||
-  "https://via.placeholder.com/40"
+  ""
 
 export default function AddonsList() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -265,16 +267,29 @@ export default function AddonsList() {
                       <span className="text-sm font-medium text-slate-700">{index + 1}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
-                        <img
-                          src={getAddonImage(addon)}
-                          alt={getAddonTitle(addon)}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/40"
-                          }}
-                        />
-                      </div>
+                      <button
+                        type="button"
+                        title="Click to upload image"
+                        onClick={() => handleEdit(addon)}
+                        className="relative group w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center ring-0 hover:ring-2 hover:ring-[#EB590E]/60 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#EB590E]/60"
+                      >
+                        {getAddonImage(addon) ? (
+                          <img
+                            src={getAddonImage(addon)}
+                            alt={getAddonTitle(addon)}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = "none"
+                            }}
+                          />
+                        ) : (
+                          <Camera className="w-4 h-4 text-slate-400" />
+                        )}
+                        {/* Hover overlay with camera icon */}
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full pointer-events-none">
+                          <Camera className="w-3.5 h-3.5 text-white" />
+                        </span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">

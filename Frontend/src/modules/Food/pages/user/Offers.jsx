@@ -53,55 +53,86 @@ export default function Offers() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
       <div 
-        className="relative w-full overflow-hidden min-h-[25vh] md:min-h-[30vh] flex flex-col justify-center items-center px-4 py-8 shadow-sm"
+        className="relative w-full overflow-hidden flex flex-col justify-center items-center shadow-lg"
         style={{ 
-          backgroundColor: '#EB590E', 
-          backgroundImage: 'linear-gradient(to right, #EB590E, #ff7d3b)' 
+          background: 'linear-gradient(135deg, #d44f0c 0%, #EB590E 45%, #ff7d3b 100%)',
+          minHeight: '200px'
         }}
       >
         {/* Back Button */}
         <button 
           onClick={goBack}
-          className="absolute top-4 left-4 md:top-6 md:left-6 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
+          className="absolute top-4 left-4 md:top-6 md:left-6 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 active:scale-95"
         >
           <ArrowLeft className="h-5 w-5 md:h-6 md:w-6 text-white" />
         </button>
-        
-        {/* Decorative Grid Patterns / Circles for Premium Feel */}
-        <div className="absolute inset-0 opacity-15 pointer-events-none">
-          <div className="absolute top-[-20%] right-[-10%] w-72 h-72 rounded-full bg-white blur-2xl"></div>
-          <div className="absolute bottom-[-10%] left-[-5%] w-48 h-48 rounded-full bg-white blur-xl"></div>
+
+        {/* Decorative fork SVG top-right - mirrors logo motif */}
+        <svg className="absolute top-2 right-4 w-16 h-16 opacity-20 pointer-events-none" viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="5" width="5" height="40" rx="2.5"/>
+          <rect x="35" y="5" width="5" height="40" rx="2.5"/>
+          <rect x="50" y="5" width="5" height="40" rx="2.5"/>
+          <rect x="30" y="45" width="15" height="50" rx="7.5"/>
+        </svg>
+
+        {/* Decorative fork SVG bottom-left */}
+        <svg className="absolute bottom-4 left-4 w-12 h-12 opacity-20 pointer-events-none rotate-[200deg]" viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="5" width="5" height="40" rx="2.5"/>
+          <rect x="35" y="5" width="5" height="40" rx="2.5"/>
+          <rect x="50" y="5" width="5" height="40" rx="2.5"/>
+          <rect x="30" y="45" width="15" height="50" rx="7.5"/>
+        </svg>
+
+        {/* Circular glow blobs matching logo style */}
+        <div className="absolute top-[-30%] right-[-8%] w-64 h-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-20%] left-[-5%] w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+
+        {/* Dot grid overlay */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="1" fill="#fff" />
+              <pattern id="offers-dots" width="18" height="18" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.2" fill="#fff" />
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
+            <rect width="100%" height="100%" fill="url(#offers-dots)" />
           </svg>
         </div>
 
-        {/* Text and Icon Content */}
-        <div className="relative z-10 text-center flex flex-col items-center select-none">
-          <span className="text-white/80 font-black tracking-widest text-[13px] md:text-sm uppercase mb-1 drop-shadow-sm">
-            FLASH
-          </span>
-          <h1 className="text-white font-extrabold text-4xl md:text-5xl lg:text-6xl tracking-tight leading-none drop-shadow-md">
-            OFFERS
-          </h1>
-          <div className="mt-3 flex items-center gap-1.5 px-3 py-1 bg-white/25 backdrop-blur-md rounded-full text-white text-[11px] md:text-xs font-bold uppercase tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
-            Super Discounts inside
+        {/* Main Content */}
+        <div className="relative z-10 flex flex-col items-center gap-3 py-8 px-4 select-none">
+          {/* Logo + Title Row */}
+          <div className="flex items-center gap-3">
+            <img
+              src="/EatAyu-logo.png"
+              alt="EatAyu Logo"
+              className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md rounded-xl"
+            />
+            <div className="text-left">
+              <p className="text-white/75 text-[11px] font-black tracking-[0.25em] uppercase leading-none">EatAyu</p>
+              <h1 className="text-white font-extrabold text-4xl md:text-5xl tracking-tight leading-none drop-shadow-md">
+                OFFERS
+              </h1>
+            </div>
+          </div>
+
+          {/* Live badge */}
+          <div className="flex items-center gap-2 px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full border border-white/30">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            </span>
+            <span className="text-white text-[11px] md:text-xs font-bold uppercase tracking-wider">Super Discounts Inside</span>
           </div>
         </div>
 
-        {/* Bottom Wavy/Stamp Edge Effect */}
-        <div className="absolute bottom-0 left-0 right-0 h-3 flex overflow-hidden">
-          {Array.from({ length: 40 }).map((_, i) => (
+        {/* Bottom scalloped edge - coupon tear */}
+        <div className="absolute bottom-0 left-0 right-0 h-4 flex overflow-hidden pointer-events-none">
+          {Array.from({ length: 50 }).map((_, i) => (
             <div 
               key={i} 
-              className="flex-1 min-w-[12px] h-3 bg-white dark:bg-[#0a0a0a] rounded-t-full"
-              style={{ transform: 'translateY(6px)' }}
+              className="flex-1 min-w-[10px] h-4 bg-white dark:bg-[#0a0a0a] rounded-t-full"
+              style={{ transform: 'translateY(8px)' }}
             />
           ))}
         </div>

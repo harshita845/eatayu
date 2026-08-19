@@ -1664,12 +1664,23 @@ export default function Cart() {
   }
 
   const handleBack = () => {
-    // Priority: slug > restaurantId (both work for the restaurant details route)
-    const idOrSlug = restaurantData?.slug || restaurantId
-    if (idOrSlug) {
-      navigate(`/food/user/restaurants/${idOrSlug}`)
-    } else {
+    // Use real history back (pop) so we never push a duplicate restaurant
+    // entry onto the stack — that was causing the cart ↔ restaurant loop.
+    // Only fall back to an explicit navigate when the user deep-linked
+    // directly to /cart with no prior history to pop.
+    const hasHistory = typeof window !== "undefined" &&
+      typeof window.history?.state?.idx === "number"
+        ? window.history.state.idx > 0
+        : window.history.length > 1
+    if (hasHistory) {
       goBack()
+    } else {
+      const idOrSlug = restaurantData?.slug || restaurantId
+      if (idOrSlug) {
+        navigate(`/food/user/restaurants/${idOrSlug}`)
+      } else {
+        goBack()
+      }
     }
   }
 
