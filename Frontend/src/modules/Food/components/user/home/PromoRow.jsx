@@ -5,8 +5,8 @@ import gourmetPromoIcon from "@food/assets/explore more icons/gourmet.png";
 import pricePromoIcon from "@food/assets/category-icons/price_promo.png";
 import collectionPromoIcon from "@food/assets/explore more icons/collection.png";
 
-export default function PromoRow({ handleVegModeChange, navigate, isVegMode, toggleRef }) {
-  const promoCardsData = [
+export default function PromoRow({ handleVegModeChange, navigate, isVegMode, toggleRef, exploreIcons = [], backendOrigin = "" }) {
+  const basePromoCards = [
     {
       id: 'offers',
       title: "Hot Deals",
@@ -33,8 +33,32 @@ export default function PromoRow({ handleVegModeChange, navigate, isVegMode, tog
     },
   ];
 
+  const promoCardsData = basePromoCards.map((promo) => {
+    const dbIcon = Array.isArray(exploreIcons)
+      ? exploreIcons.find(
+          (it) =>
+            (it.label || it.name || "").toLowerCase() === promo.value.toLowerCase() ||
+            (it.link || "").toLowerCase().includes(promo.id.toLowerCase())
+        )
+      : null;
+
+    if (dbIcon && dbIcon.imageUrl) {
+      const url = dbIcon.imageUrl;
+      const isRelative = !/^(https?:|\/\/|data:|blob:)/i.test(url.trim());
+      const originToUse = backendOrigin || import.meta.env.VITE_BACKEND_ORIGIN || "http://localhost:5000";
+      const resolvedIcon = isRelative
+        ? `${originToUse.replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`
+        : url;
+      return {
+        ...promo,
+        icon: resolvedIcon,
+      };
+    }
+    return promo;
+  });
+
   return (
-    <div className="grid grid-cols-4 gap-2 px-3 py-6 bg-transparent justify-items-center w-full max-w-[500px] mx-auto">
+    <div className="grid grid-cols-4 gap-2 px-3 py-3 bg-transparent justify-items-center w-full max-w-[380px] mx-auto">
       {promoCardsData.map((promo, idx) => (
         <motion.div
           key={idx}

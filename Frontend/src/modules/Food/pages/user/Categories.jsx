@@ -17,7 +17,7 @@ export default function Categories() {
   const [searchQuery, setSearchQuery] = useState("");
   const { effectiveLocation: location, zoneId } = useDeliveryLocation();
 
-  const BACKEND_ORIGIN = useMemo(() => API_BASE_URL.replace(/\/api\/?$/, ""), []);
+  const BACKEND_ORIGIN = useMemo(() => API_BASE_URL.split("/api")[0], []);
 
   const normalizeImageUrl = (imageUrl) => {
     if (typeof imageUrl !== "string") return "";

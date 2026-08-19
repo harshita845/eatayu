@@ -9,8 +9,6 @@ import { toast } from "sonner"
 import { RestaurantGridSkeleton } from "@food/components/ui/loading-skeletons"
 import { useDelayedLoading } from "@food/hooks/useDelayedLoading"
 
-// Import banner image
-import offerBanner from "@food/assets/offerpagebanner.png"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -54,23 +52,58 @@ export default function Offers() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
-      {/* Banner Section */}
-      <div className="relative w-full overflow-hidden min-h-[25vh] md:min-h-[30vh]">
+      <div 
+        className="relative w-full overflow-hidden min-h-[25vh] md:min-h-[30vh] flex flex-col justify-center items-center px-4 py-8 shadow-sm"
+        style={{ 
+          backgroundColor: '#EB590E', 
+          backgroundImage: 'linear-gradient(to right, #EB590E, #ff7d3b)' 
+        }}
+      >
         {/* Back Button */}
         <button 
           onClick={goBack}
-          className="absolute top-4 left-4 md:top-6 md:left-6 z-20 w-10 h-10 md:w-12 md:h-12 bg-gray-800/60 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-gray-800/80 transition-colors"
+          className="absolute top-4 left-4 md:top-6 md:left-6 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
         >
           <ArrowLeft className="h-5 w-5 md:h-6 md:w-6 text-white" />
         </button>
         
-        {/* Banner Image */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src={offerBanner} 
-            alt="Great Offers" 
-            className="w-full h-full object-cover"
-          />
+        {/* Decorative Grid Patterns / Circles for Premium Feel */}
+        <div className="absolute inset-0 opacity-15 pointer-events-none">
+          <div className="absolute top-[-20%] right-[-10%] w-72 h-72 rounded-full bg-white blur-2xl"></div>
+          <div className="absolute bottom-[-10%] left-[-5%] w-48 h-48 rounded-full bg-white blur-xl"></div>
+          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1" fill="#fff" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
+
+        {/* Text and Icon Content */}
+        <div className="relative z-10 text-center flex flex-col items-center select-none">
+          <span className="text-white/80 font-black tracking-widest text-[13px] md:text-sm uppercase mb-1 drop-shadow-sm">
+            FLASH
+          </span>
+          <h1 className="text-white font-extrabold text-4xl md:text-5xl lg:text-6xl tracking-tight leading-none drop-shadow-md">
+            OFFERS
+          </h1>
+          <div className="mt-3 flex items-center gap-1.5 px-3 py-1 bg-white/25 backdrop-blur-md rounded-full text-white text-[11px] md:text-xs font-bold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+            Super Discounts inside
+          </div>
+        </div>
+
+        {/* Bottom Wavy/Stamp Edge Effect */}
+        <div className="absolute bottom-0 left-0 right-0 h-3 flex overflow-hidden">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div 
+              key={i} 
+              className="flex-1 min-w-[12px] h-3 bg-white dark:bg-[#0a0a0a] rounded-t-full"
+              style={{ transform: 'translateY(6px)' }}
+            />
+          ))}
         </div>
       </div>
 
@@ -94,7 +127,10 @@ export default function Offers() {
             {/* Grouped Offers Sections */}
             {Object.keys(groupedOffers).length > 0 && Object.entries(groupedOffers).map(([offerText, dishes]) => (
               <section key={offerText}>
-                <h2 className="text-2xl sm:text-3xl font-black text-red-500 dark:text-red-400 text-center mb-4 tracking-wide">
+                <h2 
+                  className="text-2xl sm:text-3xl font-black text-center mb-4 tracking-wide"
+                  style={{ color: '#EB590E' }}
+                >
                   {offerText}
                 </h2>
                 
@@ -117,7 +153,7 @@ export default function Offers() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                           {/* Offer Badge */}
-                          <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
+                          <div className="absolute top-2 left-2 bg-[#EB590E] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
                             {dish.offer}
                           </div>
                         </div>
@@ -165,7 +201,10 @@ export default function Offers() {
                               {o.couponCode || "-"}
                             </p>
                           </div>
-                          <span className="px-2 py-1 rounded-md text-xs font-semibold bg-blue-600 text-white">
+                          <span 
+                            className="px-2 py-1 rounded-md text-xs font-semibold text-white"
+                            style={{ backgroundColor: '#EB590E' }}
+                          >
                             {o.title || "Offer"}
                           </span>
                         </div>

@@ -784,7 +784,7 @@ const RestaurantCard = React.memo(({
 
 export default function Home() {
   const HERO_BANNER_AUTO_SLIDE_MS = 3500;
-  const BACKEND_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
+  const BACKEND_ORIGIN = API_BASE_URL.split("/api")[0];
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
@@ -2823,6 +2823,7 @@ export default function Home() {
         isActive: liveRestaurant?.isActive !== false,
         isAcceptingOrders: liveRestaurant?.isAcceptingOrders !== false,
         featuredPrice: liveRestaurant?.featuredPrice || restaurant?.featuredPrice || 200,
+        recommendedItems: liveRestaurant?.recommendedItems || [],
       };
     });
 
@@ -2979,14 +2980,7 @@ export default function Home() {
             type="button"
             className="absolute inset-0 z-20 h-full w-full border-0 p-0 bg-transparent text-left"
             onClick={() => {
-              const bannerData = heroBannersData[currentBannerIndex];
-              const linkedRestaurants = bannerData?.linkedRestaurants || [];
-              if (linkedRestaurants.length > 0) {
-                const firstRestaurant = linkedRestaurants[0];
-                const restaurantSlug = firstRestaurant.slug || firstRestaurant.restaurantId || firstRestaurant._id;
-                captureScrollBeforeRestaurantNav();
-                navigate(`/restaurants/${restaurantSlug}`);
-              }
+              navigate("/food/user/under-250");
             }}
             aria-label={`Open hero banner ${currentBannerIndex + 1}`}
           />
@@ -3422,11 +3416,19 @@ export default function Home() {
 
           {HeroBannerSection}
 
+          <div className="px-4 pt-4">
+            <h2 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white tracking-tight">
+              {exploreMoreHeading}
+            </h2>
+          </div>
+
           <PromoRow
             handleVegModeChange={handleVegModeChange}
             navigate={navigate}
             isVegMode={vegMode}
             toggleRef={vegModeToggleRef}
+            exploreIcons={landingExploreMore}
+            backendOrigin={BACKEND_ORIGIN}
           />
 
 

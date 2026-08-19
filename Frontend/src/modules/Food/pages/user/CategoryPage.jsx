@@ -89,7 +89,7 @@ export default function CategoryPage() {
 
   const showCategorySkeleton = useDelayedLoading(loadingCategories)
   const deferredSearchQuery = useDeferredValue(searchQuery)
-  const BACKEND_ORIGIN = useMemo(() => API_BASE_URL.replace(/\/api\/?$/, ""), [])
+  const BACKEND_ORIGIN = useMemo(() => API_BASE_URL.split("/api")[0], [])
   const slugify = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
   const normalizeCategoryToken = (value) =>
     String(value || "")
