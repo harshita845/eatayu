@@ -1009,7 +1009,7 @@ export default function Cart() {
       clearInterval(intervalId)
       window.removeEventListener("focus", handleFocus)
     }
-  }, [cart.length, cart[0]?.restaurantId])
+  }, [cart[0]?.restaurantId])
 
   // Fetch approved addons for the restaurant
   useEffect(() => {
@@ -1119,67 +1119,56 @@ export default function Cart() {
     }
 
     fetchAddons()
-  }, [restaurantData, cart.length, loadingRestaurant])
+  }, [restaurantData, loadingRestaurant])
 
   // Fetch coupons for items in cart
   useEffect(() => {
-    const fetchCouponsForCartItems = async () => {
+    const fetchCouponsForCart = async () => {
       if (cart.length === 0 || !restaurantId) {
         setAvailableCoupons([])
         return
       }
 
-      debugLog(`[CART-COUPONS] Fetching coupons for ${cart.length} items in cart`)
+      debugLog(`[CART-COUPONS] Fetching coupons for cart once`)
       setLoadingCoupons(true)
 
       const allCoupons = []
       const uniqueCouponCodes = new Set()
 
-      // Fetch coupons for each item in cart
-      for (const cartItem of cart) {
-        const couponItemId = cartItem.itemId || cartItem.id
-        if (!couponItemId) {
-          debugLog(`[CART-COUPONS] Skipping item without id:`, cartItem)
-          continue
+      try {
+        // Fetch all coupons for the restaurant in a single call (the backend returns all restaurant/global coupons)
+        const response = await restaurantAPI.getCouponsByItemIdPublic(restaurantId, 'all', subtotal)
+
+        if (response?.data?.success && response?.data?.data?.coupons) {
+          const coupons = response.data.data.coupons
+          debugLog(`[CART-COUPONS] Found ${coupons.length} coupons`)
+
+          coupons.forEach(coupon => {
+            if (!uniqueCouponCodes.has(coupon.couponCode)) {
+              uniqueCouponCodes.add(coupon.couponCode)
+              allCoupons.push({
+                code: coupon.couponCode,
+                discount: coupon.originalPrice - coupon.discountedPrice,
+                discountPercentage: coupon.discountPercentage,
+                discountDisplay: coupon.discountType === "percentage"
+                  ? `${coupon.discountPercentage}% OFF`
+                  : `${RUPEE_SYMBOL}${Math.max(0, (coupon.originalPrice || 0) - (coupon.discountedPrice || 0))} OFF`,
+                minOrder: coupon.minOrderValue || 0,
+                description: coupon.discountType === "percentage"
+                  ? `${coupon.discountPercentage}% OFF with '${coupon.couponCode}'`
+                  : `Save ${RUPEE_SYMBOL}${Math.max(0, (coupon.originalPrice || 0) - (coupon.discountedPrice || 0))} with '${coupon.couponCode}'`,
+                originalPrice: coupon.originalPrice,
+                discountedPrice: coupon.discountedPrice,
+                customerGroup: coupon.customerGroup || "all",
+                isGlobalCoupon: Boolean(coupon.isGlobalCoupon),
+                itemId: 'all',
+                itemName: 'All Items',
+              })
+            }
+          })
         }
-
-        try {
-          debugLog(`[CART-COUPONS] Fetching coupons for itemId: ${couponItemId}, name: ${cartItem.name}`)
-          const response = await restaurantAPI.getCouponsByItemIdPublic(restaurantId, couponItemId, subtotal)
-
-          if (response?.data?.success && response?.data?.data?.coupons) {
-            const coupons = response.data.data.coupons
-            debugLog(`[CART-COUPONS] Found ${coupons.length} coupons for item ${couponItemId}`)
-
-            // Add coupons, avoiding duplicates
-            coupons.forEach(coupon => {
-              if (!uniqueCouponCodes.has(coupon.couponCode)) {
-                uniqueCouponCodes.add(coupon.couponCode)
-                // Convert backend coupon format to frontend format
-                allCoupons.push({
-                  code: coupon.couponCode,
-                  discount: coupon.originalPrice - coupon.discountedPrice,
-                  discountPercentage: coupon.discountPercentage,
-                  discountDisplay: coupon.discountType === "percentage"
-                    ? `${coupon.discountPercentage}% OFF`
-                    : `${RUPEE_SYMBOL}${Math.max(0, (coupon.originalPrice || 0) - (coupon.discountedPrice || 0))} OFF`,
-                  minOrder: coupon.minOrderValue || 0,
-                  description: coupon.discountType === "percentage"
-                    ? `${coupon.discountPercentage}% OFF with '${coupon.couponCode}'`
-                    : `Save ${RUPEE_SYMBOL}${Math.max(0, (coupon.originalPrice || 0) - (coupon.discountedPrice || 0))} with '${coupon.couponCode}'`,
-                  originalPrice: coupon.originalPrice,
-                  discountedPrice: coupon.discountedPrice,
-                  customerGroup: coupon.customerGroup || "all",
-                  isGlobalCoupon: Boolean(coupon.isGlobalCoupon),
-                  itemId: couponItemId,
-                  itemName: cartItem.name,
-                })
-              }
-            })
-          }
-        } catch (error) {
-          debugError(`[CART-COUPONS] Error fetching coupons for item ${cartItem.id}:`, error)
-        }
+      } catch (error) {
+        debugError(`[CART-COUPONS] Error fetching coupons:`, error)
       }
 
       debugLog(`[CART-COUPONS] Total unique coupons found: ${allCoupons.length}`, allCoupons)
@@ -1187,8 +1176,8 @@ export default function Cart() {
       setLoadingCoupons(false)
     }
 
-    fetchCouponsForCartItems()
-  }, [cart, restaurantId])
+    fetchCouponsForCart()
+  }, [restaurantId, cart.length > 0])
 
   // Calculate pricing from backend whenever cart, address, or coupon changes
   useEffect(() => {
@@ -2443,7 +2432,7 @@ export default function Cart() {
       // Handle other axios errors
       else if (error.response) {
         // Server responded with error status
-        errorMessage = error.response.data?.message || `Server error: ${error.response.status}`
+        errorMessage = error.response.data?.message || error.response.data?.error || `Server error: ${error.response.status}`
       }
       // Handle other errors
       else if (error.message) {
@@ -2590,8 +2579,8 @@ export default function Cart() {
               {/* Cart Items */}
               <div className="bg-white dark:bg-[#1a1a1a] px-4 md:px-6 py-4 md:py-5 rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 dark:border-gray-800">
                 <div className="space-y-3 md:space-y-4">
-                  {cart.map((item) => (
-                    <div key={item.id} className="flex items-start gap-3 md:gap-4">
+                  {cart.map((item, index) => (
+                    <div key={`${item.id}-${index}`} className="flex items-start gap-3 md:gap-4">
                       {/* Veg/Non-veg indicator */}
                       <div
                         className="w-4 h-4 md:w-5 md:h-5 border-2 flex items-center justify-center mt-1 flex-shrink-0"

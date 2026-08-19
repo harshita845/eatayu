@@ -2769,16 +2769,27 @@ export const orderAPI = {
         }
       }
 
+      console.log("[api.getOrderDetails] key:", key, "force:", force);
       const pending = inFlight.get(key);
-      if (pending) return pending;
+      if (pending) {
+        console.log("[api.getOrderDetails] returning pending promise for key:", key);
+        return pending;
+      }
 
+      console.log("[api.getOrderDetails] launching new request to /food/orders/" + key);
       const p = apiClient
         .get(`/food/orders/${key}`, { contextModule: "user" })
         .then((res) => {
+          console.log("[api.getOrderDetails] response success for key:", key, "res:", res);
           cache.set(key, { at: Date.now(), res });
           return res;
         })
+        .catch((err) => {
+          console.error("[api.getOrderDetails] request failed for key:", key, "err:", err);
+          throw err;
+        })
         .finally(() => {
+          console.log("[api.getOrderDetails] request finished, deleting from inFlight for key:", key);
           inFlight.delete(key);
         });
 

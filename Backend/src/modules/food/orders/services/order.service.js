@@ -611,8 +611,9 @@ export async function createOrder(userId, dto) {
         // Update order payment state before saving
         order.payment = payment;
       } catch (err) {
-        logger.error(`Razorpay order creation failed: ${err.message}`);
-        throw new ValidationError(err?.message || "Payment gateway error");
+        const rzErrMsg = err?.error?.description || err?.message || "Payment gateway error";
+        logger.error(`Razorpay order creation failed: ${rzErrMsg}`);
+        throw new ValidationError(rzErrMsg);
       }
     }
 

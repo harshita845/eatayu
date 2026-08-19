@@ -1,6 +1,8 @@
 import { config } from '../../../../config/env.js';
 import { logger } from '../../../../utils/logger.js';
 
+const routeCache = new Map();
+
 /**
  * Fetches driving route metrics from Google Directions API.
  * Call sparingly (e.g. once per order) — billed per request.
@@ -33,6 +35,12 @@ export async function fetchDrivingRoute(origin, destination) {
     return empty;
   }
 
+  const cacheKey = `${Number(origin.lat).toFixed(5)},${Number(origin.lng).toFixed(5)}|${Number(destination.lat).toFixed(5)},${Number(destination.lng).toFixed(5)}`;
+  const cached = routeCache.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp < 30 * 60 * 1000)) { // 30 minutes cache
+    return cached.data;
+  }
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
@@ -54,13 +62,16 @@ export async function fetchDrivingRoute(origin, destination) {
         durationSeconds += leg.duration?.value || 0;
       }
 
-      return {
+      const result = {
         polyline: route.overview_polyline?.points || '',
         distanceMeters: distanceMeters > 0 ? distanceMeters : null,
         durationSeconds: durationSeconds > 0 ? durationSeconds : null,
         distanceKm:
           distanceMeters > 0 ? Number((distanceMeters / 1000).toFixed(2)) : null,
       };
+
+      routeCache.set(cacheKey, { timestamp: Date.now(), data: result });
+      return result;
     }
 
     logger.warn(

@@ -271,14 +271,16 @@ const getCustomerCoordsFromApiOrder = (apiOrder, previousOrder = null) => {
 }
 
 const transformOrderForTracking = (apiOrder, previousOrder = null, explicitRestaurantCoords = null, explicitRestaurantAddress = null) => {
-  const restaurantCoords = explicitRestaurantCoords || getRestaurantCoordsFromOrder(apiOrder, previousOrder?.restaurantLocation?.coordinates)
-  const restaurantAddress = getRestaurantAddressFromOrder(apiOrder, previousOrder, explicitRestaurantAddress)
-  // API returns `deliveryAddress`; some paths use `address`
-  const addr = apiOrder?.address || apiOrder?.deliveryAddress || {}
-  const customerCoordsResolved = getCustomerCoordsFromApiOrder(apiOrder, previousOrder)
+  try {
+    console.log("[transformOrderForTracking] input apiOrder:", apiOrder, "previousOrder:", previousOrder);
+    const restaurantCoords = explicitRestaurantCoords || getRestaurantCoordsFromOrder(apiOrder, previousOrder?.restaurantLocation?.coordinates)
+    const restaurantAddress = getRestaurantAddressFromOrder(apiOrder, previousOrder, explicitRestaurantAddress)
+    // API returns `deliveryAddress`; some paths use `address`
+    const addr = apiOrder?.address || apiOrder?.deliveryAddress || {}
+    const customerCoordsResolved = getCustomerCoordsFromApiOrder(apiOrder, previousOrder)
 
-  return {
-    id: apiOrder?.orderId || apiOrder?._id,
+    const result = {
+      id: apiOrder?.orderId || apiOrder?._id,
     mongoId: apiOrder?._id || null,
     orderId: apiOrder?.orderId || apiOrder?._id,
     restaurant: apiOrder?.restaurantName || previousOrder?.restaurant || 'Restaurant',
@@ -380,7 +382,13 @@ const transformOrderForTracking = (apiOrder, previousOrder = null, explicitResta
       return merged
     })(),
     note: apiOrder?.note || previousOrder?.note || '',
-    deliveryInstructions: apiOrder?.deliveryInstructions || previousOrder?.deliveryInstructions || ''
+      deliveryInstructions: apiOrder?.deliveryInstructions || previousOrder?.deliveryInstructions || ''
+    };
+    console.log("[transformOrderForTracking] returns:", result);
+    return result;
+  } catch (err) {
+    console.error("[transformOrderForTracking] ERROR CAUGHT:", err);
+    throw err;
   }
 }
 
@@ -599,13 +607,17 @@ export default function OrderTracking() {
     },
     fetchOrderDetailsWithFallback: async (options = {}) => {
       const lookupIds = lookupIdsRef.current
+      console.log("[fetchOrderDetailsWithFallback] lookupIds:", lookupIds);
       if (lookupIds.length === 0) throw new Error("Order id required")
       let lastError = null
       for (const id of lookupIds) {
         try {
-          // Double guard against hammer
-          return await orderAPI.getOrderDetails(id, options)
+          console.log("[fetchOrderDetailsWithFallback] calling getOrderDetails for id:", id, "options:", options);
+          const res = await orderAPI.getOrderDetails(id, options)
+          console.log("[fetchOrderDetailsWithFallback] getOrderDetails resolved for id:", id, "res:", res);
+          return res
         } catch (err) {
+          console.error("[fetchOrderDetailsWithFallback] getOrderDetails failed for id:", id, "err:", err);
           lastError = err
           if (err?.response?.status === 400 || err?.response?.status === 404) continue
           throw err
@@ -832,6 +844,7 @@ export default function OrderTracking() {
     let requestInProgress = false;
 
     const poll = async (isInitial = false) => {
+      console.log("[poll] starts. isInitial:", isInitial, "isSubscribed:", isSubscribed, "requestInProgress:", requestInProgress);
       if (!isSubscribed || requestInProgress) return;
       if (terminalPollStopRef.current && !isInitial) return;
 
@@ -842,6 +855,7 @@ export default function OrderTracking() {
       // Check context immediately to avoid loaders if data exists locally
       if (isInitial) {
         const rawContext = getOrderById(orderId);
+        console.log("[poll] rawContext from getOrderById:", rawContext);
         if (rawContext) {
           setOrder(transformOrderForTracking(rawContext));
           setLoading(false);
@@ -850,7 +864,9 @@ export default function OrderTracking() {
 
       requestInProgress = true;
       try {
+        console.log("[poll] calling fetchOrderDetailsWithFallback...");
         const response = await fetchOrderDetailsWithFallback({ force: isInitial });
+        console.log("[poll] fetchOrderDetailsWithFallback response:", response);
         if (!isSubscribed) return;
 
         let finalOrderData = null;
@@ -862,6 +878,7 @@ export default function OrderTracking() {
           if (matchedOrder) finalOrderData = matchedOrder;
         }
 
+        console.log("[poll] resolved finalOrderData:", finalOrderData);
         if (finalOrderData) {
           setOrder(prev => {
             const transformedOrder = transformOrderForTracking(finalOrderData, prev);
@@ -879,6 +896,7 @@ export default function OrderTracking() {
           terminalPollStopRef.current = true;
         }
       } catch (err) {
+        console.error("[poll] error caught:", err);
         if (isInitial && !order) {
           try {
             const matchedOrder = await resolveOrderFromList(orderId);
@@ -895,6 +913,7 @@ export default function OrderTracking() {
           terminalPollStopRef.current = true;
         }
       } finally {
+        console.log("[poll] finally block. isInitial:", isInitial, "isSubscribed:", isSubscribed);
         requestInProgress = false;
         if (isInitial && isSubscribed) setLoading(false);
       }
@@ -910,6 +929,8 @@ export default function OrderTracking() {
 
     return () => {
       isSubscribed = false;
+      isInitialPollRequestedRef.current = null;
+      lastPollExecutionRef.current = 0;
     };
   }, [orderId, fetchOrderDetailsWithFallback, resolveOrderFromList]);
 
