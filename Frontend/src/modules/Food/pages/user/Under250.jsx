@@ -244,9 +244,6 @@ export default function Under250() {
 
   const filterCandidateRestaurants = useCallback((restaurants = []) => {
     return restaurants.filter((restaurant) => {
-      const availability = getRestaurantAvailabilityStatus(restaurant, new Date())
-      if (!availability.isOpen) return false
-
       // Keep candidate set broad; final eligibility is menu-item based (price contains "99").
       return true
     })
@@ -308,10 +305,6 @@ export default function Under250() {
   // Sort and filter restaurants based on selected sort and filters
   const sortedAndFilteredRestaurants = useMemo(() => {
     let filtered = under250Restaurants
-      .filter(r => {
-        const availability = getRestaurantAvailabilityStatus(r, new Date(availabilityTick));
-        return availability.isOpen;
-      })
       .map(r => ({ ...r, menuItems: [...(r.menuItems || [])] }))
 
     // Apply category filter
@@ -341,19 +334,24 @@ export default function Under250() {
       })
     }
 
-    // Apply sorting
-    if (selectedSort === 'rating-high') {
-      filtered.sort((a, b) => {
+    // Apply sorting (always keeping open restaurants at the top)
+    filtered.sort((a, b) => {
+      const aOpen = getRestaurantAvailabilityStatus(a, new Date(availabilityTick)).isOpen ? 1 : 0
+      const bOpen = getRestaurantAvailabilityStatus(b, new Date(availabilityTick)).isOpen ? 1 : 0
+      if (bOpen !== aOpen) {
+        return bOpen - aOpen
+      }
+
+      if (selectedSort === 'rating-high') {
         const ratingA = a.rating || 0
         const ratingB = b.rating || 0
         if (ratingB !== ratingA) {
           return ratingB - ratingA
         }
-        // Secondary sort by number of dishes
         return (b.menuItems?.length || 0) - (a.menuItems?.length || 0)
-      })
-    } else if (selectedSort === 'delivery-time-low') {
-      filtered.sort((a, b) => {
+      }
+      
+      if (selectedSort === 'delivery-time-low') {
         const timeA = parseDeliveryTime(a.deliveryTime)
         const timeB = parseDeliveryTime(b.deliveryTime)
         if (timeA !== timeB) {
@@ -363,9 +361,9 @@ export default function Under250() {
           return (b.rating || 0) - (a.rating || 0)
         }
         return (a.originalIndex || 0) - (b.originalIndex || 0)
-      })
-    } else if (selectedSort === 'distance-low') {
-      filtered.sort((a, b) => {
+      }
+      
+      if (selectedSort === 'distance-low') {
         const distA = Number.isFinite(a.distanceInKm) ? a.distanceInKm : parseDistance(a.distance)
         const distB = Number.isFinite(b.distanceInKm) ? b.distanceInKm : parseDistance(b.distance)
         if (distA !== distB) {
@@ -375,11 +373,10 @@ export default function Under250() {
           return (b.rating || 0) - (a.rating || 0)
         }
         return (a.originalIndex || 0) - (b.originalIndex || 0)
-      })
-    } else {
-      // Default: Relevance (keep original order from backend - already sorted by rating)
-      // No additional sorting needed
-    }
+      }
+
+      return (a.originalIndex || 0) - (b.originalIndex || 0)
+    })
 
     return filtered
   }, [under250Restaurants, selectedSort, under30MinsFilter, activeCategory, categories, availabilityTick])
@@ -1166,8 +1163,10 @@ export default function Under250() {
         ) : (
           sortedAndFilteredRestaurants.map((restaurant) => {
             const restaurantSlug = restaurant.slug || restaurant.name.toLowerCase().replace(/\s+/g, "-")
+            const availability = getRestaurantAvailabilityStatus(restaurant, new Date(availabilityTick))
+            const isClosed = !availability.isOpen
             return (
-              <section key={restaurant.id} className="pt-4 sm:pt-6 md:pt-8 lg:pt-10">
+              <section key={restaurant.id} className={`pt-4 sm:pt-6 md:pt-8 lg:pt-10 ${isClosed ? 'grayscale opacity-75' : ''}`}>
                 {/* Restaurant Header */}
                 <div className="flex items-start justify-between mb-3 md:mb-4 lg:mb-6">
                   <div className="flex-1">
@@ -1229,6 +1228,13 @@ export default function Under250() {
                           >
                             {/* Item Image */}
                             <div className="relative w-full h-32 sm:h-36 md:h-40 lg:h-48 xl:h-52 overflow-hidden">
+                              {isClosed && (
+                                <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-10">
+                                  <span className="bg-red-600 text-white px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-md">
+                                    Closed
+                                  </span>
+                                </div>
+                              )}
                               <motion.div
                                 className="absolute inset-0"
                                 whileHover={{ scale: 1.1 }}

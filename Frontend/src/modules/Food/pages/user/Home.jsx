@@ -3248,15 +3248,6 @@ export default function Home() {
                     Curated picks we think you'll love
                   </p>
                 </div>
-                <Link
-                  to="/food/user/search?sort=rating"
-                  className="flex items-center gap-1 bg-white dark:bg-[#1a1a1a] border border-gray-150 dark:border-gray-800 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-xs font-black shadow-sm hover:shadow transition-all"
-                >
-                  <span>See all</span>
-                  <svg className="w-3 h-3 fill-none stroke-current stroke-[2.5]" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </Link>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 px-4 pb-2">
                 {recommendedForYouRestaurants.map((restaurant, index) => {
