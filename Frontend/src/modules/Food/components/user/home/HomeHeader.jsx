@@ -444,12 +444,12 @@ export default function HomeHeader({
 
       {/* Sticky Search Bar wrapper — position adjusts when categories are also stuck */}
       <div
-        className={`relative sticky z-[60] px-3 pb-0 -mt-[28px] mb-2 pointer-events-none ${
+        className={`relative sticky z-[60] px-3 pb-0 -mt-[34px] mb-1.5 pointer-events-none ${
           isCategoryStuck ? 'top-0 pt-2' : 'top-2'
         }`}
       >
         <div 
-          className={`relative z-[60] rounded-[1.5rem] flex items-center px-4 py-3.5 border cursor-pointer active:scale-[0.98] group mx-1 pointer-events-auto transition-all duration-300 ${
+          className={`relative z-[60] rounded-[1.5rem] flex items-center px-4 py-2.5 border cursor-pointer active:scale-[0.98] group mx-1 pointer-events-auto transition-all duration-300 ${
             isCategoryStuck
               ? "bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-xl border-white dark:border-gray-800 shadow-[0_12px_36px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.4)]"
               : "bg-white/45 dark:bg-black/30 backdrop-blur-md border-white/50 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/55 hover:border-white/70"

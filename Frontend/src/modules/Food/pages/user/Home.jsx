@@ -2762,9 +2762,12 @@ export default function Home() {
     // Primary source: restaurants returned by landing settings API (already admin-selected).
     const fromSettingsMapped = fromSettings.map((restaurant) => {
       const restaurantId = restaurant?._id ? String(restaurant._id) : "";
+      const liveRestaurant = (restaurantsData || []).find(
+        (r) => String(r.mongoId || r.id) === restaurantId
+      );
       const cuisine =
         Array.isArray(restaurant?.cuisines) && restaurant.cuisines.length > 0
-          ? restaurant.cuisines[0]
+          ? restaurant.cuisines.join(", ")
           : "Multi-cuisine";
       const imageCandidates = extractImages([
         ...(Array.isArray(restaurant?.coverImages)
@@ -2779,17 +2782,18 @@ export default function Home() {
         id: restaurant?.restaurantId || restaurantId,
         mongoId: restaurantId,
         name: getRestaurantDisplayName(restaurant),
-        cuisine,
-        rating: Number(restaurant?.rating) || 0,
-        distance: "",
-        deliveryTime: "",
+        cuisine: liveRestaurant?.cuisine || cuisine,
+        rating: Number(liveRestaurant?.rating || restaurant?.rating) || 0,
+        distance: liveRestaurant?.distance || "",
+        deliveryTime: liveRestaurant?.deliveryTime || restaurant?.estimatedDeliveryTime || "",
         image: normalizeImageUrl(image) || foodImages[0],
         images: imageCandidates.length > 0 ? imageCandidates : [foodImages[0]],
         slug: restaurant?.slug || restaurant?.restaurantId || restaurantId,
-        offer: null,
-        pureVegRestaurant: restaurant?.pureVegRestaurant === true,
-        isActive: true,
-        isAcceptingOrders: true,
+        offer: restaurant?.offer || liveRestaurant?.offer || null,
+        pureVegRestaurant: restaurant?.pureVegRestaurant === true || liveRestaurant?.pureVegRestaurant === true,
+        isActive: liveRestaurant?.isActive !== false,
+        isAcceptingOrders: liveRestaurant?.isAcceptingOrders !== false,
+        featuredPrice: liveRestaurant?.featuredPrice || restaurant?.featuredPrice || 200,
       };
     });
 
@@ -2986,7 +2990,7 @@ export default function Home() {
           </h2>
           <Link
             to="/food/user/categories"
-            className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 transition-colors">
+            className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
             View All
             <ArrowRightLeft className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </Link>
@@ -3205,17 +3209,6 @@ export default function Home() {
             {CategoryRailSection}
           </div>
 
-          <PromoRow
-            handleVegModeChange={handleVegModeChange}
-            navigate={navigate}
-            isVegMode={vegMode}
-            toggleRef={vegModeToggleRef}
-          />
-
-          <PromotionBannerCarousel zoneId={zoneId} />
-
-          {HeroBannerSection}
-
           {recommendedForYouRestaurants.length > 0 && (
             <motion.section
               className="content-auto space-y-4 pt-4 sm:pt-6"
@@ -3224,9 +3217,23 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}>
               <div className="px-4 flex items-center justify-between">
-                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-                  Recommended for you
-                </h2>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                    Recommended for you
+                  </h2>
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-bold tracking-tight">
+                    Curated picks we think you'll love
+                  </p>
+                </div>
+                <Link
+                  to="/food/user/search?sort=rating"
+                  className="flex items-center gap-1 bg-white dark:bg-[#1a1a1a] border border-gray-150 dark:border-gray-800 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-xs font-black shadow-sm hover:shadow transition-all"
+                >
+                  <span>See all</span>
+                  <svg className="w-3 h-3 fill-none stroke-current stroke-[2.5]" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </Link>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 px-4 pb-2">
                 {recommendedForYouRestaurants.map((restaurant, index) => {
@@ -3240,43 +3247,146 @@ export default function Home() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.35, delay: index * 0.05 }}>
-                      <Link
-                        to={`/food/user/restaurants/${restaurantSlug}`}
-                        onClick={captureScrollBeforeRestaurantNav}
-                        className="block rounded-[20px] overflow-hidden border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] shadow-sm hover:shadow-md transition-shadow">
-                        <div className="relative h-24 sm:h-28 md:h-32 bg-gray-50">
-                          <RestaurantImageCarousel
-                            restaurant={restaurant}
-                            backendOrigin={BACKEND_ORIGIN}
-                            className="h-24 sm:h-28 md:h-32"
-                            roundedClass="rounded-t-[20px]"
-                          />
-                          <div
-                            className={`absolute bottom-2 left-2 px-2 py-0.5 rounded-lg ${Number(restaurant.rating) > 0 ? "text-white font-medium" : "bg-gray-200/90 text-gray-600 font-medium"} text-[10px] shadow-lg border border-white/10`}
-                            style={Number(restaurant.rating) > 0 ? {
-                              backgroundColor: "var(--module-theme-color, #FA0272)",
-                              boxShadow: "0 4px 10px rgba(var(--module-theme-rgb, 250,2,114), 0.25)",
-                            } : undefined}
-                          >
-                            {Number(restaurant.rating) > 0 ? Number(restaurant.rating).toFixed(1) : "NEW"}
+                      <div
+                        className="block rounded-2xl overflow-hidden border border-gray-150 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] shadow-[0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 group relative cursor-pointer transform hover:-translate-y-1 active:scale-95 h-full flex flex-col justify-between"
+                      >
+                        <Link
+                          to={`/food/user/restaurants/${restaurantSlug}`}
+                          onClick={captureScrollBeforeRestaurantNav}
+                          className="flex-grow flex flex-col justify-between"
+                        >
+                          <div>
+                            <div className="relative h-28 sm:h-32 bg-gray-50 overflow-hidden">
+                              <RestaurantImageCarousel
+                                restaurant={restaurant}
+                                backendOrigin={BACKEND_ORIGIN}
+                                className="h-full w-full object-cover"
+                                roundedClass="rounded-t-2xl"
+                              />
+                              
+                              {/* Offer Badge - top left like WEEKEND FEAST */}
+                              {restaurant.offer && (
+                                <div className="absolute top-2 left-0 px-2 py-0.5 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[9px] font-black rounded-r-md shadow-md uppercase tracking-wider flex items-center z-10">
+                                  {restaurant.offer}
+                                </div>
+                              )}
+
+                              {/* Favorite Heart Button - top right */}
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const favorite = isFavorite(restaurantSlug);
+                                  if (favorite) {
+                                    setSelectedRestaurantSlug(restaurantSlug);
+                                    setShowManageCollections(true);
+                                  } else {
+                                    addFavorite({
+                                      slug: restaurantSlug,
+                                      name: restaurant.name,
+                                      cuisine: restaurant.cuisine,
+                                      rating: restaurant.rating,
+                                      deliveryTime: restaurant.deliveryTime,
+                                      distance: restaurant.distance,
+                                      priceRange: "$$",
+                                      image: restaurant.image,
+                                    });
+                                    setShowToast(true);
+                                    setTimeout(() => {
+                                      setShowToast(false);
+                                    }, 3000);
+                                  }
+                                }}
+                                className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-md rounded-full shadow-sm hover:bg-red-50 hover:shadow-md hover:scale-110 transition-all duration-300 z-20"
+                              >
+                                <Heart
+                                  className={`w-3.5 h-3.5 transition-colors duration-300 ${
+                                    isFavorite(restaurantSlug) ? "fill-red-500 text-red-500 border-none" : "text-gray-400 stroke-[2.5]"
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                            
+                            <div className="p-3 pb-1">
+                              <div className="flex justify-between items-start gap-2 mb-1">
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-[#FA0272] transition-colors duration-200 flex-1 tracking-tight">
+                                  {restaurant.name}
+                                </h3>
+                                <div className="flex items-center gap-0.5 bg-green-600 text-white px-1.5 py-0.5 rounded-md text-[9px] font-bold shadow-sm flex-shrink-0">
+                                  <Star className="w-2.5 h-2.5 fill-current text-white border-none" />
+                                  <span>{Number(restaurant.rating) > 0 ? Number(restaurant.rating).toFixed(1) : "4.2"}</span>
+                                </div>
+                              </div>
+                              
+                              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-1 font-medium">
+                                {restaurant.cuisine || "Multi-cuisine"}
+                              </p>
+
+                              {/* Row 1: Delivery Time & Distance */}
+                              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                <span className="font-semibold text-gray-700 dark:text-gray-300">{restaurant.deliveryTime || "25-30 min"}</span>
+                                
+                                {restaurant.distance && (
+                                  <>
+                                    <span className="text-[10px] font-black text-gray-300 dark:text-gray-600">•</span>
+                                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                    <span className="font-semibold text-gray-700 dark:text-gray-300">{restaurant.distance}</span>
+                                  </>
+                                )}
+                              </div>
+
+                              {/* Row 2: Free Delivery Pill & Price */}
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md text-[9px] font-extrabold shadow-sm border border-emerald-100/50 dark:border-emerald-900/30">
+                                  <svg className="w-3 h-3 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
+                                    <circle cx="5.5" cy="17.5" r="2.5" />
+                                    <circle cx="18.5" cy="17.5" r="2.5" />
+                                    <path d="M15 17.5H8.5M12 17.5V11M10.5 7.5c1.5 0 2.5 1 3.5 2h4M12 11h3.5l1.5 3H8M10 5.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                                  </svg>
+                                  <span>Free</span>
+                                </div>
+                                <span className="text-[9px] font-black text-gray-300 dark:text-gray-600">•</span>
+                                <span className="text-[10px] sm:text-[11px] text-gray-600 dark:text-gray-400 font-semibold">
+                                  ₹{restaurant.featuredPrice || 200} for two
+                                </span>
+                              </div>
+                            </div>
                           </div>
+                        </Link>
+
+                        <div className="px-3 pb-3 pt-2">
+                          <Link
+                            to={`/food/user/restaurants/${restaurantSlug}`}
+                            onClick={captureScrollBeforeRestaurantNav}
+                            className="block w-full"
+                          >
+                            <div className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-100 py-2 rounded-xl text-xs font-black transition-all hover:bg-gray-50 shadow-sm">
+                              <span>View Menu</span>
+                              <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-[2.5]" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                              </svg>
+                            </div>
+                          </Link>
                         </div>
-                        <div className="p-2.5">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate tracking-tight">
-                            {restaurant.name}
-                          </p>
-                          <p className="text-[10px] text-orange-600 font-bold mt-1 flex items-center gap-1 uppercase tracking-wider">
-                            <Flame className="w-3.5 h-3.5 fill-orange-600" />
-                            Near & Fast
-                          </p>
-                        </div>
-                      </Link>
+                      </div>
                     </motion.div>
                   );
                 })}
               </div>
             </motion.section>
           )}
+
+          <PromotionBannerCarousel zoneId={zoneId} />
+
+          {HeroBannerSection}
+
+          <PromoRow
+            handleVegModeChange={handleVegModeChange}
+            navigate={navigate}
+            isVegMode={vegMode}
+            toggleRef={vegModeToggleRef}
+          />
 
 
 
