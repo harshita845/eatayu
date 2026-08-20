@@ -5,6 +5,8 @@ import gourmetPromoIcon from "@food/assets/explore more icons/gourmet.png";
 import pricePromoIcon from "@food/assets/category-icons/price_promo.png";
 import collectionPromoIcon from "@food/assets/explore more icons/collection.png";
 
+import { resolveMediaUrl } from '@/shared/utils/mediaUrl';
+
 export default function PromoRow({ handleVegModeChange, navigate, isVegMode, toggleRef, exploreIcons = [], backendOrigin = "" }) {
   const basePromoCards = [
     {
@@ -20,13 +22,13 @@ export default function PromoRow({ handleVegModeChange, navigate, isVegMode, tog
       icon: gourmetPromoIcon,
     },
     {
-      id: 'under-250',
-      title: "Under ₹99",
+      id: 'price',
+      title: "EatAyu 99",
       value: "EatAyu 99",
       icon: pricePromoIcon,
     },
     {
-      id: 'collections',
+      id: 'collection',
       title: "Favorites",
       value: "Collections",
       icon: collectionPromoIcon,
@@ -42,16 +44,11 @@ export default function PromoRow({ handleVegModeChange, navigate, isVegMode, tog
         )
       : null;
 
-    if (dbIcon && dbIcon.imageUrl) {
-      const url = dbIcon.imageUrl;
-      const isRelative = !/^(https?:|\/\/|data:|blob:)/i.test(url.trim());
-      const originToUse = backendOrigin || import.meta.env.VITE_BACKEND_ORIGIN || "http://localhost:5000";
-      const resolvedIcon = isRelative
-        ? `${originToUse.replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`
-        : url;
+    const url = dbIcon ? (dbIcon.imageUrl || dbIcon.image || dbIcon.iconUrl) : null;
+    if (url) {
       return {
         ...promo,
-        icon: resolvedIcon,
+        icon: resolveMediaUrl(url, backendOrigin),
       };
     }
     return promo;
@@ -72,8 +69,8 @@ export default function PromoRow({ handleVegModeChange, navigate, isVegMode, tog
           onClick={() => {
             if (promo.id === 'gourmet') navigate('/food/user/gourmet');
             else if (promo.id === 'offers') navigate('/food/user/offers');
-            else if (promo.id === 'under-250') navigate('/food/user/under-250');
-            else if (promo.id === 'collections') navigate('/food/user/profile/favorites');
+            else if (promo.id === 'price') navigate('/food/user/under-250');
+            else if (promo.id === 'collection') navigate('/food/user/profile/favorites');
           }}
         >
           {/* Floating Minimalist Image */}

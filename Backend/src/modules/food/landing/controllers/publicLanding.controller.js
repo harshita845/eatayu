@@ -116,8 +116,7 @@ export const getPublicLandingSettingsController = async (req, res, next) => {
                 .lean();
         }
         const payload = {
-            ...settings,
-            recommendedRestaurantIds: undefined,
+            ...(settings.toObject ? settings.toObject() : settings),
             recommendedRestaurants
         };
         return sendResponse(res, 200, 'Landing settings fetched', payload);

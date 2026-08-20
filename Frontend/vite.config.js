@@ -68,7 +68,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     proxy: {
-      // Backend API (default 5000)
+      // Backend API (runs on 5002 to avoid port 5000 conflicts with Tiffinji)
       '/api/v1': {
         target: process.env.VITE_BACKEND_PROXY_TARGET || 'http://127.0.0.1:5002',
         changeOrigin: true,
@@ -76,6 +76,12 @@ export default defineConfig({
       // Uploaded images — same origin as frontend in dev (avoids CORP / NotSameOrigin)
       '/uploads': {
         target: process.env.VITE_BACKEND_PROXY_TARGET || 'http://127.0.0.1:5002',
+        changeOrigin: true,
+      },
+      // Socket.IO WebSocket proxy (target is same Express port 5002 in local dev)
+      '/socket.io': {
+        target: 'http://127.0.0.1:5002',
+        ws: true,
         changeOrigin: true,
       },
     },

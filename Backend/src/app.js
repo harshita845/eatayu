@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -34,14 +35,14 @@ app.get('/ready', (_req, res) => {
     res.status(200).json({ status: 'ready' });
 });
 
-// Security & parsing middlewares
 app.use(helmet({
-    contentSecurityPolicy: { directives: { defaultSrc: ["'self'"] } },
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            "img-src": ["'self'", "data:", "https:", "http:"],
+        },
+    },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
-    hsts: config.nodeEnv === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
-    xssFilter: true,
-    noSniff: true,
-    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 app.use(cors());
 app.use(morgan('dev'));
@@ -73,9 +74,19 @@ app.use('/api', responseTimeLogger);
 // API Routes
 app.use('/api', routes);
 
-// Dev-only: serve uploaded files when nginx is not in front (production uses nginx)
+// Dev-only: serve uploaded files when nginx is not in front.
+// If the file is missing locally, gracefully redirect to the production CDN.
 if (config.nodeEnv === 'development') {
-    app.use('/uploads', express.static(path.resolve(config.uploadStorageRoot)));
+    app.use('/uploads', (req, res, next) => {
+        const localPath = path.join(path.resolve(config.uploadStorageRoot), req.path);
+        fs.access(localPath, fs.constants.F_OK, (err) => {
+            if (!err) {
+                next();
+            } else {
+                res.redirect(`https://eatayu.com/uploads${req.path}`);
+            }
+        });
+    }, express.static(path.resolve(config.uploadStorageRoot)));
 }
 
 // Error Handling

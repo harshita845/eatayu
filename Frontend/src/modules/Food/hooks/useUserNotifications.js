@@ -17,6 +17,7 @@ const debugLog = (...args) => {
  */
 export const useUserNotifications = () => {
   const socketRef = useRef(null);
+  const activeOtpToastIdRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
   const [userId, setUserId] = useState(null);
 
@@ -85,6 +86,14 @@ export const useUserNotifications = () => {
       const title = data.title || `Order #${data.orderId || 'Update'}`;
       const message = data.message || `Your order status is now ${String(data.orderStatus || '').replace(/_/g, ' ')}`;
 
+      // Dismiss the active OTP toast if the order is completed or cancelled
+      if (['delivered', 'cancelled', 'cancelled_by_restaurant', 'cancelled_by_user'].includes(data.orderStatus)) {
+        if (activeOtpToastIdRef.current) {
+          toast.dismiss(activeOtpToastIdRef.current);
+          activeOtpToastIdRef.current = null;
+        }
+      }
+
       // Optional: Show toast for important updates (Cancel, Ready, etc.)
       const isImportant = String(data.orderStatus).includes('cancel') || ['ready_for_pickup', 'ready', 'confirmed'].includes(data.orderStatus);
       if (isImportant) {
@@ -130,10 +139,17 @@ export const useUserNotifications = () => {
       );
       const title = orderId ? `Order ${orderId}` : 'Delivery OTP';
       const parts = [message, otp ? `OTP: ${otp}` : ''].filter(Boolean);
-      toast.message(title, {
+      
+      // Dismiss any existing OTP toast first to avoid duplicates
+      if (activeOtpToastIdRef.current) {
+        toast.dismiss(activeOtpToastIdRef.current);
+      }
+
+      const toastId = toast.message(title, {
         description: parts.join(' — ') || 'Handover OTP from your delivery partner.',
         duration: 90_000
       });
+      activeOtpToastIdRef.current = toastId;
     });
 
     socketRef.current.on('admin_notification', (payload) => {

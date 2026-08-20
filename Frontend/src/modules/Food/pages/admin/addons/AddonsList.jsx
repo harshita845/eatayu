@@ -148,6 +148,22 @@ export default function AddonsList() {
               description: editForm.description.trim(),
               image: imageUrl || a.image,
               images: imageUrl ? [imageUrl] : a.images,
+              draft: a.draft ? {
+                ...a.draft,
+                name: editForm.name.trim(),
+                price: priceNum,
+                description: editForm.description.trim(),
+                image: imageUrl || a.draft.image,
+                images: imageUrl ? [imageUrl] : a.draft.images,
+              } : null,
+              published: a.published ? {
+                ...a.published,
+                name: editForm.name.trim(),
+                price: priceNum,
+                description: editForm.description.trim(),
+                image: imageUrl || a.published.image,
+                images: imageUrl ? [imageUrl] : a.published.images,
+              } : null,
             }
             : a,
         ),
