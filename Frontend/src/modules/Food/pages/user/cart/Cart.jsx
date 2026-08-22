@@ -495,12 +495,30 @@ export default function Cart() {
     [deliveryInstructionMode, selectedDeliveryInstruction, customDeliveryInstruction],
   )
 
-  // Cash on Delivery has been removed; coerce any stale selection to online payment.
+  const [codEnabled, setCodEnabled] = useState(true)
+
   useEffect(() => {
-    if (selectedPaymentMethod === "cash") {
+    const fetchFeatureSettings = async () => {
+      try {
+        const res = await restaurantAPI.getFeatureSettingsPublic()
+        const rows = Array.isArray(res?.data?.data) ? res.data.data : []
+        const codFeature = rows.find((row) => row.key === "cod_control")
+        if (codFeature) {
+          setCodEnabled(codFeature.isEnabled === true || codFeature.isEnabled === "true")
+        }
+      } catch (err) {
+        // Fallback to true on error
+      }
+    }
+    fetchFeatureSettings()
+  }, [])
+
+  // Coerce any stale cash selection to online payment only if COD control is disabled.
+  useEffect(() => {
+    if (selectedPaymentMethod === "cash" && !codEnabled) {
       setSelectedPaymentMethod("razorpay")
     }
-  }, [selectedPaymentMethod])
+  }, [selectedPaymentMethod, codEnabled])
 
   useEffect(() => {
     const timer = setInterval(() => setAvailabilityTick(Date.now()), 60000)
@@ -1504,7 +1522,11 @@ export default function Cart() {
   const otherSavings = Math.max(0, savings - itemDiscountAmount)
   const compareItemTotal = getCartCompareItemTotal(cart)
   const selectedPaymentLabel =
-    selectedPaymentMethod === "wallet" ? "Wallet" : "Online Payment"
+    selectedPaymentMethod === "wallet"
+      ? "Wallet"
+      : selectedPaymentMethod === "cash"
+        ? "Cash on Delivery"
+        : "Online Payment"
 
   const headerDeliveryTime = deliveryMode === "quick" ? "20-25 mins" : (restaurantData?.estimatedDeliveryTime || "35-40 mins")
   const basicDeliveryTime = restaurantData?.estimatedDeliveryTime || "35-40 mins"
@@ -2257,6 +2279,18 @@ export default function Cart() {
         } catch (cleanupError) {
           debugError("Failed to cleanup abandoned online payment order:", cleanupError)
         }
+      }
+
+      // Cash/COD flow: order placed successfully (already processed in backend)
+      if (selectedPaymentMethod === "cash") {
+        toast.success("Order placed successfully with Cash on Delivery")
+        setPlacedOrderId(order?._id || order?.orderId || order?.id || null)
+        setShowOrderSuccess(true)
+        window.dispatchEvent(new CustomEvent('order-placed', { detail: { order } }))
+        clearCart()
+        resetCartPreferences()
+        setIsPlacingOrder(false)
+        return
       }
 
       // Wallet flow: order placed with wallet payment (already processed in backend)
@@ -3799,6 +3833,14 @@ export default function Cart() {
                           disabled: walletBalance < total,
                           disabledText: 'Low Balance'
                         },
+                        ...(codEnabled ? [{
+                          id: 'cash',
+                          name: 'Cash on Delivery (COD)',
+                          description: 'Pay cash at your doorstep',
+                          icon: <Banknote className="w-5 h-5" />,
+                          color: 'bg-orange-50 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400',
+                          selectedColor: 'bg-orange-500 text-white'
+                        }] : [])
                       ].map((option) => (
                         <button
                           key={option.id}

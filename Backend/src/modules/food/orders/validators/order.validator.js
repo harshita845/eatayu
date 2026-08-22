@@ -92,9 +92,7 @@ export function validateCreateOrderDto(body) {
         sendCutlery: z.boolean().optional(),
         // 'cash' (COD) is no longer accepted for new orders; legacy COD orders remain supported elsewhere.
         // 'razorpay_qr' means COD-style flow, but payment is collected via Razorpay QR at delivery.
-        paymentMethod: z.enum(['razorpay', 'razorpay_qr', 'card', 'wallet'], {
-            errorMap: () => ({ message: 'Cash on Delivery is no longer available. Please pay online.' }),
-        }),
+        paymentMethod: z.enum(['razorpay', 'razorpay_qr', 'card', 'wallet', 'cash']),
         zoneId: z.string().nullable().optional(),
         scheduledAt: z.string().datetime().optional()
     });
