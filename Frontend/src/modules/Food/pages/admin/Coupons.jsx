@@ -249,7 +249,7 @@ export default function Coupons() {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const response = await adminAPI.getRestaurants({ page: 1, limit: 200 })
+        const response = await adminAPI.getApprovedRestaurants({ page: 1, limit: 200 })
         if (response?.data?.success) {
           const list = response?.data?.data?.restaurants || []
           // Backend returns `restaurantName`; normalize to `name` for this dropdown without affecting other pages.

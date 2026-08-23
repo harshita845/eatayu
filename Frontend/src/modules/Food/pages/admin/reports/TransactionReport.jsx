@@ -55,7 +55,7 @@ export default function TransactionReport() {
         }
 
         // Fetch restaurants
-        const restaurantsResponse = await adminAPI.getRestaurants({ limit: 1000 })
+        const restaurantsResponse = await adminAPI.getApprovedRestaurants({ limit: 1000 })
         if (restaurantsResponse?.data?.success && restaurantsResponse.data.data?.restaurants) {
           setRestaurants(restaurantsResponse.data.data.restaurants)
         }

@@ -68,7 +68,7 @@ export default function RegularOrderReport() {
         }
 
         // Fetch restaurants
-        const restaurantsRes = await adminAPI.getRestaurants({ limit: 100 })
+        const restaurantsRes = await adminAPI.getApprovedRestaurants({ limit: 100 })
         if (restaurantsRes.data?.success) {
           setRestaurants(restaurantsRes.data.data.restaurants || [])
         }

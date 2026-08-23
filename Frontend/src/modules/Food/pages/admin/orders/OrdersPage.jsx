@@ -776,7 +776,7 @@ export default function OrdersPage({ statusKey = "all" }) {
   useEffect(() => {
     const fetchRestaurantOptions = async () => {
       try {
-        const response = await adminAPI.getRestaurants({
+        const response = await adminAPI.getApprovedRestaurants({
           status: "approved",
           limit: 1000,
           page: 1,

@@ -112,7 +112,7 @@ export default function FoodsList() {
 
   const fetchRestaurantsForFilter = useCallback(async () => {
     try {
-      const restaurantsResponse = await adminAPI.getRestaurants({ limit: 1000 })
+      const restaurantsResponse = await adminAPI.getApprovedRestaurants({ limit: 1000 })
       const list =
         restaurantsResponse?.data?.data?.restaurants ||
         restaurantsResponse?.data?.restaurants ||

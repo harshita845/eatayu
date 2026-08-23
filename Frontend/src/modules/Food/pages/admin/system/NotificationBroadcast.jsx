@@ -74,7 +74,7 @@ export default function NotificationBroadcast() {
       setRecipientLoading(true);
       const [customersRes, restaurantsRes, deliveryRes] = await Promise.all([
         adminAPI.getCustomers({ page: 1, limit: 500 }),
-        adminAPI.getRestaurants({ page: 1, limit: 500 }),
+        adminAPI.getApprovedRestaurants({ page: 1, limit: 500 }),
         adminAPI.getDeliveryPartners({ page: 1, limit: 500 }),
       ]);
 

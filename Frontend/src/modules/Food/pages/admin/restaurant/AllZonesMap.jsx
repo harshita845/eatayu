@@ -84,7 +84,7 @@ export default function AllZonesMap() {
 
   const fetchRestaurants = async () => {
     try {
-      const response = await adminAPI.getRestaurants({ limit: 1000 })
+      const response = await adminAPI.getApprovedRestaurants({ limit: 1000 })
       if (response.data?.success && response.data.data?.restaurants) {
         setRestaurants(response.data.data.restaurants)
       }

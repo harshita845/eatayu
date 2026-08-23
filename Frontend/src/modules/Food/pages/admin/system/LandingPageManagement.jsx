@@ -1261,7 +1261,7 @@ export default function LandingPageManagement() {
     try {
       setRestaurantsLoading(true)
       setError(null)
-      const response = await adminAPI.getRestaurants({ limit: 1000 })
+      const response = await adminAPI.getApprovedRestaurants({ limit: 1000 })
       const data = response?.data?.data
       if (response?.data?.success && data) {
         const raw = Array.isArray(data) ? data : (data.restaurants || [])
