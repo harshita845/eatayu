@@ -638,7 +638,7 @@ export default function PointOfSale() {
             </div>
 
             {/* Key Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {/* Total Orders */}
               <div className="bg-white rounded-lg shadow-sm border border-[#e3e6ef] p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -693,29 +693,7 @@ export default function PointOfSale() {
                 <p className="text-xs text-[#8a94aa] mt-2">From {formatNumber(analyticsData.totalRatings)} reviews</p>
               </div>
 
-              {/* Subscription Plan */}
-              <div className="bg-white rounded-lg shadow-sm border border-[#e3e6ef] p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-purple-100 rounded-lg">
-                    <CreditCard className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                    subscriptionSummary.status === 'paid'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {subscriptionSummary.status === 'paid' ? 'Paid' : 'Due'}
-                  </span>
-                </div>
-                <h3 className="text-sm font-medium text-[#8a94aa] mb-1">Subscription Plan</h3>
-                <p className="text-2xl font-bold text-[#334257]">{subscriptionSummary.planLabel}</p>
-                <p className="text-xs text-[#8a94aa] mt-2">
-                  Last invoice: {formatCurrency(subscriptionSummary.cycleFee)}
-                  {subscriptionSummary.currentMonthGmv > 0
-                    ? ` · This month GMV: ${formatCurrency(subscriptionSummary.currentMonthGmv)}`
-                    : ''}
-                </p>
-              </div>
+
                   </div>
 
             {/* Profit & Revenue Section */}
@@ -782,7 +760,7 @@ export default function PointOfSale() {
             {/* Detailed Financial Breakdown */}
             <div className="bg-white rounded-lg shadow-sm border border-[#e3e6ef] p-6">
               <h3 className="text-lg font-semibold text-[#334257] mb-1">Financial Breakdown</h3>
-              <p className="text-xs text-[#8a94aa] mb-4">Order earnings plus current subscription billing status for this restaurant.</p>
+              <p className="text-xs text-[#8a94aa] mb-4">Order earnings for this restaurant.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center py-3 border-b border-[#e3e6ef]">
@@ -811,27 +789,6 @@ export default function PointOfSale() {
                     <span className="text-sm text-[#8a94aa]">Completion Rate</span>
                     <span className="text-base font-semibold text-green-600">{analyticsData.completionRate.toFixed(1)}%</span>
                   </div>
-                  <div className="rounded-lg border border-purple-100 bg-purple-50/60 p-4 space-y-3">
-                    <p className="text-sm font-semibold text-[#334257]">Subscription billing (monthly postpaid)</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#8a94aa]">Last billed plan</span>
-                      <span className="text-sm font-semibold text-[#334257]">{subscriptionSummary.planLabel}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#8a94aa]">This month GMV</span>
-                      <span className="text-sm font-semibold text-[#334257]">{formatCurrency(subscriptionSummary.currentMonthGmv)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#8a94aa]">Outstanding due</span>
-                      <span className={`text-sm font-semibold ${subscriptionSummary.dueAmount > 0 ? 'text-amber-700' : 'text-green-700'}`}>
-                        {formatCurrency(subscriptionSummary.dueAmount)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#8a94aa]">Total subscription collected</span>
-                      <span className="text-sm font-semibold text-[#006fbd]">{formatCurrency(subscriptionSummary.totalCollected)}</span>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -840,7 +797,7 @@ export default function PointOfSale() {
             <div className="bg-white rounded-lg shadow-sm border border-[#e3e6ef] p-6">
               <h3 className="text-lg font-semibold text-[#334257] mb-1">Restaurant Payments (Completed Orders)</h3>
               <p className="text-xs text-[#8a94aa] mb-4">
-                Order payout breakdown from the transaction ledger. Subscription payments are shown separately on the right.
+                Order payout breakdown from the transaction ledger.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
@@ -879,76 +836,6 @@ export default function PointOfSale() {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="rounded-lg border border-purple-100 bg-purple-50/60 p-3 mb-1">
-                    <p className="text-sm font-semibold text-[#334257] mb-2">Subscription billing</p>
-                    <p className="text-xs text-[#8a94aa] mb-3">
-                      {subscriptionSummary.statusLabel}
-                      {subscriptionSummary.invoiceCount > 0
-                        ? ` · ${subscriptionSummary.invoiceCount} invoice${subscriptionSummary.invoiceCount === 1 ? '' : 's'}`
-                        : ''}
-                    </p>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[#e3e6ef]">
-                    <span className="text-sm text-[#8a94aa]">Last billed plan & fee</span>
-                    <span className="text-sm font-semibold text-[#334257]">
-                      {subscriptionSummary.planLabel} · {formatCurrency(subscriptionSummary.cycleFee)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[#e3e6ef]">
-                    <span className="text-sm text-[#8a94aa]">Total billed</span>
-                    <span className="text-sm font-semibold text-[#334257]">{formatCurrency(subscriptionSummary.totalBilled)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[#e3e6ef]">
-                    <span className="text-sm text-[#8a94aa]">Total collected</span>
-                    <span className="text-sm font-semibold text-[#006fbd]">{formatCurrency(subscriptionSummary.totalCollected)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[#e3e6ef]">
-                    <span className="text-sm text-[#8a94aa]">Deducted from wallet</span>
-                    <span className="text-sm font-semibold text-[#334257]">{formatCurrency(subscriptionSummary.walletDeductionsTotal)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[#e3e6ef]">
-                    <span className="text-sm text-[#8a94aa]">Waived</span>
-                    <span className="text-sm font-semibold text-purple-700">{formatCurrency(subscriptionSummary.totalWaived)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[#e3e6ef]">
-                    <span className="text-sm text-[#8a94aa]">Outstanding subscription due</span>
-                    <span className={`text-sm font-semibold ${subscriptionSummary.dueAmount > 0 ? 'text-amber-700' : 'text-green-700'}`}>
-                      {formatCurrency(subscriptionSummary.dueAmount)}
-                    </span>
-                  </div>
-                  {subscriptionSummary.lastPayment ? (
-                    <div className="rounded-lg border border-[#e3e6ef] bg-[#f9fafc] p-3">
-                      <p className="text-xs font-semibold text-[#334257] mb-1">Last subscription payment</p>
-                      <p className="text-sm font-semibold text-[#334257]">
-                        {formatCurrency(subscriptionSummary.lastPayment.amount)}
-                      </p>
-                      <p className="text-xs text-[#8a94aa] mt-1">
-                        {formatSubscriptionPaymentLabel(subscriptionSummary.lastPayment.eventType)}
-                        {subscriptionSummary.lastPayment.date
-                          ? ` · ${new Date(subscriptionSummary.lastPayment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
-                          : ''}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[#8a94aa]">No subscription payment recorded yet.</p>
-                  )}
-                  {Array.isArray(subscriptionSummary.invoices) && subscriptionSummary.invoices.length > 0 && (
-                    <div className="rounded-lg border border-[#e3e6ef] bg-[#f9fafc] p-3">
-                      <p className="text-xs font-semibold text-[#334257] mb-2">Monthly billing history</p>
-                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                        {subscriptionSummary.invoices.map((inv) => (
-                          <div key={inv.billingMonth} className="flex items-center justify-between text-xs">
-                            <span className="text-[#8a94aa]">{inv.billingMonthLabel || inv.billingMonth}</span>
-                            <span className="text-[#8a94aa] capitalize">{inv.planName}</span>
-                            <span className="font-semibold text-[#334257]">{formatCurrency(inv.totalAmount)}</span>
-                            <span className={`font-semibold ${inv.outstandingAmount > 0 ? 'text-amber-700' : 'text-green-700'}`}>
-                              {inv.outstandingAmount > 0 ? `Due ${formatCurrency(inv.outstandingAmount)}` : (inv.status === 'waived' ? 'Waived' : 'Paid')}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   <div className="flex justify-between items-center py-2 border-b border-[#e3e6ef]">
                     <span className="text-sm text-[#8a94aa]">Restaurant share (orders)</span>
                     <span className="text-sm font-semibold text-green-700">{formatCurrency(paymentSummary?.restaurantShare || 0)}</span>
