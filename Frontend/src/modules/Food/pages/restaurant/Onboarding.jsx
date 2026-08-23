@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import { Input } from "@food/components/ui/input"
 import { Button } from "@food/components/ui/button"
 import { Label } from "@food/components/ui/label"
-import { Image as ImageIcon, Upload, Clock, Calendar as CalendarIcon, Award, BadgeCheck, Wallet, Info, X } from "lucide-react"
+import { Image as ImageIcon, Upload, Clock, Calendar as CalendarIcon, BadgeCheck, Wallet, Info, X } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@food/components/ui/popover"
 import { Calendar } from "@food/components/ui/calendar"
 import {
@@ -45,14 +45,14 @@ import {
   chipClass,
 } from "@food/components/restaurant/onboardingStyles"
 
-const RESTAURANT_THEME = "#FA0272"
+const RESTAURANT_THEME = "#fa5902"
 
 const formatMoney = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
 
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -261,7 +261,7 @@ const saveOnboardingToLocalStorage = (step1, step2, step3, currentStep, step4Sta
       ),
       profileImage:
         !isUploadableFile(step2.profileImage) &&
-        (step2.profileImage?.url || (typeof step2.profileImage === "string" && step2.profileImage.trim()))
+          (step2.profileImage?.url || (typeof step2.profileImage === "string" && step2.profileImage.trim()))
           ? step2.profileImage
           : null,
     }
@@ -270,17 +270,17 @@ const saveOnboardingToLocalStorage = (step1, step2, step3, currentStep, step4Sta
       ...step3,
       panImage:
         !isUploadableFile(step3.panImage) &&
-        (step3.panImage?.url || (typeof step3.panImage === "string" && step3.panImage.trim()))
+          (step3.panImage?.url || (typeof step3.panImage === "string" && step3.panImage.trim()))
           ? step3.panImage
           : null,
       gstImage:
         !isUploadableFile(step3.gstImage) &&
-        (step3.gstImage?.url || (typeof step3.gstImage === "string" && step3.gstImage.trim()))
+          (step3.gstImage?.url || (typeof step3.gstImage === "string" && step3.gstImage.trim()))
           ? step3.gstImage
           : null,
       fssaiImage:
         !isUploadableFile(step3.fssaiImage) &&
-        (step3.fssaiImage?.url || (typeof step3.fssaiImage === "string" && step3.fssaiImage.trim()))
+          (step3.fssaiImage?.url || (typeof step3.fssaiImage === "string" && step3.fssaiImage.trim()))
           ? step3.fssaiImage
           : null,
     }
@@ -465,7 +465,7 @@ function TimeSelector({ label, value, onChange }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
       <div className="mb-2 flex items-center gap-2">
-        <Clock className="h-4 w-4 text-[#FA0272]" />
+        <Clock className="h-4 w-4 text-[#fa5902]" />
         <span className="text-sm font-medium text-gray-900">{label}</span>
       </div>
       <MobileTimePicker ampm={true}
@@ -551,8 +551,7 @@ export default function RestaurantOnboarding() {
     paymentType: "razorpay",
     errors: [],
   })
-  const [subscriptionSettings, setSubscriptionSettings] = useState(null)
-  const [loadingSubscriptionSettings, setLoadingSubscriptionSettings] = useState(true)
+  const [onboardingFeeSettings, setOnboardingFeeSettings] = useState(null)
   const [registrationProcessing, setRegistrationProcessing] = useState(false)
   const [uploadingAttachments, setUploadingAttachments] = useState({})
 
@@ -563,9 +562,8 @@ export default function RestaurantOnboarding() {
     window.scrollTo({ top: 0, behavior: "instant" })
   }
 
-  const planCatalog = subscriptionSettings?.planCatalog?.plans || []
-  const gstRate = Number(subscriptionSettings?.gstRate ?? 0.18)
-  const onboardingFeeAmount = Math.max(0, Number(subscriptionSettings?.onboardingFee) || 0)
+  const gstRate = 0.18
+  const onboardingFeeAmount = Math.max(0, Number(onboardingFeeSettings?.onboardingFee) || 0)
   const onboardingFeeGst =
     onboardingFeeAmount > 0 ? Math.round(onboardingFeeAmount * gstRate * 100) / 100 : 0
   const onboardingFeeTotal = onboardingFeeAmount + onboardingFeeGst
@@ -573,21 +571,18 @@ export default function RestaurantOnboarding() {
 
   useEffect(() => {
     let cancelled = false
-    const loadSubscriptionSettings = async () => {
+    const loadOnboardingFeeSettings = async () => {
       try {
-        setLoadingSubscriptionSettings(true)
         const res = await restaurantAPI.getSubscriptionSettings()
         const data = res?.data?.data || res?.data || null
         if (!cancelled && data) {
-          setSubscriptionSettings(data)
+          setOnboardingFeeSettings(data)
         }
       } catch (err) {
-        debugWarn("Failed to load subscription settings:", err)
-      } finally {
-        if (!cancelled) setLoadingSubscriptionSettings(false)
+        debugWarn("Failed to load onboarding fee settings:", err)
       }
     }
-    loadSubscriptionSettings()
+    loadOnboardingFeeSettings()
     return () => {
       cancelled = true
     }
@@ -599,30 +594,30 @@ export default function RestaurantOnboarding() {
 
     const trackingKey = isArray && arrayIndex >= 0 ? `${fieldName}_${arrayIndex}` : fieldName;
     setUploadingAttachments(prev => ({ ...prev, [trackingKey]: true }))
-    
+
     try {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('folder', folder)
-      
+
       const res = await restaurantAPI.uploadAttachment(formData)
       const url = res.data?.data?.url
 
       if (url) {
         if (fieldName === 'profileImage') {
-           setStep2(prev => ({ ...prev, profileImage: url }))
+          setStep2(prev => ({ ...prev, profileImage: url }))
         } else if (fieldName === 'panImage') {
-           setStep3(prev => ({ ...prev, panImage: url }))
+          setStep3(prev => ({ ...prev, panImage: url }))
         } else if (fieldName === 'gstImage') {
-           setStep3(prev => ({ ...prev, gstImage: url }))
+          setStep3(prev => ({ ...prev, gstImage: url }))
         } else if (fieldName === 'fssaiImage') {
-           setStep3(prev => ({ ...prev, fssaiImage: url }))
+          setStep3(prev => ({ ...prev, fssaiImage: url }))
         } else if (fieldName === 'menuImages' && isArray && arrayIndex >= 0) {
-           setStep2(prev => {
-             const next = [...prev.menuImages]
-             next[arrayIndex] = url
-             return { ...prev, menuImages: next }
-           })
+          setStep2(prev => {
+            const next = [...prev.menuImages]
+            next[arrayIndex] = url
+            return { ...prev, menuImages: next }
+          })
         }
       }
     } catch (error) {
@@ -905,9 +900,9 @@ export default function RestaurantOnboarding() {
         typeof img === "string"
           ? img
           : {
-              url: img.url,
-              publicId: img.publicId || null,
-            },
+            url: img.url,
+            publicId: img.publicId || null,
+          },
       )
 
   const handleRemoveMenuImage = async (indexToRemove) => {
@@ -1016,21 +1011,21 @@ export default function RestaurantOnboarding() {
       try {
         const currentPhone = getVerifiedPhoneFromStoredRestaurant()
         const localData = loadOnboardingFromLocalStorage()
-        
+
         if (localData) {
           // SECURITY CHECK: If the saved data's phone number doesn't match current login, clear it.
           // This prevents data leakage when logging in with a different account on the same device.
           const savedPhone = normalizePhoneDigits(localData.step1?.ownerPhone || "")
           const normalizedCurrent = normalizePhoneDigits(currentPhone)
-          
+
           if (savedPhone && normalizedCurrent && savedPhone !== normalizedCurrent) {
-             debugLog("? Phone mismatch, data belongs to different user. Clearing.")
-             // Be a bit more lenient: only clear if they are substantially different
-             if (savedPhone.slice(-10) !== normalizedCurrent.slice(-10)) {
-               clearOnboardingFromLocalStorage()
-               await clearAllFilesFromDB()
-               return
-             }
+            debugLog("? Phone mismatch, data belongs to different user. Clearing.")
+            // Be a bit more lenient: only clear if they are substantially different
+            if (savedPhone.slice(-10) !== normalizedCurrent.slice(-10)) {
+              clearOnboardingFromLocalStorage()
+              await clearAllFilesFromDB()
+              return
+            }
           }
 
           if (localData.step1) {
@@ -1066,7 +1061,7 @@ export default function RestaurantOnboarding() {
           const restoredPanImage = await getFileFromDB("panImage")
           const restoredGstImage = await getFileFromDB("gstImage")
           const restoredFssaiImage = await getFileFromDB("fssaiImage")
-          
+
           const restoredMenuImages = []
           for (let i = 0; i < 10; i++) {
             const img = await getFileFromDB(`menuImage_${i}`)
@@ -1077,7 +1072,7 @@ export default function RestaurantOnboarding() {
             const urlMenuImages = (localData.step2.menuImages || []).filter(
               (img) => img?.url || typeof img === "string"
             )
-            
+
             setStep2((prev) => ({
               ...prev,
               menuImages: [...urlMenuImages, ...restoredMenuImages],
@@ -1171,7 +1166,7 @@ export default function RestaurantOnboarding() {
     if (!isOnboardingHydrated) return
     if (isRestoringOnboardingRef.current) return
     saveOnboardingToLocalStorage(step1, step2, step3, step, step4State)
-    
+
     // Save images to IndexedDB
     const saveFiles = async () => {
       if (step2.profileImage && isUploadableFile(step2.profileImage)) {
@@ -1188,7 +1183,7 @@ export default function RestaurantOnboarding() {
       if (step3.fssaiImage && isUploadableFile(step3.fssaiImage)) {
         await saveFileToDB("fssaiImage", step3.fssaiImage)
       }
-      
+
       await persistMenuImagesToDB(step2.menuImages || [])
     }
     saveFiles()
@@ -1218,147 +1213,147 @@ export default function RestaurantOnboarding() {
         // Use restaurantAPI.getCurrentRestaurant() to fetch real data
         const res = await restaurantAPI.getCurrentRestaurant()
         const data = res?.data?.data?.restaurant || res?.data?.restaurant
-        
-          if (data) {
-            setHasExistingRestaurantProfile(true)
-            const onboardingData = data.onboarding || {}
-            const step1Data = onboardingData.step1 || {}
-            const step2Data = onboardingData.step2 || {}
-            const step3Data = onboardingData.step3 || {}
-            const panData = step3Data.pan || {}
-            const gstData = step3Data.gst || {}
-            const fssaiData = step3Data.fssai || {}
-            const bankData = step3Data.bank || {}
-            const locationData = step1Data.location || data.location || {}
-            const deliveryTimings = step2Data.deliveryTimings || data.deliveryTimings || {}
 
-            setIsEditing(true)
-            // Map Step 1 (Merging with local state - prioritize local edits)
-            setStep1((prev) => ({
-              ...prev,
-              restaurantName: prev.restaurantName || step1Data.restaurantName || data.name || data.restaurantName || "",
-              pureVegRestaurant:
-                typeof prev.pureVegRestaurant === "boolean"
-                  ? prev.pureVegRestaurant
-                  : typeof step1Data.pureVegRestaurant === "boolean"
+        if (data) {
+          setHasExistingRestaurantProfile(true)
+          const onboardingData = data.onboarding || {}
+          const step1Data = onboardingData.step1 || {}
+          const step2Data = onboardingData.step2 || {}
+          const step3Data = onboardingData.step3 || {}
+          const panData = step3Data.pan || {}
+          const gstData = step3Data.gst || {}
+          const fssaiData = step3Data.fssai || {}
+          const bankData = step3Data.bank || {}
+          const locationData = step1Data.location || data.location || {}
+          const deliveryTimings = step2Data.deliveryTimings || data.deliveryTimings || {}
+
+          setIsEditing(true)
+          // Map Step 1 (Merging with local state - prioritize local edits)
+          setStep1((prev) => ({
+            ...prev,
+            restaurantName: prev.restaurantName || step1Data.restaurantName || data.name || data.restaurantName || "",
+            pureVegRestaurant:
+              typeof prev.pureVegRestaurant === "boolean"
+                ? prev.pureVegRestaurant
+                : typeof step1Data.pureVegRestaurant === "boolean"
                   ? step1Data.pureVegRestaurant
                   : typeof data.pureVegRestaurant === "boolean"
-                  ? data.pureVegRestaurant
-                  : null,
-              ownerName: prev.ownerName || step1Data.ownerName || data.ownerName || "",
-              ownerEmail: prev.ownerEmail || step1Data.ownerEmail || data.ownerEmail || data.email || "",
-              ownerPhone: prev.ownerPhone || step1Data.ownerPhone || data.ownerPhone || data.phone || "",
-              zoneId: prev.zoneId || step1Data.zoneId || data.zoneId || "",
-              primaryContactNumber:
-                prev.primaryContactNumber ||
-                step1Data.primaryContactNumber ||
-                data.primaryContactNumber ||
-                data.ownerPhone ||
-                data.phone ||
+                    ? data.pureVegRestaurant
+                    : null,
+            ownerName: prev.ownerName || step1Data.ownerName || data.ownerName || "",
+            ownerEmail: prev.ownerEmail || step1Data.ownerEmail || data.ownerEmail || data.email || "",
+            ownerPhone: prev.ownerPhone || step1Data.ownerPhone || data.ownerPhone || data.phone || "",
+            zoneId: prev.zoneId || step1Data.zoneId || data.zoneId || "",
+            primaryContactNumber:
+              prev.primaryContactNumber ||
+              step1Data.primaryContactNumber ||
+              data.primaryContactNumber ||
+              data.ownerPhone ||
+              data.phone ||
+              "",
+            location: {
+              ...prev.location,
+              formattedAddress:
+                locationData.formattedAddress ||
+                locationData.address ||
+                data.address ||
+                prev.location?.formattedAddress ||
                 "",
-              location: {
-                ...prev.location,
-                formattedAddress:
-                  locationData.formattedAddress ||
-                  locationData.address ||
-                  data.address ||
-                  prev.location?.formattedAddress ||
-                  "",
-                addressLine1: locationData.addressLine1 || data.addressLine1 || prev.location?.addressLine1 || "",
-                addressLine2: locationData.addressLine2 || data.addressLine2 || prev.location?.addressLine2 || "",
-                area: locationData.area || data.area || prev.location?.area || "",
-                city: locationData.city || data.city || prev.location?.city || "",
-                state: locationData.state || data.state || prev.location?.state || "",
-                pincode: locationData.pincode || data.pincode || prev.location?.pincode || "",
-                landmark: locationData.landmark || data.landmark || prev.location?.landmark || "",
-                latitude: locationData.latitude ?? prev.location?.latitude ?? "",
-                longitude: locationData.longitude ?? prev.location?.longitude ?? "",
-              },
-            }))
+              addressLine1: locationData.addressLine1 || data.addressLine1 || prev.location?.addressLine1 || "",
+              addressLine2: locationData.addressLine2 || data.addressLine2 || prev.location?.addressLine2 || "",
+              area: locationData.area || data.area || prev.location?.area || "",
+              city: locationData.city || data.city || prev.location?.city || "",
+              state: locationData.state || data.state || prev.location?.state || "",
+              pincode: locationData.pincode || data.pincode || prev.location?.pincode || "",
+              landmark: locationData.landmark || data.landmark || prev.location?.landmark || "",
+              latitude: locationData.latitude ?? prev.location?.latitude ?? "",
+              longitude: locationData.longitude ?? prev.location?.longitude ?? "",
+            },
+          }))
 
-            // Map Step 2
-            setStep2((prev) => ({
-              ...prev,
-              menuImages:
-                (step2Data.menuImageUrls && step2Data.menuImageUrls.length > 0)
-                  ? step2Data.menuImageUrls
-                  : (data.menuImages && data.menuImages.length > 0)
+          // Map Step 2
+          setStep2((prev) => ({
+            ...prev,
+            menuImages:
+              (step2Data.menuImageUrls && step2Data.menuImageUrls.length > 0)
+                ? step2Data.menuImageUrls
+                : (data.menuImages && data.menuImages.length > 0)
                   ? data.menuImages
                   : prev.menuImages,
-              profileImage: step2Data.profileImageUrl || data.profileImage || prev.profileImage,
-              cuisines:
-                (step2Data.cuisines && step2Data.cuisines.length > 0)
-                  ? step2Data.cuisines
-                  : (data.cuisines && data.cuisines.length > 0)
+            profileImage: step2Data.profileImageUrl || data.profileImage || prev.profileImage,
+            cuisines:
+              (step2Data.cuisines && step2Data.cuisines.length > 0)
+                ? step2Data.cuisines
+                : (data.cuisines && data.cuisines.length > 0)
                   ? data.cuisines
                   : prev.cuisines,
-              estimatedDeliveryTime:
-                step2Data.estimatedDeliveryTime ||
-                data.estimatedDeliveryTime ||
-                prev.estimatedDeliveryTime ||
-                "",
-              openingTime: normalizeTimeValue(deliveryTimings.openingTime || data.openingTime) || prev.openingTime,
-              closingTime: normalizeTimeValue(deliveryTimings.closingTime || data.closingTime) || prev.closingTime,
-              openDays:
-                (step2Data.openDays && step2Data.openDays.length > 0)
-                  ? step2Data.openDays
-                  : (data.openDays && data.openDays.length > 0)
+            estimatedDeliveryTime:
+              step2Data.estimatedDeliveryTime ||
+              data.estimatedDeliveryTime ||
+              prev.estimatedDeliveryTime ||
+              "",
+            openingTime: normalizeTimeValue(deliveryTimings.openingTime || data.openingTime) || prev.openingTime,
+            closingTime: normalizeTimeValue(deliveryTimings.closingTime || data.closingTime) || prev.closingTime,
+            openDays:
+              (step2Data.openDays && step2Data.openDays.length > 0)
+                ? step2Data.openDays
+                : (data.openDays && data.openDays.length > 0)
                   ? data.openDays
                   : prev.openDays,
-            }))
+          }))
 
-            // Map Step 3
-            setStep3((prev) => ({
-              ...prev,
-              panNumber: panData.panNumber || data.panNumber || prev.panNumber || "",
-              nameOnPan: panData.nameOnPan || data.nameOnPan || prev.nameOnPan || "",
-              panImage: panData.image || data.panImage || prev.panImage || null,
-              gstRegistered:
-                typeof gstData.isRegistered === "boolean"
-                  ? gstData.isRegistered
-                  : typeof data.gstRegistered === "boolean"
+          // Map Step 3
+          setStep3((prev) => ({
+            ...prev,
+            panNumber: panData.panNumber || data.panNumber || prev.panNumber || "",
+            nameOnPan: panData.nameOnPan || data.nameOnPan || prev.nameOnPan || "",
+            panImage: panData.image || data.panImage || prev.panImage || null,
+            gstRegistered:
+              typeof gstData.isRegistered === "boolean"
+                ? gstData.isRegistered
+                : typeof data.gstRegistered === "boolean"
                   ? data.gstRegistered
                   : (prev.gstRegistered || false),
-              gstNumber: gstData.gstNumber || data.gstNumber || prev.gstNumber || "",
-              gstLegalName: gstData.legalName || data.gstLegalName || prev.gstLegalName || "",
-              gstAddress: gstData.address || data.gstAddress || prev.gstAddress || "",
-              gstImage: gstData.image || data.gstImage || prev.gstImage || null,
-              fssaiNumber: fssaiData.registrationNumber || data.fssaiNumber || prev.fssaiNumber || "",
-              fssaiExpiry:
-                fssaiData.expiryDate
-                  ? String(fssaiData.expiryDate).split("T")[0]
-                  : data.fssaiExpiry
+            gstNumber: gstData.gstNumber || data.gstNumber || prev.gstNumber || "",
+            gstLegalName: gstData.legalName || data.gstLegalName || prev.gstLegalName || "",
+            gstAddress: gstData.address || data.gstAddress || prev.gstAddress || "",
+            gstImage: gstData.image || data.gstImage || prev.gstImage || null,
+            fssaiNumber: fssaiData.registrationNumber || data.fssaiNumber || prev.fssaiNumber || "",
+            fssaiExpiry:
+              fssaiData.expiryDate
+                ? String(fssaiData.expiryDate).split("T")[0]
+                : data.fssaiExpiry
                   ? String(data.fssaiExpiry).split("T")[0]
                   : prev.fssaiExpiry,
-              fssaiImage: fssaiData.image || data.fssaiImage || prev.fssaiImage || null,
-              accountNumber: bankData.accountNumber || data.accountNumber || prev.accountNumber || "",
-              confirmAccountNumber:
-                bankData.accountNumber || data.accountNumber || prev.confirmAccountNumber || "",
-              ifscCode: (bankData.ifscCode || data.ifscCode || prev.ifscCode || "").toUpperCase(),
-              accountHolderName:
-                bankData.accountHolderName || data.accountHolderName || prev.accountHolderName || "",
-              accountType: normalizeAccountTypeValue(bankData.accountType || data.accountType || prev.accountType || ""),
-            }))
+            fssaiImage: fssaiData.image || data.fssaiImage || prev.fssaiImage || null,
+            accountNumber: bankData.accountNumber || data.accountNumber || prev.accountNumber || "",
+            confirmAccountNumber:
+              bankData.accountNumber || data.accountNumber || prev.confirmAccountNumber || "",
+            ifscCode: (bankData.ifscCode || data.ifscCode || prev.ifscCode || "").toUpperCase(),
+            accountHolderName:
+              bankData.accountHolderName || data.accountHolderName || prev.accountHolderName || "",
+            accountType: normalizeAccountTypeValue(bankData.accountType || data.accountType || prev.accountType || ""),
+          }))
 
           // Only determine step automatically if not specified in URL
           const stepParam = searchParams.get("step")
           if (!stepParam) {
             // If already registered/pending, stay on step 1 for editing
             if (data.status === "approved" || data.status === "pending") {
-               setStep(1)
+              setStep(1)
             } else {
-               const stepToShow = determineStepToShow({ step1: data, step2: data, step3: data })
-               // Map null (all steps complete) to final step for this flow
-               const targetStep = stepToShow === null ? 3 : stepToShow
-               
-               // Only update if backend says we are further along than current local step
-               // This prevents "downgrading" the step on reload if backend is out of sync
-               setStep(prevStep => {
-                 if (targetStep > prevStep) {
-                   return targetStep
-                 }
-                 return prevStep
-               })
+              const stepToShow = determineStepToShow({ step1: data, step2: data, step3: data })
+              // Map null (all steps complete) to final step for this flow
+              const targetStep = stepToShow === null ? 3 : stepToShow
+
+              // Only update if backend says we are further along than current local step
+              // This prevents "downgrading" the step on reload if backend is out of sync
+              setStep(prevStep => {
+                if (targetStep > prevStep) {
+                  return targetStep
+                }
+                return prevStep
+              })
             }
           }
         } else {
@@ -1696,7 +1691,7 @@ export default function RestaurantOnboarding() {
     formData.append('ifscCode', (step3.ifscCode || '').toUpperCase())
     formData.append('accountHolderName', step3.accountHolderName || '')
     formData.append('accountType', step3.accountType || '')
-    formData.append('subscriptionPlan', 'starter')
+
 
     if (requiresOnboardingFee) {
       formData.append('onboardingFeeAmount', String(step4State.onboardingFeeAmount || onboardingFeeTotal))
@@ -1716,7 +1711,7 @@ export default function RestaurantOnboarding() {
       clearOnboardingFileCache()
       try {
         localStorage.setItem('restaurant_pendingPhone', normalizePhoneDigits(step1.ownerPhone))
-      } catch {}
+      } catch { }
       toast.success('Registration submitted for admin approval.', { duration: 4000 })
       navigate('/food/restaurant/pending-verification', {
         replace: true,
@@ -2013,7 +2008,7 @@ export default function RestaurantOnboarding() {
               />
               {isSearchingLocation && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#FA0272] border-t-transparent" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#fa3c02] border-t-transparent" />
                 </div>
               )}
             </div>
@@ -2121,7 +2116,7 @@ export default function RestaurantOnboarding() {
                 ))}
               </div>
             )}
-            
+
             <p className={ONBOARDING_HINT}>
               Select a suggestion to auto-fill area/city/state/pincode and coordinates.
             </p>
@@ -2277,17 +2272,17 @@ export default function RestaurantOnboarding() {
         // 4. Check for existing script and force libraries=places if needed
         const scripts = Array.from(document.getElementsByTagName("script"))
         const mapsScript = scripts.find(s => s.src?.includes("maps.googleapis.com/maps/api/js"))
-        
+
         if (mapsScript && !mapsScript.src.includes("libraries=places")) {
           debugLog("Found maps script without places, removing to reload properly.")
           mapsScript.remove()
         } else if (mapsScript && mapsScript.src.includes("libraries=places")) {
-           // Wait if it's still loading
-           for (let i = 0; i < 60; i++) {
-             if (window.google?.maps?.places?.Autocomplete) return true
-             if (cancelled) return false
-             await new Promise(r => setTimeout(r, 100))
-           }
+          // Wait if it's still loading
+          for (let i = 0; i < 60; i++) {
+            if (window.google?.maps?.places?.Autocomplete) return true
+            if (cancelled) return false
+            await new Promise(r => setTimeout(r, 100))
+          }
         }
 
         // 5. Create and append new script
@@ -2377,7 +2372,7 @@ export default function RestaurantOnboarding() {
             },
           }))
           setIsAutoFilledLocationLocked(true)
-          
+
           setLocationSearchValue(parsed.formattedAddress)
           inputElement.blur()
           void detectAndSetZoneForLocation(parsed.latitude, parsed.longitude)
@@ -2407,12 +2402,12 @@ export default function RestaurantOnboarding() {
       }
     }
 
-    init().catch(() => {})
+    init().catch(() => { })
 
     return () => {
       cancelled = true
       if (autocomplete) {
-        try { window.google?.maps?.event?.clearInstanceListeners(autocomplete) } catch {}
+        try { window.google?.maps?.event?.clearInstanceListeners(autocomplete) } catch { }
       }
       if (locationSearchInputRef.current) {
         locationSearchInputRef.current.removeAttribute("data-google-places-initialized")
@@ -3211,103 +3206,35 @@ export default function RestaurantOnboarding() {
     </div>
   )
 
-  const formatGmvRange = (plan) => {
-    const min = Number(plan?.gmvMin ?? 0)
-    const max = plan?.gmvMax
-    if (max == null) return `≥ ${formatMoney(min)}`
-    return `${formatMoney(min)} – ${formatMoney(max)}`
-  }
-
   const renderStep4 = () => (
     <div className="space-y-5">
+      {/* Info box */}
       <section className={ONBOARDING_INFO_BOX}>
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FA0272]/10">
-            <Info className="h-5 w-5 text-[#FA0272]" />
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EB590E]/10">
+            <Info className="h-5 w-5 text-[#EB590E]" />
           </div>
           <div>
-            <h2 className={ONBOARDING_SECTION_TITLE}>How subscription billing works</h2>
+            <h2 className={ONBOARDING_SECTION_TITLE}>One-time Onboarding Fee</h2>
             <p className={`${ONBOARDING_SECTION_DESC} mt-2`}>
-              Your monthly plan is assigned automatically from your restaurant&apos;s calendar-month GMV
-              (net earnings from delivered orders). Invoices are generated at month end with plan amount
-              plus {(gstRate * 100).toFixed(0)}% GST. No upfront subscription purchase is required today.
+              A one-time onboarding fee is required to activate your restaurant on the platform.
+              This is a one-time payment only — there are no monthly subscription charges.
             </p>
           </div>
         </div>
       </section>
 
-      {loadingSubscriptionSettings ? (
-        <section className={`${ONBOARDING_SECTION_FULL} text-sm text-gray-500`}>
-          Loading subscription plans...
-        </section>
-      ) : (
-        <section className={ONBOARDING_SECTION_FULL}>
-          <div className="mb-5">
-            <h3 className={ONBOARDING_SECTION_TITLE}>Monthly plans by GMV slab</h3>
-            <p className={`${ONBOARDING_SECTION_DESC} mt-1`}>
-              Your plan is assigned automatically based on your restaurant&apos;s monthly order volume.
-            </p>
-          </div>
-
-          {planCatalog.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {planCatalog.map((plan) => {
-                const gstAmount = Math.round(Number(plan.basePrice || 0) * gstRate * 100) / 100
-                const totalWithGst = Number(plan.basePrice || 0) + gstAmount
-                return (
-                  <div key={plan.id} className={ONBOARDING_PLAN_CARD}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FA0272]/10">
-                        <Award className="h-5 w-5 text-[#FA0272]" />
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-gray-900">{formatMoney(plan.basePrice)}</p>
-                        <p className="text-[11px] font-medium text-gray-500">/ month + GST</p>
-                      </div>
-                    </div>
-
-                    <p className="mt-4 text-base font-semibold text-gray-900">{plan.label} Plan</p>
-
-                    <div className="mt-3 rounded-xl bg-gray-50 px-3 py-2.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                        Monthly GMV slab
-                      </p>
-                      <p className="mt-0.5 text-sm font-medium text-gray-800">{formatGmvRange(plan)}</p>
-                    </div>
-
-                    <div className="mt-auto border-t border-gray-100 pt-4">
-                      <p className="text-xs text-gray-500">
-                        Estimated invoice:{" "}
-                        <span className="font-semibold text-gray-800">{formatMoney(totalWithGst)}</span>
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-gray-400">
-                        Includes GST ({formatMoney(gstAmount)})
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
-              Subscription plan details are not available right now.
-            </div>
-          )}
-        </section>
-      )}
-
       {requiresOnboardingFee ? (
-        <section className={`${ONBOARDING_SECTION_FULL} border-[#FA0272]/20`}>
+        <section className={`${ONBOARDING_SECTION_FULL} border-[#EB590E]/20`}>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FA0272]/10">
-                <Wallet className="h-5 w-5 text-[#FA0272]" />
+              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EB590E]/10">
+                <Wallet className="h-5 w-5 text-[#EB590E]" />
               </div>
               <div className="max-w-xl">
-                <h3 className={ONBOARDING_SECTION_TITLE}>One-time onboarding fee</h3>
+                <h3 className={ONBOARDING_SECTION_TITLE}>Onboarding fee</h3>
                 <p className={`${ONBOARDING_SECTION_DESC} mt-1`}>
-                  A one-time onboarding fee is required before your application can be submitted
-                  for approval.
+                  Pay the one-time fee below to submit your application for admin approval.
                 </p>
                 <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3 text-sm">
                   <div className="flex justify-between text-gray-600">
@@ -3350,7 +3277,21 @@ export default function RestaurantOnboarding() {
             </p>
           )}
         </section>
-      ) : null}
+      ) : (
+        <section className={ONBOARDING_SECTION_FULL}>
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-100">
+              <BadgeCheck className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <h3 className={ONBOARDING_SECTION_TITLE}>No fee required</h3>
+              <p className={`${ONBOARDING_SECTION_DESC} mt-1`}>
+                There is no onboarding fee configured. You can submit your application for approval directly.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   )
 
