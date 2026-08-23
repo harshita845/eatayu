@@ -1,30 +1,27 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Phone, User, AlertCircle, Loader2, UtensilsCrossed } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { motion, useReducedMotion } from "framer-motion"
+import { Phone, User, AlertCircle, Loader2, Shield } from "lucide-react"
 import { restaurantAPI } from "@food/api"
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@food/components/ui/card"
 import { Button } from "@food/components/ui/button"
-import { Input } from "@food/components/ui/input"
 import { Label } from "@food/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@food/components/ui/select"
-import loginBg from "@food/assets/loginbanner.png"
 import { useCompanyName } from "@food/hooks/useCompanyName"
+import { loadBusinessSettings, getModuleLogoUrl } from "@food/utils/businessSettings"
+import RestaurantPartnerHero from "@food/components/restaurant/auth/RestaurantPartnerHero"
+import quickSpicyLogo from "@food/assets/EatAyu-logo.png"
 
-const countryCodes = [
-  { code: "+91", country: "IN", flag: "🇮🇳" },
-]
+const DEFAULT_COUNTRY_CODE = "+91"
+const THEME = "#EB590E"
 
 export default function RestaurantSignup() {
+  const companyName = useCompanyName()
   const navigate = useNavigate()
+  const prefersReducedMotion = useReducedMotion()
+  const [logoUrl, setLogoUrl] = useState(() => getModuleLogoUrl("restaurant") || quickSpicyLogo)
+  
   const [formData, setFormData] = useState({
     phone: "",
-    countryCode: "+91",
+    countryCode: DEFAULT_COUNTRY_CODE,
     name: "",
   })
   const [errors, setErrors] = useState({
@@ -34,15 +31,32 @@ export default function RestaurantSignup() {
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState("")
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        await loadBusinessSettings()
+        const logo = getModuleLogoUrl("restaurant")
+        if (logo) setLogoUrl(logo)
+      } catch {
+        // keep fallback
+      }
+    }
+    fetchSettings()
+
+    const handleSettingsUpdate = async () => {
+      await loadBusinessSettings()
+      const logo = getModuleLogoUrl("restaurant")
+      if (logo) setLogoUrl(logo)
+    }
+    window.addEventListener("businessSettingsUpdated", handleSettingsUpdate)
+    return () => window.removeEventListener("businessSettingsUpdated", handleSettingsUpdate)
+  }, [])
+
   const validatePhone = (phone) => {
-    if (!phone.trim()) {
-      return "Phone number is required"
-    }
-    const cleanPhone = phone.replace(/[\s\-\(\)]/g, "")
-    const phoneRegex = /^\d{7,15}$/
-    if (!phoneRegex.test(cleanPhone)) {
-      return "Phone number must be 7-15 digits"
-    }
+    if (!phone || phone.trim() === "") return "Phone number required"
+    const digitsOnly = phone.replace(/\D/g, "")
+    if (digitsOnly.length !== 10) return "Must be 10 digits"
+    if (!["6", "7", "8", "9"].includes(digitsOnly[0])) return "Invalid number"
     return ""
   }
 
@@ -61,24 +75,14 @@ export default function RestaurantSignup() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    })
+    }))
 
-    // Real-time validation
-    if (name === "phone") {
-      setErrors({ ...errors, phone: validatePhone(value) })
-    } else if (name === "name") {
-      setErrors({ ...errors, name: validateName(value) })
+    if (name === "name") {
+      setErrors((prev) => ({ ...prev, name: validateName(value) }))
     }
-  }
-
-  const handleCountryCodeChange = (value) => {
-    setFormData({
-      ...formData,
-      countryCode: value,
-    })
   }
 
   const handleSubmit = async (e) => {
@@ -105,14 +109,11 @@ export default function RestaurantSignup() {
       return
     }
 
-    // Build full phone number
     const fullPhone = `${formData.countryCode} ${formData.phone}`.trim()
 
     try {
-      // Send OTP with purpose 'register'
       await restaurantAPI.sendOTP(fullPhone, "register")
 
-      // Store auth data in sessionStorage for OTP page
       const authData = {
         method: "phone",
         phone: fullPhone,
@@ -121,7 +122,6 @@ export default function RestaurantSignup() {
         module: "restaurant",
       }
       sessionStorage.setItem("restaurantAuthData", JSON.stringify(authData))
-
       navigate("/food/restaurant/otp")
     } catch (error) {
       const message =
@@ -134,243 +134,185 @@ export default function RestaurantSignup() {
     }
   }
 
+  const formMotion = prefersReducedMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 12 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.35, ease: "easeOut" },
+      }
+
+  const isValidForm = formData.name.trim().length >= 2 && !validatePhone(formData.phone)
+
   return (
-    <div className="h-screen w-full flex bg-white overflow-hidden">
-      {/* Left image section */}
-      <div className="hidden lg:flex lg:w-1/2 relative">
-        <img
-          src={loginBg}
-          alt="Restaurant background"
-          className="w-full h-full object-cover"
-        />
-        {/* Orange half-circle text block attached to the left with animation */}
-        <div className="absolute inset-0 flex items-center text-white pointer-events-none">
-          <div
-            className="bg-primary-orange/80 rounded-r-full py-10 xl:py-20 pl-10 xl:pl-14 pr-10 xl:pr-20 max-w-[70%] shadow-xl backdrop-blur-[1px]"
-            style={{ animation: "slideInLeft 0.8s ease-out both" }}
-          >
-            <h1 className="text-3xl xl:text-4xl font-extrabold mb-4 tracking-wide leading-tight">
-              JOIN AS
-              <br />
-              RESTAURANT PARTNER
-            </h1>
-            <p className="text-base xl:text-lg opacity-95 max-w-xl">
-              Register your restaurant and start serving customers.
-            </p>
-          </div>
-        </div>
+    <div className="flex h-[100dvh] overflow-hidden bg-white">
+      {/* Left hero panel */}
+      <div className="hidden h-full lg:block lg:w-1/2">
+        <RestaurantPartnerHero themeColor={THEME} />
       </div>
 
-      {/* Right form section */}
-      <div className="w-full lg:w-1/2 h-full flex flex-col">
-        {/* Top logo and version */}
-        <div className="relative flex items-center justify-center px-6 sm:px-10 lg:px-16 pt-6 pb-4">
+      {/* Right form panel */}
+      <div className="flex h-full w-full flex-col bg-[#F0F2F5] lg:w-1/2">
+        {/* Mobile top bar */}
+        <div className="relative shrink-0 overflow-hidden px-6 py-5 lg:hidden" style={{ backgroundColor: "#141018" }}>
           <div
-            className="flex items-center gap-3"
-            style={{ animation: "fadeInDown 0.7s ease-out both" }}
-          >
-            <div className="h-11 w-11 rounded-xl bg-primary-orange flex items-center justify-center text-white shadow-lg">
-              <UtensilsCrossed className="h-6 w-6" />
+            className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full blur-2xl"
+            style={{ backgroundColor: `${THEME}35` }}
+          />
+          <div className="relative flex items-center gap-2.5">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-lg"
+              style={{ backgroundColor: `${THEME}20` }}
+            >
+              <Shield className="h-3.5 w-3.5" style={{ color: THEME }} aria-hidden="true" />
             </div>
-            <div className="flex flex-col items-start">
-              <span className="text-2xl font-bold tracking-wide text-primary-orange">
-                {companyName}
-              </span>
-              <span className="text-xs font-medium text-gray-500">
-                Restaurant Panel
-              </span>
+            <div>
+              <p className="text-[10px] font-medium text-white/50">Partner Portal</p>
+              <p className="text-sm font-semibold text-white">{companyName}</p>
             </div>
-          </div>
-          <div className="absolute right-6 sm:right-10 lg:right-16 top-6 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-medium text-emerald-700 shadow-sm">
-            Software Version : 1.0.0
           </div>
         </div>
 
-        {/* Centered content (title + form + info) */}
-        <div
-          className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 lg:px-16 pb-8"
-          style={{ animation: "fadeInUp 0.8s ease-out 0.15s both" }}
-        >
-          {/* Title */}
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">
-              Register Your Restaurant
-            </h2>
-            <p className="text-sm text-gray-500">
-              Enter your details to get started.
-            </p>
-          </div>
-
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5 w-full max-w-lg rounded-xl bg-white/80 backdrop-blur-sm p-1 sm:p-2"
-          >
-            {/* Restaurant name input */}
-            <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                Restaurant Name
-              </Label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
-                  <User className="h-4 w-4" />
-                </span>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="Enter restaurant name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`h-11 pl-9 border-gray-300 rounded-md shadow-sm focus-visible:ring-primary-orange focus-visible:ring-2 transition-colors placeholder:text-gray-400 ${errors.name ? "border-red-500" : ""}`}
-                  required
-                />
-              </div>
-              {errors.name && (
-                <div className="flex items-center gap-1 text-xs sm:text-sm text-red-600">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>{errors.name}</span>
+        {/* Signup form body */}
+        <div className="flex flex-1 items-center justify-center overflow-y-auto px-5 py-8 sm:px-10">
+          <motion.div {...formMotion} className="my-auto w-full max-w-[380px]">
+            <div className="mb-7 text-center lg:text-left">
+              <div className="mb-5 flex justify-center lg:justify-start">
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
+                  <img
+                    src={logoUrl}
+                    alt={`${companyName} logo`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      if (e.target.src !== quickSpicyLogo) e.target.src = quickSpicyLogo
+                    }}
+                  />
                 </div>
-              )}
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight text-gray-900">Register Your Restaurant</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Enter your details to get started
+              </p>
             </div>
 
-            {/* Phone input */}
-            <div className="space-y-1.5">
-              <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                Phone Number
-              </Label>
-              <div className="flex gap-2">
-                <Select
-                  value={formData.countryCode}
-                  onValueChange={handleCountryCodeChange}
-                >
-                  <SelectTrigger className="w-20 sm:w-24 md:w-[100px] text-xs sm:text-sm">
-                    <SelectValue placeholder="Code" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countryCodes.map((country) => (
-                      <SelectItem key={country.code} value={country.code}>
-                        <span className="flex items-center gap-2 text-xs sm:text-sm">
-                          <span>{country.flag}</span>
-                          <span>{country.code}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex-1 min-w-0">
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
-                      <Phone className="h-4 w-4" />
-                    </span>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="Enter phone number"
-                      value={formData.phone}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-[0_4px_24px_rgba(0,0,0,0.08)] sm:p-7">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {apiError && (
+                  <div role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+                    {apiError}
+                  </div>
+                )}
+
+                {/* Restaurant Name input */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="restaurant-name" className="text-sm font-medium text-gray-700">
+                    Restaurant Name
+                  </Label>
+                  <div className="flex overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#EB590E]/30">
+                    <input
+                      id="restaurant-name"
+                      name="name"
+                      type="text"
+                      placeholder="Enter restaurant name"
+                      value={formData.name}
                       onChange={handleChange}
-                      className={`h-11 pl-9 border-gray-300 rounded-md shadow-sm focus-visible:ring-primary-orange focus-visible:ring-2 transition-colors placeholder:text-gray-400 ${errors.phone ? "border-red-500" : ""}`}
+                      className="h-12 w-full border-0 bg-transparent px-4 text-base font-medium text-gray-900 outline-none placeholder:text-gray-400"
+                      style={{ caretColor: THEME }}
                       required
                     />
                   </div>
+                  {errors.name && (
+                    <p className="text-xs text-red-600 mt-1">{errors.name}</p>
+                  )}
                 </div>
-              </div>
-              {errors.phone && (
-                <div className="flex items-center gap-1 text-xs sm:text-sm text-red-600">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>{errors.phone}</span>
+
+                {/* Phone number input */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="restaurant-phone" className="text-sm font-medium text-gray-700">
+                    Mobile number
+                  </Label>
+                  <div className="flex overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#EB590E]/30">
+                    <div className="flex items-center border-r border-gray-200 bg-gray-50 px-4 text-sm font-semibold text-gray-700">
+                      +91
+                    </div>
+                    <input
+                      id="restaurant-phone"
+                      name="phone"
+                      type="tel"
+                      maxLength={10}
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      placeholder="00000 00000"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                        setFormData((prev) => ({ ...prev, phone: val }));
+                        if (errors.phone) setErrors((prev) => ({ ...prev, phone: validatePhone(val) }));
+                      }}
+                      className="h-12 w-full border-0 bg-transparent px-4 text-base font-medium text-gray-900 outline-none placeholder:text-gray-400"
+                      style={{ caretColor: THEME }}
+                      required
+                    />
+                  </div>
+                  {errors.phone && (
+                    <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
+                  )}
                 </div>
-              )}
-              {apiError && !errors.phone && (
-                <div className="flex items-center gap-1 text-xs sm:text-sm text-red-600 mt-1">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>{apiError}</span>
-                </div>
-              )}
+
+                <Button
+                  type="submit"
+                  disabled={!isValidForm || isLoading}
+                  variant="ghost"
+                  className="h-12 w-full cursor-pointer rounded-xl border-0 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 disabled:opacity-50"
+                  style={{ backgroundColor: THEME }}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Sending OTP...
+                    </>
+                  ) : (
+                    "Send OTP"
+                  )}
+                </Button>
+              </form>
             </div>
 
-            {/* Sign up button */}
-            <Button
-              type="submit"
-              className="mt-2 h-11 w-full bg-primary-orange hover:bg-primary-orange/90 text-white text-base font-semibold rounded-md shadow-md transition-colors"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Sending OTP...
-                </>
-              ) : (
-                "Send OTP"
-              )}
-            </Button>
-          </form>
-
-          {/* Login link */}
-          <div className="mt-6 text-center text-sm">
-            <span className="text-gray-600">Already have an account? </span>
-            <button
-              type="button"
-              onClick={() => navigate("/food/restaurant/login")}
-              className="text-primary-orange hover:underline font-medium"
-            >
-              Login
-            </button>
-          </div>
-
-          {/* Demo credentials / info bar */}
-          <div className="mt-8 w-full max-w-lg rounded-lg border border-orange-100 bg-orange-50 px-4 py-3 text-xs sm:text-sm text-gray-800 flex items-start gap-3">
-            <div className="mt-0.5 text-primary-orange">
-              <AlertCircle className="h-4 w-4" />
+            {/* Login Link */}
+            <div className="mt-5 text-center text-sm">
+              <span className="text-gray-600">Already have an account? </span>
+              <button
+                type="button"
+                onClick={() => navigate("/food/restaurant/login")}
+                className="text-[#EB590E] hover:underline font-semibold"
+              >
+                Login
+              </button>
             </div>
-            <div>
-              <div className="font-semibold mb-1">Demo Credentials</div>
-              <div>
-                <span className="font-semibold">Phone :</span> +91 9876543210
-              </div>
-              <div>
-                <span className="font-semibold">OTP :</span> 1234
-              </div>
-            </div>
-          </div>
+
+            {/* Footer links */}
+            <footer className="mt-7 space-y-2 text-center">
+              <p className="text-xs text-gray-400">
+                Secure partner registration &middot; {companyName}
+              </p>
+              <p className="text-[11px] text-gray-400">
+                <Link to="/food/restaurant/terms" className="transition-colors hover:text-[#EB590E]">
+                  Terms
+                </Link>
+                {" · "}
+                <Link to="/food/restaurant/privacy" className="transition-colors hover:text-[#EB590E]">
+                  Privacy
+                </Link>
+                {" · "}
+                <Link to="/food/restaurant/help-content" className="transition-colors hover:text-[#EB590E]">
+                  Support
+                </Link>
+              </p>
+            </footer>
+          </motion.div>
         </div>
-
-        {/* Simple keyframe animations */}
-        <style>{`
-          @keyframes slideInLeft {
-            from {
-              opacity: 0;
-              transform: translateX(-40px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          @keyframes fadeInDown {
-            from {
-              opacity: 0;
-              transform: translateY(-16px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-        `}</style>
       </div>
     </div>
   )
 }
-

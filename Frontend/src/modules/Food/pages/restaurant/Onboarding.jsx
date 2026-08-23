@@ -1948,7 +1948,6 @@ export default function RestaurantOnboarding() {
                 const val = raw.startsWith("91") && raw.length > 10 ? raw.slice(2) : raw
                 setStep1({ ...step1, ownerPhone: val.slice(0, 10) })
               }}
-              readOnly={Boolean(verifiedPhoneNumber)}
               inputMode="numeric"
               className={ONBOARDING_INPUT}
               placeholder="98XXXXXX"
@@ -2155,7 +2154,6 @@ export default function RestaurantOnboarding() {
                 location: { ...step1.location, addressLine1: e.target.value },
               })
             }
-            readOnly={isAutoFilledLocationLocked}
             className="bg-white text-sm"
             placeholder="Shop no. / building no. (optional)"
           />
@@ -2189,7 +2187,6 @@ export default function RestaurantOnboarding() {
                 location: { ...step1.location, area: e.target.value },
               })
             }
-            readOnly={isAutoFilledLocationLocked}
             className="bg-white text-sm"
             placeholder="Area / Sector / Locality*"
           />
@@ -2201,7 +2198,6 @@ export default function RestaurantOnboarding() {
                 location: { ...step1.location, city: e.target.value },
               })
             }
-            readOnly={isAutoFilledLocationLocked}
             className="bg-white text-sm"
             placeholder="City"
           />
@@ -2214,7 +2210,6 @@ export default function RestaurantOnboarding() {
                   location: { ...step1.location, state: e.target.value },
                 })
               }
-              readOnly={isAutoFilledLocationLocked}
               className={ONBOARDING_INPUT}
               placeholder="State"
             />
@@ -2226,7 +2221,6 @@ export default function RestaurantOnboarding() {
                   location: { ...step1.location, pincode: e.target.value },
                 })
               }
-              readOnly={isAutoFilledLocationLocked}
               className={ONBOARDING_INPUT}
               placeholder="Pincode"
             />
