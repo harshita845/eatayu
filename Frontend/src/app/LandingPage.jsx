@@ -255,7 +255,7 @@ export default function LandingPage() {
 
             <div className="overflow-hidden mt-4 lg:mt-6 max-w-xl">
               <motion.p custom={3} initial="hidden" animate="visible" variants={textReveal} className="text-base lg:text-lg text-slate-600 font-light leading-relaxed">
-                EatAyu is a next-generation food delivery platform built with a mission to create fairness and transparency in the food ecosystem. Unlike traditional platforms, we operate on a lifetime 0% commission model, ensuring that restaurant partners keep every hard-earned penny of their revenue.
+                EatAyu is a next-generation food delivery platform built with a mission to create fairness and transparency in the food ecosystem. Unlike traditional platforms, we operate on a lifetime 25% commission model, ensuring that restaurant partners keep a vast majority of their hard-earned revenue.
               </motion.p>
             </div>
 
@@ -333,7 +333,7 @@ export default function LandingPage() {
               />
             </h3>
             <p className="text-lg md:text-xl text-slate-600 leading-relaxed font-light max-w-lg">
-              Unlike traditional delivery apps that squeeze restaurant margins, EatAyu works on a lifetime 0% commission model. We believe in creating a balanced, fair, and growth-oriented food ecosystem.
+              Unlike traditional delivery apps that squeeze restaurant margins, EatAyu works on a lifetime 25% commission model. We believe in creating a balanced, fair, and growth-oriented food ecosystem.
             </p>
             <div className="pt-2">
               <button
@@ -345,11 +345,11 @@ export default function LandingPage() {
             </div>
             <div className="pt-8 grid grid-cols-2 gap-8 border-t border-slate-200">
               <div>
-                <p className="text-4xl font-black text-slate-950">0%</p>
+                <p className="text-4xl font-black text-slate-950">25%</p>
                 <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mt-2">Lifetime Commission</p>
               </div>
               <div>
-                <p className="text-4xl font-black text-slate-950">100%</p>
+                <p className="text-4xl font-black text-slate-950">75%</p>
                 <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mt-2">Revenue Retained</p>
               </div>
             </div>
@@ -791,7 +791,7 @@ export default function LandingPage() {
                 <div>
                   <h4 className="font-bold text-slate-900 mb-1">Telangana Launchpad (Active)</h4>
                   <p className="text-sm text-slate-500 font-light">
-                    Our central headquarters and active delivery operations. Reclaiming restaurant revenues with 0% lifetime commission.
+                    Our central headquarters and active delivery operations. Reclaiming restaurant revenues with 25% lifetime commission.
                   </p>
                 </div>
               </div>
@@ -1159,9 +1159,9 @@ export default function LandingPage() {
                     <div className="w-14 h-14 rounded-2xl bg-[#FF6F3C]/10 flex items-center justify-center text-[#FF6F3C] mb-6 group-hover:scale-110 transition-transform">
                       <Percent className="w-7 h-7" />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Lifetime 0% Commission</h3>
+                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Lifetime 25% Commission</h3>
                     <p className="text-slate-600 font-light leading-relaxed">
-                      We operate on a lifetime 0% commission model. This ensures that our restaurant partners keep every hard-earned penny of their revenue, giving them the financial breathing room to grow, sustain jobs, and thrive in a digital economy.
+                      We operate on a lifetime 25% commission model. This ensures that our restaurant partners keep the vast majority of their revenue, giving them the financial breathing room to grow, sustain jobs, and thrive in a digital economy.
                     </p>
                   </div>
                   <div className="mt-8 pt-6 border-t border-slate-100 flex items-center gap-3">
@@ -1296,11 +1296,11 @@ export default function LandingPage() {
                   <Store className="w-4 h-4 text-[#FF6F3C]" /> Restaurant Empowerment Initiative
                 </span>
                 <h1 className="text-5xl md:text-7xl font-black leading-[1.05] tracking-tight text-slate-900">
-                  Earn Commission-Free. <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#FF6F3C] to-[#E02477] font-extrabold italic font-light">Reclaim 100% of Your Revenue.</span>
+                  Earn Commission-Friendly. <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#FF6F3C] to-[#E02477] font-extrabold italic font-light">Reclaim 75% of Your Revenue.</span>
                 </h1>
                 <p className="text-xl text-slate-700 font-light leading-relaxed max-w-3xl mx-auto">
-                  Say goodbye to standard 25%-30% commissions that wipe out restaurant profit margins. With EatAyu, you gain access to a powerful digital ordering system on a <strong>lifetime 0% commission model</strong>.
+                  Say goodbye to standard 25%-30% commissions that wipe out restaurant profit margins. With EatAyu, you gain access to a powerful digital ordering system on a <strong>lifetime 25% commission model</strong>.
                 </p>
               </div>
 
@@ -1357,7 +1357,7 @@ export default function LandingPage() {
                       <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-center">
                         <div className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">With EatAyu</div>
                         <div className="text-sm font-black text-[#FF6F3C] mt-0.5">₹18,450.00</div>
-                        <div className="text-[7px] text-slate-400 mt-0.5">0% Commission Paid</div>
+                        <div className="text-[7px] text-slate-400 mt-0.5">25% Commission Paid</div>
                       </div>
                       <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-center relative opacity-80">
                         <div className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Traditional Apps</div>
@@ -1383,9 +1383,9 @@ export default function LandingPage() {
                     <div className="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#FF6F3C] mb-6 group-hover:scale-110 transition-transform">
                       <Percent className="w-7 h-7" />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Lifetime 0% Commission</h3>
+                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Lifetime 25% Commission</h3>
                     <p className="text-slate-600 font-light leading-relaxed">
-                      Every order processed through our platform incurs exactly 0% commission. You keep 100% of your earnings to scale your business, hire culinary talents, and maintain operational margins.
+                      Every order processed through our platform incurs exactly 25% commission. You keep 75% of your earnings to scale your business, hire culinary talents, and maintain operational margins.
                     </p>
                   </div>
                   <div className="mt-8 pt-6 border-t border-slate-200/50 flex items-center gap-3">
