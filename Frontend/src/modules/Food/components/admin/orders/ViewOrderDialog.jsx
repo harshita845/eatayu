@@ -12,6 +12,7 @@ import { getTimelineStatusLabel, getTimelineRoleLabel } from "@food/utils/orderS
 import { computeDeliveryFeeGst, formatDeliveryFeeBreakdownSubtext, getDeliveryFeeTotal, resolveDeliveryFeeGst } from "@food/utils/deliveryFeeDisplay"
 import { getCartCompareItemTotal, getLineCompareUnitPrice } from "@food/utils/foodVariants"
 import { DualMoney } from "@food/components/user/FoodPriceDisplay"
+import AssignRiderModal from "./AssignRiderModal"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -53,6 +54,7 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
   // Full order detail (statusHistory + transaction split) fetched on open;
   // the `order` prop only carries the mapped list-row fields.
   const [detail, setDetail] = useState(null)
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const detailOrderId = order?._id || order?.orderMongoId || order?.id || null
 
   useEffect(() => {
@@ -240,7 +242,17 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
             <div className="space-y-4">
               {order.orderStatus && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Order Status</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Order Status</p>
+                    {(!order.deliveryPartnerId && order.orderStatus === 'Pending' || order.orderStatus === 'Processing' || order.orderStatus === 'Accepted') && (
+                      <button 
+                        onClick={() => setIsAssignModalOpen(true)}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                      >
+                        Force Assign Rider
+                      </button>
+                    )}
+                  </div>
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
                     {order.orderStatus}
                   </span>
@@ -729,6 +741,18 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
               </div>
             </div>
           )}
+          {/* Modals */}
+          {isAssignModalOpen && (
+            <AssignRiderModal
+              isOpen={isAssignModalOpen}
+              onClose={() => setIsAssignModalOpen(false)}
+              orderId={detailOrderId}
+              onAssignSuccess={() => {
+                onOpenChange(false); // Close dialog and ideally refresh list
+              }}
+            />
+          )}
+
         </div>
       </DialogContent>
     </Dialog>

@@ -140,6 +140,7 @@ const EditRestaurant = lazy(() => import("@food/pages/admin/restaurant/EditResta
 const AdminLogin = lazy(() => import("@food/pages/admin/auth/AdminLogin"));
 const AdminSignup = lazy(() => import("@food/pages/admin/auth/AdminSignup"));
 const AdminForgotPassword = lazy(() => import("@food/pages/admin/auth/AdminForgotPassword"));
+const MultiorderSetting = lazy(() => import("@food/pages/admin/settings/MultiorderSetting"));
 
 function FeatureSettingsRouteGuard() {
   const adminUser = getCurrentUser("admin");
@@ -307,6 +308,7 @@ export default function AdminRouter() {
 
             <Route path="delivery-boy-commission" element={<DeliveryBoyCommission />} />
             <Route path="delivery-cash-limit" element={<DeliveryCashLimit />} />
+            <Route path="multiorder-setting" element={<MultiorderSetting />} />
             <Route path="cash-limit-settlement" element={<CashLimitSettlement />} />
             <Route path="delivery-withdrawal" element={<DeliveryWithdrawal />} />
             <Route path="delivery-boy-wallet" element={<DeliveryBoyWallet />} />

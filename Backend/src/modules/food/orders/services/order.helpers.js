@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { FoodOrder } from '../models/order.model.js';
+import { FoodBusinessSettings } from '../../admin/models/businessSettings.model.js';
 import { logger } from '../../../../utils/logger.js';
 import { haversineKm as geoHaversineKm, parseGeoPoint } from '../../shared/geo.utils.js';
 import {
@@ -102,13 +103,16 @@ export async function partnerHasActiveDelivery(deliveryPartnerId) {
   if (!deliveryPartnerId) return false;
 
   const partnerId = new mongoose.Types.ObjectId(deliveryPartnerId);
-  const active = await FoodOrder.exists({
+  const activeCount = await FoodOrder.countDocuments({
     'dispatch.deliveryPartnerId': partnerId,
     'dispatch.status': 'accepted',
     orderStatus: { $nin: TERMINAL_ORDER_STATUSES },
   });
 
-  return Boolean(active);
+  const settings = await FoodBusinessSettings.findOne().lean();
+  const limit = settings?.deliveryBoyOrderLimit || 1;
+
+  return activeCount >= limit;
 }
 
 export async function getBusyDeliveryPartnerIds() {

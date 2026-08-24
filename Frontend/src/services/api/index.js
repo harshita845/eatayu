@@ -215,6 +215,8 @@ export const notificationAPI = {
 
 /** Admin API - new backend only (GET /auth/me, PATCH /auth/admin/profile, POST /auth/admin/change-password) */
 export const adminAPI = {
+  adminForceAssignOrder: (orderId, body) => 
+    apiClient.post(`/food/admin/orders/${orderId}/assign`, body, { contextModule: "admin" }),
   getSidebarBadges: () =>
     apiClient.get("/food/admin/sidebar-badges", { contextModule: "admin" }),
   login: (email, password) => authService.adminLogin(email, password),

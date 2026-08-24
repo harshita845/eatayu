@@ -1793,3 +1793,18 @@ export async function updateFeatureSetting(req, res, next) {
         next(error);
     }
 }
+
+export async function assignRiderToOrder(req, res, next) {
+    try {
+        const orderId = req.params?.orderId;
+        const { deliveryPartnerId } = req.body;
+        if (!deliveryPartnerId) {
+            return res.status(400).json({ success: false, message: 'Delivery Partner ID is required' });
+        }
+        
+        const data = await adminService.adminForceAssignOrder(orderId, deliveryPartnerId, req.user?._id || null);
+        res.status(200).json({ success: true, message: 'Rider assigned successfully', data });
+    } catch (error) {
+        next(error);
+    }
+}

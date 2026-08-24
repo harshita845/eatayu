@@ -56,7 +56,8 @@ const businessSettingsSchema = new mongoose.Schema(
             youtube: { type: String, default: '' },
             linkedin: { type: String, default: '' }
         },
-        orderAcceptanceTimeMinutes: { type: Number, default: 4, min: 1, max: 20 }
+        orderAcceptanceTimeMinutes: { type: Number, default: 4, min: 1, max: 20 },
+        deliveryBoyOrderLimit: { type: Number, default: 1, min: 1, max: 5 }
     },
     { timestamps: true }
 );

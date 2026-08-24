@@ -31,7 +31,7 @@ import { FoodAddon } from '../../restaurant/models/foodAddon.model.js';
 import { FoodSupportTicket } from '../../user/models/supportTicket.model.js';
 import { FoodRestaurantSupportTicket } from '../../restaurant/models/supportTicket.model.js';
 import { FoodOrder } from '../../orders/models/order.model.js';
-import { isCancelledOrder, CANCELLED_ORDER_STATUSES } from '../../orders/services/order.helpers.js';
+import { isCancelledOrder, CANCELLED_ORDER_STATUSES, pushStatusHistory } from '../../orders/services/order.helpers.js';
 import { FoodTransaction } from '../../orders/models/foodTransaction.model.js';
 import { FoodRestaurantWithdrawal } from '../../restaurant/models/foodRestaurantWithdrawal.model.js';
 import { FoodDeliveryWithdrawal } from '../../delivery/models/foodDeliveryWithdrawal.model.js';
@@ -6290,4 +6290,31 @@ export function getAdminPermissionCatalog() {
             actions: ADMIN_FULL_PERMISSIONS[section],
         })),
     };
+}
+
+export async function adminForceAssignOrder(orderId, deliveryPartnerId, adminId) {
+    const order = await FoodOrder.findById(orderId);
+    if (!order) throw new ValidationError('Order not found');
+
+    const partner = await FoodDeliveryPartner.findById(deliveryPartnerId).lean();
+    if (!partner) throw new ValidationError('Delivery partner not found');
+
+    order.dispatch = {
+        deliveryPartnerId: partner._id,
+        status: 'accepted',
+        assignedAt: new Date(),
+        acceptedAt: new Date(),
+    };
+    order.orderStatus = 'preparing'; // Or 'dispatching' depending on current state, assuming they haven't picked up yet.
+
+    pushStatusHistory(order, {
+        byRole: 'admin',
+        byId: adminId,
+        from: order.orderStatus,
+        to: order.orderStatus, // Assuming status doesn't change wildly, just assigned
+        note: `Admin manually assigned rider ${partner.firstName} ${partner.lastName}`
+    });
+
+    await order.save();
+    return order.lean();
 }

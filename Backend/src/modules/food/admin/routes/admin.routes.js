@@ -438,6 +438,11 @@ router.patch(
     adminController.deassignAndResendOrder
 );
 router.post(
+    '/orders/:orderId/assign',
+    requireAdminPermission('order_management', 'edit'),
+    adminController.assignRiderToOrder
+);
+router.post(
     '/orders/:orderId/resend-notification',
     requireAdminPermission('order_management', 'edit'),
     orderController.resendDeliveryNotificationAdminController
