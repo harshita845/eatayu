@@ -390,7 +390,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
     if (p.includes("orders/pending")) return badges.orders
     if (p.includes("offline-payments")) return badges.offlinePayments
     if (l.includes("support tickets")) return l.includes("delivery") ? badges.deliverySupportTickets : badges.userSupportTickets
-    if (l.includes("withdrawal")) return l.includes("delivery") ? badges.deliveryWithdrawals : badges.restaurantWithdrawals
+    if (l.includes("withdraw")) return l.includes("delivery") ? badges.deliveryWithdrawals : badges.restaurantWithdrawals
     if (l.includes("emergency help")) return badges.emergencyHelp
     if (l.includes("earning addon history")) return badges.earningAddons
     if (l.includes("safety emergency reports")) return badges.safetyReports
