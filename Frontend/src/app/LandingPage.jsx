@@ -58,6 +58,12 @@ export default function LandingPage() {
   const [submittingLead, setSubmittingLead] = useState(false);
   const [leadSuccess, setLeadSuccess] = useState(false);
   const [activeCraving, setActiveCraving] = useState(0);
+  const [socialMedia, setSocialMedia] = useState({
+    facebook: "https://www.facebook.com/share/1J8C8U4wnK/?mibextid=wwXIfr",
+    youtube: "https://youtube.com/@EatAyu?si=EzceIs61zBwz3SGO",
+    instagram: "https://www.instagram.com/EatAyu?igsh=MTA3eXJnMTRlMTF5Zw%3D%3D&utm_source=qr",
+    linkedin: "https://www.linkedin.com/company/EatAyu/"
+  });
 
   useEffect(() => {
     async function fetchSupportInfo() {
@@ -76,7 +82,25 @@ export default function LandingPage() {
         console.error("Error fetching support contact for footer:", err);
       }
     }
+    async function fetchBusinessSettings() {
+      try {
+        const response = await apiClient.get("/food/admin/business-settings/public");
+        const data = response?.data?.data || response?.data;
+        if (data?.socialMedia) {
+          setSocialMedia(prev => ({
+            ...prev,
+            ...(data.socialMedia.facebook && { facebook: data.socialMedia.facebook }),
+            ...(data.socialMedia.youtube && { youtube: data.socialMedia.youtube }),
+            ...(data.socialMedia.instagram && { instagram: data.socialMedia.instagram }),
+            ...(data.socialMedia.linkedin && { linkedin: data.socialMedia.linkedin }),
+          }));
+        }
+      } catch (err) {
+        console.error("Error fetching business settings for social media:", err);
+      }
+    }
     fetchSupportInfo();
+    fetchBusinessSettings();
   }, []);
 
   const [mapRotate, setMapRotate] = useState({ x: 0, y: 0 });
@@ -1016,11 +1040,11 @@ export default function LandingPage() {
               </p>
               <div className="flex gap-4">
                 {[
-                  { Icon: Facebook, url: "https://www.facebook.com/share/1J8C8U4wnK/?mibextid=wwXIfr" },
-                  { Icon: Youtube, url: "https://youtube.com/@EatAyu?si=EzceIs61zBwz3SGO" },
-                  { Icon: Instagram, url: "https://www.instagram.com/EatAyu?igsh=MTA3eXJnMTRlMTF5Zw%3D%3D&utm_source=qr" },
-                  { Icon: Linkedin, url: "https://www.linkedin.com/company/EatAyu/" }
-                ].map(({ Icon, url }, i) => (
+                  { Icon: Facebook, url: socialMedia.facebook },
+                  { Icon: Youtube, url: socialMedia.youtube },
+                  { Icon: Instagram, url: socialMedia.instagram },
+                  { Icon: Linkedin, url: socialMedia.linkedin }
+                ].filter(item => item.url).map(({ Icon, url }, i) => (
                   <a
                     key={i}
                     href={url}

@@ -51,6 +51,12 @@ export default function BusinessSetup() {
     state: "",
     pincode: "",
     region: "",
+    socialMedia: {
+      facebook: "",
+      instagram: "",
+      youtube: "",
+      linkedin: "",
+    },
   });
 
   // Fetch business settings on mount
@@ -74,6 +80,12 @@ export default function BusinessSetup() {
           state: settings.state || "",
           pincode: settings.pincode || "",
           region: settings.region || "India",
+          socialMedia: {
+            facebook: settings.socialMedia?.facebook || "",
+            instagram: settings.socialMedia?.instagram || "",
+            youtube: settings.socialMedia?.youtube || "",
+            linkedin: settings.socialMedia?.linkedin || "",
+          },
         });
 
         // Set logo and favicon previews if they exist
@@ -160,6 +172,12 @@ export default function BusinessSetup() {
         state: formData.state.trim(),
         pincode: formData.pincode.trim(),
         region: formData.region,
+        socialMedia: {
+          facebook: formData.socialMedia.facebook.trim(),
+          instagram: formData.socialMedia.instagram.trim(),
+          youtube: formData.socialMedia.youtube.trim(),
+          linkedin: formData.socialMedia.linkedin.trim(),
+        },
       };
 
       // Prepare files
@@ -776,6 +794,75 @@ export default function BusinessSetup() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Social Media Links */}
+          <div className="px-4 py-4 border-t border-slate-100">
+            <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <span>Social Media Links</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Facebook</label>
+                <input
+                  type="url"
+                  placeholder="https://facebook.com/..."
+                  value={formData.socialMedia.facebook}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      socialMedia: { ...prev.socialMedia, facebook: e.target.value },
+                    }))
+                  }
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Instagram</label>
+                <input
+                  type="url"
+                  placeholder="https://instagram.com/..."
+                  value={formData.socialMedia.instagram}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      socialMedia: { ...prev.socialMedia, instagram: e.target.value },
+                    }))
+                  }
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">YouTube</label>
+                <input
+                  type="url"
+                  placeholder="https://youtube.com/..."
+                  value={formData.socialMedia.youtube}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      socialMedia: { ...prev.socialMedia, youtube: e.target.value },
+                    }))
+                  }
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">LinkedIn</label>
+                <input
+                  type="url"
+                  placeholder="https://linkedin.com/..."
+                  value={formData.socialMedia.linkedin}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      socialMedia: { ...prev.socialMedia, linkedin: e.target.value },
+                    }))
+                  }
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
             </div>
           </div>

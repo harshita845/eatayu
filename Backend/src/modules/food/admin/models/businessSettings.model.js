@@ -50,6 +50,12 @@ const businessSettingsSchema = new mongoose.Schema(
                 fontFamily: { type: String, default: 'Poppins' }
             }
         },
+        socialMedia: {
+            facebook: { type: String, default: '' },
+            instagram: { type: String, default: '' },
+            youtube: { type: String, default: '' },
+            linkedin: { type: String, default: '' }
+        },
         orderAcceptanceTimeMinutes: { type: Number, default: 4, min: 1, max: 20 }
     },
     { timestamps: true }
