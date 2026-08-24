@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Search, Plus, Edit, Trash2, ToggleLeft, ToggleRight, Settings, ArrowUpDown, Check, Columns, Package } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@food/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@food/components/ui/dialog"
@@ -615,7 +615,7 @@ export default function EarningAddon() {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-md shadow-emerald-500/30 transition-all"
+                className="px-5 py-2 text-sm font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/30 transition-all"
               >
                 {isEditMode ? "Update" : "Create"} Offer
               </button>
@@ -670,7 +670,7 @@ export default function EarningAddon() {
               </button>
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30 transition-all"
+                className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 transition-all"
               >
                 Apply
               </button>
