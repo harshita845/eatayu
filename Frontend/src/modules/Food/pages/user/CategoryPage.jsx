@@ -126,7 +126,7 @@ export default function CategoryPage() {
     let cancelled = false
     const categorySlug = String(selectedCategory || category || "all").toLowerCase()
 
-    if (!zoneId || categorySlug === "all") {
+    if (!zoneId) {
       setCategoryFoodsData([])
       setLoadingCategoryFoods(false)
       return () => {
@@ -440,12 +440,30 @@ export default function CategoryPage() {
 
     if (deferredSearchQuery.trim()) {
       const query = deferredSearchQuery.toLowerCase()
-      nextRows = nextRows.filter((row) =>
-        row.name?.toLowerCase().includes(query) ||
-        row.cuisine?.toLowerCase().includes(query) ||
-        row.featuredDish?.toLowerCase().includes(query) ||
-        row.categoryDishName?.toLowerCase().includes(query)
-      )
+      nextRows = nextRows.filter((row) => {
+        // Direct match on restaurant fields or dish card fields
+        if (
+          row.name?.toLowerCase().includes(query) ||
+          row.cuisine?.toLowerCase().includes(query) ||
+          row.featuredDish?.toLowerCase().includes(query) ||
+          row.categoryDishName?.toLowerCase().includes(query)
+        ) {
+          return true;
+        }
+
+        // Expanded match against all foods loaded for this category/zone
+        if (Array.isArray(categoryFoodsData)) {
+          const rowId = String(row.restaurantId || row.id || row.mongoId);
+          const hasMatchingFood = categoryFoodsData.some((food) => {
+            const matchesSearch = food.name?.toLowerCase().includes(query) || food.categoryName?.toLowerCase().includes(query);
+            const belongsToRow = String(food.restaurantId) === rowId;
+            return matchesSearch && belongsToRow;
+          });
+          if (hasMatchingFood) return true;
+        }
+
+        return false;
+      })
     }
 
     if (sortBy) {
@@ -548,10 +566,8 @@ export default function CategoryPage() {
     if (Array.isArray(fromAdmin) && fromAdmin.length > 0) {
       keywords = [...fromAdmin]
     } else {
-      // Fallback: derive keywords from the slug in URL (e.g. "samosha" -> ["samosha"])
-      // This prevents "no data" when admin categories don't include the slug.
-      const parts = raw.split(/[\s-]+/).filter(Boolean)
-      keywords = parts.length > 0 ? Array.from(new Set([raw, ...parts])) : []
+      const normalized = raw.replace(/&/g, ' and ').replace(/-/g, ' ').trim();
+      keywords = [raw, normalized]
     }
 
     // Add common variations/misspellings (e.g. "samosha" vs "samosa")
@@ -560,7 +576,7 @@ export default function CategoryPage() {
       if (!keywords.includes('samosha')) keywords.push('samosha')
     }
 
-    return keywords
+    return Array.from(new Set(keywords))
   }
 
   // Fetch restaurants from API

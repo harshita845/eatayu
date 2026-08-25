@@ -213,9 +213,12 @@ const RestaurantImageCarousel = React.memo(
       const hasRecommended = Array.isArray(restaurant.recommendedItems) && restaurant.recommendedItems.length > 0;
 
       if (hasRecommended) {
-        return restaurant.recommendedItems
-          .filter(item => item && item.image)
+        const recImages = restaurant.recommendedItems
+          .filter(item => item && typeof item.image === 'string' && item.image.trim() !== '')
           .map(item => withCacheBuster(item.image));
+        if (recImages.length > 0) {
+          return recImages;
+        }
       }
 
       const sourceImages =
@@ -2526,12 +2529,9 @@ export default function Home() {
 
         const categories = Array.from(categoryMap.values())
           .sort((a, b) => a.name.localeCompare(b.name))
-          .map((category, index) => ({
+          .map((category) => ({
             ...category,
-            image:
-              category.image ||
-              foodImages[index % foodImages.length] ||
-              foodImages[0],
+            image: category.image || "",
           }));
 
         setMenuCategories(categories);

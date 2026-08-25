@@ -11,8 +11,7 @@ const buildCategoryKeywords = (categorySlug) => {
     if (!raw || raw === 'all') return [];
 
     const normalized = raw.replace(/&/g, ' and ').replace(/-/g, ' ').trim();
-    const words = normalized.split(/\s+/).filter(Boolean);
-    return [...new Set([raw, normalized, ...words])];
+    return [...new Set([raw, normalized])];
 };
 
 const isEatAyu99Price = (price) => String(price ?? '').includes('99');
