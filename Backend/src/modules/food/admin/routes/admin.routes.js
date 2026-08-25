@@ -300,6 +300,7 @@ router.patch('/business-settings', upload.fields([
     { name: 'deliveryLogo', maxCount: 1 },
     { name: 'deliveryFavicon', maxCount: 1 }
 ]), businessSettingsController.updateBusinessSettings);
+router.patch('/business-settings/multiorder', businessSettingsController.updateMultiorderSettings);
 router.get('/power-scanning', businessSettingsController.getPowerScanningSettings);
 router.patch('/power-scanning', businessSettingsController.updatePowerScanningSettings);
 

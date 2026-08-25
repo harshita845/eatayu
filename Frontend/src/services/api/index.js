@@ -1221,6 +1221,10 @@ export const adminAPI = {
       contextModule: "admin",
     });
   },
+  updateMultiorderSettings: (body) => 
+    apiClient.patch("/food/admin/business-settings/multiorder", body, {
+      contextModule: "admin",
+    }),
 };
 
 /** Restaurant API - OTP login via new backend; no email/password. */

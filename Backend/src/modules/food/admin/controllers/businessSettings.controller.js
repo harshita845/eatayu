@@ -290,3 +290,21 @@ export async function updateBusinessSettings(req, res, next) {
         next(error);
     }
 }
+
+export async function updateMultiorderSettings(req, res, next) {
+    try {
+        const { deliveryBoyOrderLimit } = req.body;
+        if (!deliveryBoyOrderLimit || deliveryBoyOrderLimit < 1 || deliveryBoyOrderLimit > 5) {
+             return res.status(400).json({ success: false, message: 'Order limit must be between 1 and 5' });
+        }
+        let settings = await FoodBusinessSettings.findOne();
+        if (!settings) {
+            settings = new FoodBusinessSettings({ companyName: 'EatAyu', email: 'admin@EatAyu.com' });
+        }
+        settings.deliveryBoyOrderLimit = deliveryBoyOrderLimit;
+        await settings.save();
+        return sendResponse(res, 200, 'Multiorder settings updated successfully', settings);
+    } catch (error) {
+        next(error);
+    }
+}

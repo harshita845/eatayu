@@ -39,7 +39,7 @@ export default function MultiorderSetting() {
         
         setSaving(true);
         try {
-            const res = await adminAPI.updateBusinessSettings({
+            const res = await adminAPI.updateMultiorderSettings({
                 deliveryBoyOrderLimit: numLimit
             });
             if (res.data?.success) {

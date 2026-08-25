@@ -24,7 +24,8 @@ export default function AssignRiderModal({ isOpen, onClose, orderId, onAssignSuc
             // Assume we can fetch all active riders from this API
             const res = await adminAPI.getDeliveryPartners({ isActive: true });
             if (res.data?.success) {
-                setRiders(res.data.data?.docs || res.data.data || []);
+                const data = res.data.data || {};
+                setRiders(data.deliveryPartners || data.docs || (Array.isArray(data) ? data : []));
             }
         } catch (error) {
             console.error("Error fetching riders:", error);
@@ -84,7 +85,7 @@ export default function AssignRiderModal({ isOpen, onClose, orderId, onAssignSuc
                                 <option value="">-- Select a rider --</option>
                                 {riders.map((rider) => (
                                     <option key={rider._id} value={rider._id}>
-                                        {rider.firstName} {rider.lastName} ({rider.phone})
+                                        {rider.name} ({rider.phone})
                                     </option>
                                 ))}
                             </select>
