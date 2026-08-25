@@ -15,8 +15,28 @@ import {
 export const registerDeliveryPartnerController = async (req, res, next) => {
     try {
         const validated = validateDeliveryRegisterDto(req.body);
-        const partner = await registerDeliveryPartner(validated, req.files);
-        return sendResponse(res, 201, 'Delivery partner registered successfully', partner);
+        const { partner, registrationState } = await registerDeliveryPartner(validated, req.files);
+        return sendResponse(res, 201, 'Delivery partner registered successfully', { partner, registrationState });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const createJoiningFeeOrderController = async (req, res, next) => {
+    try {
+        const { createJoiningFeeOrder } = await import('../services/delivery.service.js');
+        const data = await createJoiningFeeOrder(req.body);
+        return sendResponse(res, 201, 'Razorpay order created successfully', data);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const verifyJoiningFeePaymentController = async (req, res, next) => {
+    try {
+        const { verifyJoiningFeePayment } = await import('../services/delivery.service.js');
+        const result = await verifyJoiningFeePayment(req.body);
+        return sendResponse(res, 200, 'Joining fee payment verified', result);
     } catch (error) {
         next(error);
     }

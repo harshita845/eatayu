@@ -20,6 +20,7 @@ import { getRestaurantSubscriptionHistory } from '../services/subscriptionHistor
 import { validateRestaurantRegisterDto } from '../validators/restaurant.validator.js';
 import { sendResponse, sendError } from '../../../../utils/response.js';
 import { FoodUnregisteredRestaurant } from '../models/unregisteredRestaurant.model.js';
+import { FoodRestaurant } from '../models/restaurant.model.js';
 
 
 export const uploadRestaurantAttachmentController = async (req, res, next) => {
@@ -209,3 +210,34 @@ export const registerUnregisteredRestaurantController = async (req, res, next) =
         next(error);
     }
 };
+
+
+
+export const checkRestaurantStatusByPhoneController = async (req, res, next) => {
+    try {
+        const { phone } = req.params;
+        const digits = String(phone || '').replace(/\D/g, '');
+        const last10 = digits.slice(-10);
+        const phoneCandidates = [phone, digits, last10].filter(Boolean);
+        const phoneOrFields = (field) => [
+            { [field]: { $in: phoneCandidates } },
+            ...(last10 ? [{ [field]: { $regex: new RegExp(last10 + '$') } }] : [])
+        ];
+
+        const restaurant = await FoodRestaurant.findOne({
+            $or: [
+                ...phoneOrFields('ownerPhone'),
+                ...phoneOrFields('primaryContactNumber')
+            ]
+        }).select('status restaurantName ownerPhone').lean();
+
+        if (!restaurant) {
+            return sendResponse(res, 404, 'Restaurant not found', null);
+        }
+
+        return sendResponse(res, 200, 'Status fetched successfully', { status: restaurant.status });
+    } catch (error) {
+        next(error);
+    }
+};
+

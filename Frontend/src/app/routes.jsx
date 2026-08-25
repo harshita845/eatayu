@@ -11,6 +11,11 @@ const FoodApp = lazy(() => import('../modules/Food/routes'))
 const AuthApp = lazy(() => import('../modules/auth/routes'))
 import ProtectedRoute from '@food/components/ProtectedRoute'
 
+const PrivacyStandalone = lazy(() => import('../modules/Food/pages/user/profile/Privacy'))
+const TermsStandalone = lazy(() => import('../modules/Food/pages/user/profile/Terms'))
+const AboutStandalone = lazy(() => import('../modules/Food/pages/user/profile/About'))
+const HelpContentStandalone = lazy(() => import('../modules/Food/pages/user/profile/CMSHelpSupport'))
+
 const PageLoader = () => <AppShellSkeleton />
 
 /**
@@ -92,6 +97,10 @@ const AppRoutes = () => {
     <Routes>
       {/* Root → Master Landing Page */}
       <Route path="/" element={<RootEntryRoute />} />
+      <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyStandalone /></Suspense>} />
+      <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsStandalone /></Suspense>} />
+      <Route path="/about" element={<Suspense fallback={<PageLoader />}><AboutStandalone /></Suspense>} />
+      <Route path="/help-content" element={<Suspense fallback={<PageLoader />}><HelpContentStandalone /></Suspense>} />
 
       {/* Auth Module */}
 

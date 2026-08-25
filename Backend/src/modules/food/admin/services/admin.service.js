@@ -2237,6 +2237,9 @@ export async function upsertFeeSettings(body) {
         if (body.gstRate === null) $unset.gstRate = 1;
         else if (body.gstRate !== undefined) $set.gstRate = body.gstRate;
 
+        if (body.deliveryBoyJoiningFee === null) $unset.deliveryBoyJoiningFee = 1;
+        else if (body.deliveryBoyJoiningFee !== undefined) $set.deliveryBoyJoiningFee = body.deliveryBoyJoiningFee;
+
         if (body.isActive !== undefined) $set.isActive = body.isActive;
 
         const update = {};
@@ -3159,7 +3162,7 @@ export async function updateRestaurantStatus(id, body = {}) {
     const rejectedAt = status === 'rejected' ? new Date() : undefined;
     const rejectionReason = status === 'rejected' ? 'Disabled by admin' : undefined;
 
-    return FoodRestaurant.findByIdAndUpdate(
+    const updated = await FoodRestaurant.findByIdAndUpdate(
         id,
         {
             $set: {
@@ -3171,6 +3174,30 @@ export async function updateRestaurantStatus(id, body = {}) {
         },
         { new: true, runValidators: false }
     ).lean();
+
+    if (updated && status === 'approved') {
+        try {
+            // Auto-create a default 25% commission on approval
+            await FoodRestaurantCommission.findOneAndUpdate(
+                { restaurantId: id },
+                {
+                    $setOnInsert: {
+                        restaurantId: id,
+                        defaultCommission: {
+                            type: 'percentage',
+                            value: 25
+                        },
+                        status: true
+                    }
+                },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
+        } catch (commErr) {
+            console.error('Failed to auto-create commission on status update:', commErr);
+        }
+    }
+
+    return updated;
 }
 
 export async function updateRestaurantLocation(id, body = {}) {
@@ -4210,6 +4237,26 @@ export async function approveRestaurant(id) {
     ).lean();
 
     if (updated) {
+        try {
+            // Auto-create a default 25% commission on approval
+            await FoodRestaurantCommission.findOneAndUpdate(
+                { restaurantId: id },
+                {
+                    $setOnInsert: {
+                        restaurantId: id,
+                        defaultCommission: {
+                            type: 'percentage',
+                            value: 25
+                        },
+                        status: true
+                    }
+                },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
+        } catch (commErr) {
+            console.error('Failed to auto-create commission on approval:', commErr);
+        }
+
         try {
             const { notifyOwnersSafely } = await import('../../../../core/notifications/firebase.service.js');
             await notifyOwnersSafely(

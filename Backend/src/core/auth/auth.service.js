@@ -447,6 +447,14 @@ export const verifyDeliveryOtpAndLogin = async (phone, otp, fcmToken, platform) 
   }
 
   if (deliveryPartner.status && deliveryPartner.status !== "approved") {
+    if (deliveryPartner.status === "payment_pending") {
+      return {
+        paymentRequired: true,
+        phone: normalized,
+        message: "Joining fee payment is pending."
+      };
+    }
+
     const isRejected = deliveryPartner.status === "rejected";
     return {
       pendingApproval: true,

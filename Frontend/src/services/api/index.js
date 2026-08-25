@@ -1229,6 +1229,7 @@ export const restaurantAPI = {
     apiClient.post("/food/restaurant/unregistered", data),
   deleteAccount: () => apiClient.delete('/food/restaurant/profile/account', { contextModule: 'restaurant' }),
   getWallet: () => apiClient.get('/food/restaurant/finance', { contextModule: 'restaurant' }),
+  checkStatus: (phone) => apiClient.get('/food/restaurant/public/status/' + encodeURIComponent(phone)),
   sendOTP: (phone, _purpose = "login") => {
     if (!phone) return Promise.reject(new Error("Phone is required"));
     return authService.requestRestaurantOtp(phone);
@@ -1240,8 +1241,8 @@ export const restaurantAPI = {
   },
   getMe: () => authService.getMe("restaurant"),
   /** Restaurant dashboard: always fetch fresh profile data. */
-  getCurrentRestaurant: () =>
-    apiClient.get("/food/restaurant/current", { contextModule: "restaurant" }),
+  getCurrentRestaurant: (params = {}) =>
+    apiClient.get("/food/restaurant/current", { contextModule: "restaurant", params }),
   /** Finance dashboard for `hub-finance`. */
   getFinance: (params = {}) =>
     apiClient.get("/food/restaurant/finance", {
@@ -2046,6 +2047,8 @@ export const deliveryAPI = {
     }
     return apiClient.post("/food/delivery/register", formData);
   },
+  createJoiningFeeOrder: (data) => apiClient.post("/food/delivery/registration/payment/create-order", data),
+  verifyJoiningFeePayment: (data) => apiClient.post("/food/delivery/registration/payment/verify", data),
   /** GET /food/delivery/check-vehicle/:number - check if vehicle number is unique. */
   checkVehicleAvailability: (number) => apiClient.get(`/food/delivery/check-vehicle/${number}`),
   /** PATCH /food/delivery/profile - complete profile after OTP (Bearer token required). */

@@ -243,6 +243,85 @@ export default function SignupStep2() {
   const documentTypes = ["profilePhoto", "aadharPhoto", "panPhoto", "drivingLicensePhoto"]
   const isMountedRef = useRef(true)
 
+  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false)
+  const [razorpayConfig, setRazorpayConfig] = useState(null)
+
+  const handlePaymentSubmit = async () => {
+    if (!razorpayConfig) return;
+    setIsSubmitting(true);
+    const { initRazorpayPayment } = await import("@food/utils/razorpay");
+    const isCompleteProfile = sessionStorage.getItem("deliveryNeedsRegistration") === "true";
+    const raw = sessionStorage.getItem("deliverySignupDetails");
+    const details = JSON.parse(raw);
+    
+    await initRazorpayPayment({
+      key: razorpayConfig.key,
+      amount: razorpayConfig.amount,
+      currency: razorpayConfig.currency,
+      order_id: razorpayConfig.orderId,
+      name: "EatAyu Delivery Partner",
+      description: "Joining Fee",
+      prefill: {
+        name: details.name || "",
+        contact: String(details.phone).replace(/\D/g, "").slice(0, 15),
+        email: details.email || ""
+      },
+      handler: async (paymentResponse) => {
+        toast.loading("Verifying payment...");
+        try {
+          await deliveryAPI.verifyJoiningFeePayment({
+            phone: String(details.phone).replace(/\D/g, "").slice(0, 15),
+            razorpayOrderId: paymentResponse.razorpay_order_id,
+            razorpayPaymentId: paymentResponse.razorpay_payment_id,
+            razorpaySignature: paymentResponse.razorpay_signature
+          });
+          toast.dismiss();
+          
+          sessionStorage.removeItem("deliverySignupDetails")
+          sessionStorage.removeItem("deliverySignupDocs")
+          sessionStorage.removeItem("deliveryAuthData")
+          clearOnboardingState()
+          void cleanupDeliveryOnboardingIndexedDb().catch((error) => {
+            debugWarn("Failed to cleanup onboarding IndexedDB", error)
+          })
+
+          if (isCompleteProfile) {
+            sessionStorage.removeItem("deliveryNeedsRegistration")
+            clearModuleAuth("delivery")
+            
+            sessionStorage.setItem("deliveryAuthData", JSON.stringify({
+              phone: details.phone,
+              pendingApproval: true,
+              pendingMessage: "Payment successful. Waiting for admin approval."
+            }));
+            
+            navigate("/food/delivery/otp", { replace: true })
+          } else {
+            const targetPath = isModuleAuthenticated("delivery")
+              ? "/food/delivery"
+              : "/food/delivery/login"
+            toast.success("Profile submitted. Waiting for admin approval.")
+            navigate(targetPath, { replace: true })
+          }
+        } catch (verifyError) {
+          toast.dismiss();
+          toast.error("Payment verification failed. Please contact support.");
+          setIsSubmitting(false);
+        }
+      },
+      onClose: () => {
+        toast.dismiss();
+        toast.error("Payment cancelled");
+        setIsSubmitting(false);
+      },
+      onError: (error) => {
+        toast.dismiss();
+        toast.error(error.description || "Payment failed");
+        setIsSubmitting(false);
+      }
+    });
+  }
+
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" })
     document.documentElement.scrollTop = 0
@@ -472,6 +551,33 @@ export default function SignupStep2() {
         : await deliveryAPI.completeProfile(formData)
 
       if (response?.data?.success) {
+        const { partner, registrationState } = response.data.data;
+
+        if (registrationState === 'PAYMENT_REQUIRED') {
+          // Initialize Razorpay flow for joining fee
+          setIsSubmitting(true);
+          toast.loading("Initializing payment...");
+          
+          try {
+            const orderRes = await deliveryAPI.createJoiningFeeOrder({ phone: String(details.phone).replace(/\D/g, "").slice(0, 15) });
+            const razorpayData = orderRes.data.data;
+            toast.dismiss();
+            
+            // Store Razorpay data and show payment prompt instead of executing immediately
+            setRazorpayConfig(razorpayData);
+            setShowPaymentPrompt(true);
+            setIsSubmitting(false);
+          } catch (orderError) {
+            toast.dismiss();
+            toast.error("Failed to initialize payment. Try again.");
+            setIsSubmitting(false);
+          }
+          return;
+        }
+
+
+
+        // PENDING_APPROVAL or other states
         sessionStorage.removeItem("deliverySignupDetails")
         sessionStorage.removeItem("deliverySignupDocs")
         sessionStorage.removeItem("deliveryAuthData")
@@ -482,8 +588,14 @@ export default function SignupStep2() {
         if (isCompleteProfile) {
           sessionStorage.removeItem("deliveryNeedsRegistration")
           clearModuleAuth("delivery")
-          toast.success("Registration successful. Please login with OTP.")
-          navigateWithFallback("/food/delivery/login")
+          
+          sessionStorage.setItem("deliveryAuthData", JSON.stringify({
+            phone: details.phone,
+            pendingApproval: true,
+            pendingMessage: "Registration successful. Waiting for admin approval."
+          }));
+          
+          navigateWithFallback("/food/delivery/otp")
         } else {
           const targetPath = isModuleAuthenticated("delivery")
             ? "/food/delivery"
@@ -497,7 +609,6 @@ export default function SignupStep2() {
       debugError("Error submitting registration:", error)
       const message = getFriendlyRegistrationError(error)
       toast.error(message)
-    } finally {
       setIsSubmitting(false)
     }
   }
@@ -617,6 +728,47 @@ export default function SignupStep2() {
     return Boolean(getPreviewSrc(docType))
   })
   const disableSubmit = isSubmitting || isAnyUploading || !hasAllDocuments || !hasAllPreviews
+
+  if (showPaymentPrompt && razorpayConfig) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex flex-col">
+        <div className="bg-white px-4 py-3 flex items-center gap-4 border-b border-gray-200">
+          <button onClick={() => setShowPaymentPrompt(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-medium">Joining Fee</h1>
+        </div>
+        <div className="flex-1 p-6 flex flex-col items-center justify-center">
+          <div className="bg-white rounded-2xl p-6 shadow-sm w-full max-w-sm text-center">
+            <div className="w-16 h-16 bg-[#EB590E]/10 text-[#EB590E] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Registration Complete</h2>
+            <p className="text-gray-600 mb-6">To activate your delivery partner account, please pay the one-time joining fee.</p>
+            
+            <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-600">Joining Fee</span>
+                <span className="font-medium">₹{razorpayConfig.amount / 100}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-2 mt-2">
+                <span>Total Amount to Pay</span>
+                <span className="font-bold text-gray-900">₹{razorpayConfig.amount / 100}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handlePaymentSubmit}
+              disabled={isSubmitting}
+              className="w-full py-4 rounded-xl font-bold text-white bg-[#00B761] hover:bg-[#00A055] transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? "Processing..." : "Pay Securely"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">

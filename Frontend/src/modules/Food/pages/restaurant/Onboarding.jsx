@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import { Input } from "@food/components/ui/input"
 import { Button } from "@food/components/ui/button"
 import { Label } from "@food/components/ui/label"
-import { Image as ImageIcon, Upload, Clock, Calendar as CalendarIcon, BadgeCheck, Wallet, Info, X } from "lucide-react"
+import { Image as ImageIcon, Upload, Clock, Calendar as CalendarIcon, BadgeCheck, Wallet, Info, X, Percent } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@food/components/ui/popover"
 import { Calendar } from "@food/components/ui/calendar"
 import {
@@ -1171,17 +1171,26 @@ export default function RestaurantOnboarding() {
     const saveFiles = async () => {
       if (step2.profileImage && isUploadableFile(step2.profileImage)) {
         await saveFileToDB("profileImage", step2.profileImage)
-      } else if (!step2.profileImage) {
+      } else if (!step2.profileImage || typeof step2.profileImage === 'string') {
         await deleteFileFromDB("profileImage")
       }
+
       if (step3.panImage && isUploadableFile(step3.panImage)) {
         await saveFileToDB("panImage", step3.panImage)
+      } else if (!step3.panImage || typeof step3.panImage === 'string') {
+        await deleteFileFromDB("panImage")
       }
+
       if (step3.gstImage && isUploadableFile(step3.gstImage)) {
         await saveFileToDB("gstImage", step3.gstImage)
+      } else if (!step3.gstImage || typeof step3.gstImage === 'string') {
+        await deleteFileFromDB("gstImage")
       }
+
       if (step3.fssaiImage && isUploadableFile(step3.fssaiImage)) {
         await saveFileToDB("fssaiImage", step3.fssaiImage)
+      } else if (!step3.fssaiImage || typeof step3.fssaiImage === 'string') {
+        await deleteFileFromDB("fssaiImage")
       }
 
       await persistMenuImagesToDB(step2.menuImages || [])
@@ -1709,6 +1718,7 @@ export default function RestaurantOnboarding() {
       toast.dismiss(loadingToast)
       clearOnboardingFromLocalStorage()
       clearOnboardingFileCache()
+      await clearAllFilesFromDB()
       try {
         localStorage.setItem('restaurant_pendingPhone', normalizePhoneDigits(step1.ownerPhone))
       } catch { }
@@ -3292,6 +3302,78 @@ export default function RestaurantOnboarding() {
           </div>
         </section>
       )}
+
+      {/* Platform Commission Section — always shown, informational */}
+      <section className={`${ONBOARDING_SECTION_FULL} border-[#EB590E]/20`}>
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EB590E]/10">
+            <Percent className="h-5 w-5 text-[#EB590E]" />
+          </div>
+          <div className="w-full">
+            <h3 className={ONBOARDING_SECTION_TITLE}>Platform Commission — Automatically Applied</h3>
+            <p className={`${ONBOARDING_SECTION_DESC} mt-1`}>
+              EatAyu operates on a transparent, fixed commission model. Your commission rate is automatically configured on account approval — no action required from you.
+            </p>
+
+            {/* Commission display */}
+            <div className="mt-4 rounded-xl border border-[#EB590E]/20 bg-[#EB590E]/5 px-5 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Platform Commission</p>
+                  <p className="mt-0.5 text-xs text-gray-500">Applied on every order value (incl. taxes)</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl font-black text-[#EB590E]">25%</span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[#EB590E]/20 bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#EB590E]">
+                    Auto-set
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3 border-t border-[#EB590E]/15 pt-3 space-y-1.5">
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <BadgeCheck className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                  <span>You keep <strong>75%</strong> of every order's revenue</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <BadgeCheck className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                  <span>No monthly fee, no hidden charges — only a flat 25% per order</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <BadgeCheck className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                  <span>Commission is automatically configured when admin approves your account</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <BadgeCheck className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                  <span>Daily settlements directly to your bank account</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Example calculation */}
+            <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Example for ₹1,000 order</p>
+              <div className="space-y-1.5 text-sm">
+                <div className="flex justify-between text-gray-600">
+                  <span>Order value</span>
+                  <span className="font-medium">₹1,000</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Platform commission (25%)</span>
+                  <span className="font-medium text-red-500">− ₹250</span>
+                </div>
+                <div className="flex justify-between border-t border-dashed border-gray-200 pt-1.5 font-semibold text-gray-900">
+                  <span>Your earnings</span>
+                  <span className="text-green-600">₹750</span>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-gray-400 italic">
+              * The 25% commission rate is fixed for all restaurants on the platform. It will be automatically applied to your account once your application is approved by the admin.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   )
 

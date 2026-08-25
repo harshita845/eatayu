@@ -3,6 +3,7 @@ import { FoodDeliveryPartner } from '../models/deliveryPartner.model.js';
 import { DeliverySupportTicket } from '../models/supportTicket.model.js';
 import { DeliveryBonusTransaction } from '../../admin/models/deliveryBonusTransaction.model.js';
 import { FoodEarningAddon } from '../../admin/models/earningAddon.model.js';
+import { FoodFeeSettings } from '../../admin/models/feeSettings.model.js';
 import { FoodOrder } from '../../orders/models/order.model.js';
 import { uploadImageBuffer } from '../../../../services/cloudinary.service.js';
 import { ValidationError } from '../../../../core/auth/errors.js';
@@ -111,6 +112,17 @@ export const registerDeliveryPartner = async (payload, files) => {
         }
     }
 
+    const feeSettingsDoc = await FoodFeeSettings.findOne().sort({ createdAt: -1 }).lean();
+    const joiningFee = feeSettingsDoc?.deliveryBoyJoiningFee || 0;
+    
+    let initialStatus = 'pending';
+    let isPaymentPending = false;
+    
+    if (joiningFee > 0) {
+        initialStatus = 'payment_pending';
+        isPaymentPending = true;
+    }
+
     const partner = await FoodDeliveryPartner.create({
         name,
         phone,
@@ -125,7 +137,9 @@ export const registerDeliveryPartner = async (payload, files) => {
         drivingLicenseNumber,
         panNumber,
         aadharNumber,
-        status: 'pending',
+        status: initialStatus,
+        joiningFeeAmount: joiningFee,
+        joiningFeePaid: !isPaymentPending,
         ...images
     });
 
@@ -165,7 +179,10 @@ export const registerDeliveryPartner = async (payload, files) => {
         console.error('Failed to notify admins of new delivery partner registration:', e);
     }
 
-    return partner.toObject();
+    return {
+        partner: partner.toObject(),
+        registrationState: isPaymentPending ? 'PAYMENT_REQUIRED' : 'PENDING_APPROVAL'
+    };
 };
 
 export const updateDeliveryPartnerProfile = async (userId, payload, files) => {
@@ -924,4 +941,63 @@ export const deleteDeliveryPartnerAccount = async (partnerId) => {
     await FoodDeliveryPartner.findByIdAndDelete(partnerId);
 
     return { success: true };
+};
+
+export const createJoiningFeeOrder = async (payload) => {
+    const { phone } = payload;
+    if (!phone) throw new ValidationError('Phone is required');
+
+    const partner = await FoodDeliveryPartner.findOne({ phone: String(phone).trim() });
+    if (!partner) throw new ValidationError('Delivery partner not found');
+
+    if (partner.joiningFeePaid) {
+        throw new ValidationError('Joining fee already paid or not required');
+    }
+
+    if (!partner.joiningFeeAmount || partner.joiningFeeAmount <= 0) {
+        throw new ValidationError('Invalid joining fee amount');
+    }
+
+    const { createRazorpayOrder } = await import('../../orders/helpers/razorpay.helper.js');
+    const amountPaise = partner.joiningFeeAmount * 100;
+    const order = await createRazorpayOrder(amountPaise, 'INR', `joining_fee_${partner._id}`);
+
+    // Optionally save the order id
+    partner.joiningFeeOrderId = order.id;
+    await partner.save();
+
+    const { getRazorpayKeyId } = await import('../../orders/helpers/razorpay.helper.js');
+    return {
+        key: getRazorpayKeyId(),
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency
+    };
+};
+
+export const verifyJoiningFeePayment = async (payload) => {
+    const { phone, razorpayOrderId, razorpayPaymentId, razorpaySignature } = payload;
+    if (!phone || !razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+        throw new ValidationError('Missing required payment details');
+    }
+
+    const partner = await FoodDeliveryPartner.findOne({ phone: String(phone).trim() });
+    if (!partner) throw new ValidationError('Delivery partner not found');
+
+    const { verifyPaymentSignature } = await import('../../orders/helpers/razorpay.helper.js');
+    const isValid = verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
+
+    if (!isValid) {
+        throw new ValidationError('Invalid payment signature');
+    }
+
+    partner.joiningFeePaid = true;
+    partner.joiningFeeOrderId = razorpayOrderId;
+    partner.joiningFeePaymentId = razorpayPaymentId;
+    partner.joiningFeePaidAt = new Date();
+    partner.status = 'pending'; // Move to pending admin approval
+    
+    await partner.save();
+
+    return { success: true, partner };
 };

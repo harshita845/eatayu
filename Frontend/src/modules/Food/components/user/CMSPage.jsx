@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { ArrowLeft, Lock, Loader2, Mail, Phone, MessageSquare, Clock, ShieldCheck } from "lucide-react"
 import { motion } from "framer-motion"
@@ -9,6 +9,7 @@ import useAppBackNavigation from "@food/hooks/useAppBackNavigation"
 
 export default function CMSPage({ endpoint, title: defaultTitle, module = "USER" }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const goBack = useAppBackNavigation()
   const [loading, setLoading] = useState(true)
   const [pageData, setPageData] = useState({
@@ -63,8 +64,10 @@ export default function CMSPage({ endpoint, title: defaultTitle, module = "USER"
   }
 
   const handleBack = () => {
-    if (window.history.length > 2) {
-      goBack()
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else if (!location.pathname.startsWith("/food")) {
+      navigate("/")
     } else {
       navigate('/food/user')
     }

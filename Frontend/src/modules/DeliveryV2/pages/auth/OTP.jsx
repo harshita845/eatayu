@@ -33,7 +33,13 @@ export default function DeliveryOTP() {
   useEffect(() => {
     const stored = sessionStorage.getItem("deliveryAuthData")
     if (stored) {
-      setAuthData(JSON.parse(stored))
+      const parsed = JSON.parse(stored);
+      setAuthData(parsed)
+      if (parsed.pendingApproval) {
+        setPendingMessage(parsed.pendingMessage || "Waiting for admin approval.");
+        setIsRejected(parsed.isRejected || false);
+        setRejectionReason(parsed.rejectionReason || "");
+      }
     } else {
       const token = localStorage.getItem("delivery_accessToken")
       const authenticated = localStorage.getItem("delivery_authenticated") === "true"
@@ -144,6 +150,10 @@ export default function DeliveryOTP() {
 
       const response = await deliveryAPI.verifyOTP(phone, code, purpose, null, fcmToken, platform)
       const data = response?.data?.data || response?.data || {}
+      if (data.paymentRequired === true) {
+        setIsLoading(false); setPendingMessage(data.message); setIsRejected(false); setRejectionReason("");
+        return
+      }
       if (data.pendingApproval === true) {
         setIsLoading(false); setPendingMessage(data.message); setIsRejected(data.isRejected || false); setRejectionReason(data.rejectionReason || "");
         return

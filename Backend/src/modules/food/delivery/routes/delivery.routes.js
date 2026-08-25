@@ -16,6 +16,25 @@ const uploadFields = upload.fields([
 ]);
 
 router.post('/register', uploadFields, registerDeliveryPartnerController);
+
+// Registration Joining Fee Payment Endpoints
+router.post('/registration/payment/create-order', async (req, res, next) => {
+    try {
+        const { createJoiningFeeOrderController } = await import('../controllers/delivery.controller.js');
+        await createJoiningFeeOrderController(req, res, next);
+    } catch (e) {
+        next(e);
+    }
+});
+
+router.post('/registration/payment/verify', async (req, res, next) => {
+    try {
+        const { verifyJoiningFeePaymentController } = await import('../controllers/delivery.controller.js');
+        await verifyJoiningFeePaymentController(req, res, next);
+    } catch (e) {
+        next(e);
+    }
+});
 router.get('/check-vehicle/:number', async (req, res) => {
     try {
         const { FoodDeliveryPartner } = await import('../models/deliveryPartner.model.js');

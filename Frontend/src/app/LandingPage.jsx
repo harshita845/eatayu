@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import Lenis from "lenis";
 import {
@@ -1060,42 +1061,34 @@ export default function LandingPage() {
 
             <div className="flex flex-col gap-5 text-sm font-medium">
               <h4 className="text-slate-900 font-bold tracking-widest text-xs uppercase mb-1">Legal</h4>
-              <a
-                href="https://EatAyu.com/food/user/profile/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/privacy"
                 className="hover:text-[#FF6F3C] transition-colors"
               >
                 Privacy Policy
-              </a>
-              <a
-                href="https://EatAyu.com/food/user/profile/terms"
-                target="_blank"
-                rel="noopener noreferrer"
+              </Link>
+              <Link
+                to="/terms"
                 className="hover:text-[#FF6F3C] transition-colors"
               >
                 Terms of Service
-              </a>
+              </Link>
             </div>
 
             <div className="flex flex-col gap-5 text-sm font-medium">
               <h4 className="text-slate-900 font-bold tracking-widest text-xs uppercase mb-1">Company</h4>
-              <a
-                href="https://EatAyu.com/food/user/profile/about"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/about"
                 className="hover:text-[#FF6F3C] transition-colors"
               >
                 About Us
-              </a>
-              <a
-                href="https://EatAyu.com/food/user/profile/help-content"
-                target="_blank"
-                rel="noopener noreferrer"
+              </Link>
+              <Link
+                to="/help-content"
                 className="hover:text-[#FF6F3C] transition-colors"
               >
                 Support
-              </a>
+              </Link>
             </div>
 
             <div className="flex flex-col gap-5 text-sm font-medium">
@@ -1292,14 +1285,14 @@ export default function LandingPage() {
                 <span className="text-[#FF6F3C]">.</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
-                <button
-                  onClick={() => document.getElementById("partner-lead-form")?.scrollIntoView({ behavior: "smooth" })}
+                <Link
+                  to="/food/restaurant/login"
                   className="group flex items-center gap-1.5 sm:gap-2 bg-[#FF6F3C]/10 hover:bg-[#FF6F3C] text-[#FF6F3C] hover:text-white px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs font-bold transition-all duration-300 border border-[#FF6F3C]/20 cursor-pointer shadow-sm"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Become a Partner</span>
                   <span className="sm:hidden">Join</span>
-                </button>
+                </Link>
                 <button
                   onClick={() => setIsRestaurantOpen(false)}
                   className="group flex items-center gap-1.5 sm:gap-2 bg-slate-900 text-white px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs font-bold hover:bg-[#FF6F3C] transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer"
@@ -1471,125 +1464,6 @@ export default function LandingPage() {
 
               </div>
 
-              {/* Bottom Call to Action and Lead Form */}
-              <div id="partner-lead-form" className="py-12 md:py-20 border-t border-slate-200/40 shrink-0 max-w-3xl mx-auto w-full">
-                <div className="text-center mb-10">
-                  <h3 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Become a Restaurant Partner</h3>
-                  <p className="text-slate-600 max-w-lg font-light text-sm md:text-base mx-auto mt-3">
-                    Fill out the form below to register your interest, and our onboarding team will contact you to set up your restaurant on EatAyu.
-                  </p>
-                </div>
-
-                {leadSuccess ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-[#FF6F3C]/5 border border-[#FF6F3C]/20 rounded-3xl p-8 text-center space-y-4"
-                  >
-                    <div className="w-16 h-16 bg-[#FF6F3C]/10 rounded-full flex items-center justify-center mx-auto text-[#FF6F3C]">
-                      <Sparkles className="w-8 h-8" />
-                    </div>
-                    <h4 className="text-xl font-bold text-slate-900">Application Submitted Successfully!</h4>
-                    <p className="text-sm text-slate-600 max-w-md mx-auto">
-                      Thank you for choosing EatAyu. Our onboarding representative will get in touch with you shortly to finalize your registration.
-                    </p>
-                    <button
-                      onClick={() => setLeadSuccess(false)}
-                      className="px-6 py-2.5 text-xs font-bold text-[#FF6F3C] bg-[#FF6F3C]/10 hover:bg-[#FF6F3C]/20 transition-all rounded-full"
-                    >
-                      Submit Another Inquiry
-                    </button>
-                  </motion.div>
-                ) : (
-                  <form onSubmit={handleLeadSubmit} className="space-y-5 bg-white border border-slate-200/60 p-6 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-900/5">
-                    <div className="grid md:grid-cols-2 gap-5">
-                      <div className="space-y-2">
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Owner Name</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Ex: John Doe"
-                          value={leadForm.ownerName}
-                          onChange={(e) => setLeadForm({ ...leadForm, ownerName: e.target.value })}
-                          className="w-full px-5 py-3.5 text-sm rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-[#FF6F3C]/20 focus:border-[#FF6F3C] transition-all text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Restaurant Name</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Ex: The Culinary Hub"
-                          value={leadForm.restaurantName}
-                          onChange={(e) => setLeadForm({ ...leadForm, restaurantName: e.target.value })}
-                          className="w-full px-5 py-3.5 text-sm rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-[#FF6F3C]/20 focus:border-[#FF6F3C] transition-all text-slate-800"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-5">
-                      <div className="space-y-2">
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Mobile Number</label>
-                        <input
-                          type="tel"
-                          required
-                          placeholder="Ex: +91 98765 43210"
-                          value={leadForm.mobileNumber}
-                          onChange={(e) => setLeadForm({ ...leadForm, mobileNumber: e.target.value })}
-                          className="w-full px-5 py-3.5 text-sm rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-[#FF6F3C]/20 focus:border-[#FF6F3C] transition-all text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Mail ID</label>
-                        <input
-                          type="email"
-                          required
-                          placeholder="Ex: partner@domain.com"
-                          value={leadForm.emailId}
-                          onChange={(e) => setLeadForm({ ...leadForm, emailId: e.target.value })}
-                          className="w-full px-5 py-3.5 text-sm rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-[#FF6F3C]/20 focus:border-[#FF6F3C] transition-all text-slate-800"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Location / Address</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ex: Madhapur, Hyderabad, Telangana"
-                        value={leadForm.location}
-                        onChange={(e) => setLeadForm({ ...leadForm, location: e.target.value })}
-                        className="w-full px-5 py-3.5 text-sm rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-[#FF6F3C]/20 focus:border-[#FF6F3C] transition-all text-slate-800"
-                      />
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                      <button
-                        type="submit"
-                        disabled={submittingLead}
-                        className="flex-1 bg-slate-900 text-white hover:bg-[#FF6F3C] px-8 py-4 rounded-2xl font-bold text-sm transition-all duration-300 shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {submittingLead ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin text-white" />
-                            Registering Your Lead...
-                          </>
-                        ) : (
-                          "Submit Registration Request"
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsRestaurantOpen(false)}
-                        className="sm:flex-initial bg-slate-100 hover:bg-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold text-sm transition-all duration-300 text-center cursor-pointer"
-                      >
-                        Return to Homepage
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
 
             </main>
 

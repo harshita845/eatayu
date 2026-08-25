@@ -28,28 +28,41 @@ export default function VerificationPending() {
     let cancelled = false
 
     const checkApprovalStatus = async () => {
-      const token = getModuleToken("restaurant")
-      if (!token) {
-        if (!cancelled) setCheckingStatus(false)
-        return
-      }
-
       try {
-        const response = await restaurantAPI.getCurrentRestaurant()
-        const restaurant =
-          response?.data?.data?.restaurant ||
-          response?.data?.restaurant ||
-          response?.data?.data?.user ||
-          response?.data?.user
+        const token = getModuleToken("restaurant")
+        let status = null
+
+        if (token) {
+          const response = await restaurantAPI.getCurrentRestaurant({ _t: Date.now() })
+          const restaurant =
+            response?.data?.data?.restaurant ||
+            response?.data?.restaurant ||
+            response?.data?.data?.user ||
+            response?.data?.user
+          status = restaurant?.status
+        } else if (pendingPhone) {
+          const response = await restaurantAPI.checkStatus(pendingPhone)
+          status = response?.data?.data?.status || response?.data?.status
+        } else {
+          if (!cancelled) setCheckingStatus(false)
+          return
+        }
+
+        console.log("Approval status check:", status);
 
         if (cancelled) return
 
-        if (String(restaurant?.status || "").toLowerCase() === "approved") {
+        if (String(status || "").toLowerCase() === "approved") {
           clearRestaurantPendingPhone()
-          navigate("/food/restaurant", { replace: true })
+          if (!token) {
+             navigate("/food/restaurant/login", { replace: true, state: { message: "Your account is approved! Please login." } })
+          } else {
+             navigate("/food/restaurant", { replace: true })
+          }
           return
         }
-      } catch (_) {
+      } catch (err) {
+        console.error("Status check failed:", err)
         // Keep the pending screen visible if the status check fails.
       } finally {
         if (!cancelled) setCheckingStatus(false)
@@ -64,15 +77,23 @@ export default function VerificationPending() {
       }
     }
 
+    // Add a 10-second polling interval
+    const pollInterval = setInterval(() => {
+      if (!cancelled && document.visibilityState === "visible") {
+        checkApprovalStatus()
+      }
+    }, 10000)
+
     window.addEventListener("focus", handleVisibilityOrFocus)
     document.addEventListener("visibilitychange", handleVisibilityOrFocus)
 
     return () => {
       cancelled = true
+      clearInterval(pollInterval)
       window.removeEventListener("focus", handleVisibilityOrFocus)
       document.removeEventListener("visibilitychange", handleVisibilityOrFocus)
     }
-  }, [navigate])
+  }, [navigate, pendingPhone])
 
   return (
     <div className="min-h-screen bg-[#f8fafc] px-6 py-10">
