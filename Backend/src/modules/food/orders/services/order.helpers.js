@@ -151,6 +151,7 @@ export function toGeoPoint(lat, lng) {
 }
 
 export function pushStatusHistory(order, { byRole, byId, from, to, note = "" }) {
+  if (!order.statusHistory) order.statusHistory = [];
   order.statusHistory.push({
     at: new Date(),
     byRole,

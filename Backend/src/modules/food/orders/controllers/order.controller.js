@@ -296,6 +296,7 @@ export async function getCurrentTripDeliveryController(req, res, next) {
         const order = await orderService.getCurrentTripDelivery(deliveryPartnerId);
         return sendResponse(res, 200, 'Current trip retrieved', { activeOrder: order });
     } catch (err) {
+        console.error("DEBUG_CURRENT_TRIP_ERROR:", err);
         next(err);
     }
 }

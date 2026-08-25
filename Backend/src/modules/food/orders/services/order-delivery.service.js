@@ -213,7 +213,7 @@ export async function getCurrentTripDelivery(deliveryPartnerId) {
     .select(DELIVERY_ORDER_BASE_SELECT)
     .populate(DELIVERY_RESTAURANT_POPULATE)
     .populate({ path: 'userId', select: 'name phone' })
-    .sort({ updatedAt: -1 })
+    .sort({ createdAt: 1 })
     .lean();
 
   if (!order) return null;

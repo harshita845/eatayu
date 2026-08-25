@@ -6355,13 +6355,13 @@ export async function adminForceAssignOrder(orderId, deliveryPartnerId, adminId)
     order.orderStatus = 'preparing'; // Or 'dispatching' depending on current state, assuming they haven't picked up yet.
 
     pushStatusHistory(order, {
-        byRole: 'admin',
+        byRole: 'ADMIN',
         byId: adminId,
         from: order.orderStatus,
         to: order.orderStatus, // Assuming status doesn't change wildly, just assigned
-        note: `Admin manually assigned rider ${partner.firstName} ${partner.lastName}`
+        note: `Admin manually assigned rider ${partner.name || ''}`
     });
 
     await order.save();
-    return order.lean();
+    return order.toObject();
 }
