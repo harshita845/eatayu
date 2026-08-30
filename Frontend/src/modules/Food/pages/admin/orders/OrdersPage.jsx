@@ -896,6 +896,11 @@ export default function OrdersPage({ statusKey = "all" }) {
       fetchOrdersRef.current({ silent: true, withRingCheck: false, force: true })
     }
 
+    const handleNewDeliveryPartner = (payload) => {
+      playDefaultRing()
+      toast.info("New Delivery Partner 🚲", { description: payload?.message || "A new delivery partner has joined." });
+    }
+
     socket.on("connect", () => {
       socketConnectedRef.current = true
       socket.emit("join-admin-orders")
@@ -905,11 +910,13 @@ export default function OrdersPage({ statusKey = "all" }) {
     })
     socket.on("admin_new_order", handleIncomingRealtimeOrder)
     socket.on("play_notification_sound", handleIncomingRealtimeOrder)
+    socket.on("admin_new_delivery_partner", handleNewDeliveryPartner)
 
     return () => {
       socketConnectedRef.current = false
       socket.off("admin_new_order", handleIncomingRealtimeOrder)
       socket.off("play_notification_sound", handleIncomingRealtimeOrder)
+      socket.off("admin_new_delivery_partner", handleNewDeliveryPartner)
       socket.disconnect()
       socketRef.current = null
       fetchAbortRef.current?.abort()

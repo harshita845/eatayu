@@ -225,13 +225,27 @@ const RestaurantCard = ({
         </p>
 
         <div className="flex items-center justify-between pt-2.5 border-t border-gray-100/80">
-          <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-2 py-1 rounded-md">
-            <Clock className="w-3.5 h-3.5 text-orange-500" />
-            <span className="text-[10px] sm:text-xs font-semibold">{restaurant.deliveryTime || "25-30 min"}</span>
-          </div>
-          <div className="flex items-center gap-1 text-gray-600 bg-gray-50 px-2 py-1 rounded-md">
-            <IndianRupee className="w-3 h-3 text-orange-500" />
-            <span className="text-[10px] sm:text-xs font-semibold">{restaurant.avgPrice || "₹200 for one"}</span>
+          <div className="flex flex-wrap items-center gap-2 w-full justify-between">
+            <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-2 py-1 rounded-md">
+              <Clock className="w-3.5 h-3.5 text-orange-500" />
+              <span className="text-[10px] sm:text-xs font-semibold">{restaurant.deliveryTime || "25-30 min"}</span>
+            </div>
+            
+            {restaurant.isFreeDelivery !== false && (
+              <div className="flex items-center gap-1 bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md shadow-sm border border-emerald-100/50">
+                <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
+                  <circle cx="5.5" cy="17.5" r="2.5" />
+                  <circle cx="18.5" cy="17.5" r="2.5" />
+                  <path d="M15 17.5H8.5M12 17.5V11M10.5 7.5c1.5 0 2.5 1 3.5 2h4M12 11h3.5l1.5 3H8M10 5.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                </svg>
+                <span className="text-[10px] sm:text-xs font-bold">Free</span>
+              </div>
+            )}
+            
+            <div className="flex items-center gap-1 text-gray-600 bg-gray-50 px-2 py-1 rounded-md">
+              <IndianRupee className="w-3 h-3 text-orange-500" />
+              <span className="text-[10px] sm:text-xs font-semibold">{restaurant.avgPrice || (restaurant.costForTwo ? `₹${restaurant.costForTwo} for two` : "--")}</span>
+            </div>
           </div>
         </div>
       </div>

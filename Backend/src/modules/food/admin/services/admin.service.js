@@ -4479,7 +4479,7 @@ export async function expireExpiredOffers() {
 export async function getDeliveryJoinRequests(query) {
     const { status = 'pending', page = 1, limit = 1000, search, zone, vehicleType } = query;
     const filter = {};
-    if (status === 'pending') filter.status = 'pending';
+    if (status === 'pending') filter.status = { $in: ['pending', 'payment_pending'] };
     else if (status === 'denied' || status === 'rejected') filter.status = 'rejected';
     else filter.status = status;
 
@@ -6078,7 +6078,7 @@ export async function getSidebarBadges() {
             pendingRestaurantComplaints
         ] = await Promise.all([
             FoodRestaurant.countDocuments({ status: 'pending' }),
-            FoodDeliveryPartner.countDocuments({ status: 'pending' }),
+            FoodDeliveryPartner.countDocuments({ status: { $in: ['pending', 'payment_pending'] } }),
             FoodItem.countDocuments({ approvalStatus: 'pending' }),
             FoodAddon.countDocuments({ approvalStatus: 'pending' }),
             FoodOrder.countDocuments({ orderStatus: 'pending' }),

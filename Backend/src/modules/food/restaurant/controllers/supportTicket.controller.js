@@ -40,6 +40,21 @@ export const createRestaurantSupportTicketController = async (req, res, next) =>
             orderRef,
             priority
         });
+        
+        try {
+            const { notifyAdminsSafely } = await import('../../../../core/notifications/firebase.service.js');
+            void notifyAdminsSafely({
+                title: 'New Restaurant Support Ticket 🎫',
+                body: `A new ${priority} priority ticket was raised regarding ${category}.`,
+                data: {
+                    type: 'new_ticket',
+                    subType: 'restaurant',
+                    id: String(created._id)
+                }
+            });
+        } catch (e) {
+            console.error('Failed to notify admins of new restaurant ticket:', e);
+        }
 
         return sendResponse(res, 201, 'Support ticket created successfully', {
             ticket: created.toObject()

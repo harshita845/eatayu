@@ -182,6 +182,7 @@ export default function RestaurantsList() {
   const [detailsForm, setDetailsForm] = useState({
     name: "",
     pureVegRestaurant: false,
+    isFreeDelivery: true,
     ownerName: "",
     ownerEmail: "",
     ownerPhone: "",
@@ -955,6 +956,10 @@ export default function RestaurantsList() {
         typeof restaurant.pureVegRestaurant === "boolean"
           ? restaurant.pureVegRestaurant
           : false,
+      isFreeDelivery:
+        typeof restaurant.isFreeDelivery === "boolean"
+          ? restaurant.isFreeDelivery
+          : true,
       ownerName: restaurant.ownerName || "",
       ownerEmail: restaurant.ownerEmail || "",
       ownerPhone: restaurant.ownerPhone || restaurant.phone || "",
@@ -1022,6 +1027,7 @@ export default function RestaurantsList() {
       const payload = {
         name: detailsForm.name.trim(),
         pureVegRestaurant: detailsForm.pureVegRestaurant === true,
+        isFreeDelivery: detailsForm.isFreeDelivery === true,
         ownerName: detailsForm.ownerName.trim(),
         ownerEmail: detailsForm.ownerEmail.trim(),
         ownerPhone: detailsForm.ownerPhone.trim(),
@@ -1673,6 +1679,33 @@ export default function RestaurantsList() {
                           onClick={() => setDetailsForm((prev) => ({ ...prev, pureVegRestaurant: false }))}
                           className={`px-3 py-1.5 text-xs rounded-full border ${
                             detailsForm.pureVegRestaurant === false
+                              ? "bg-slate-900 text-white border-slate-900"
+                              : "bg-white text-slate-700 border-slate-300"
+                          }`}
+                        >
+                          No
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Free Delivery</label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setDetailsForm((prev) => ({ ...prev, isFreeDelivery: true }))}
+                          className={`px-3 py-1.5 text-xs rounded-full border ${
+                            detailsForm.isFreeDelivery === true
+                              ? "bg-green-600 text-white border-green-600"
+                              : "bg-white text-slate-700 border-slate-300"
+                          }`}
+                        >
+                          Yes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDetailsForm((prev) => ({ ...prev, isFreeDelivery: false }))}
+                          className={`px-3 py-1.5 text-xs rounded-full border ${
+                            detailsForm.isFreeDelivery === false
                               ? "bg-slate-900 text-white border-slate-900"
                               : "bg-white text-slate-700 border-slate-300"
                           }`}

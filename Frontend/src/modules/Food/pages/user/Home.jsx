@@ -718,17 +718,19 @@ const RestaurantCard = React.memo(({
 
                 {/* Free Delivery status and Cost for Two */}
                 <div className="flex items-center gap-1.5 mt-0.5 mb-2 lg:mb-3">
-                  <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-black shadow-sm border border-emerald-100/50 dark:border-emerald-900/30">
-                    <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-                      <circle cx="5.5" cy="17.5" r="2.5" />
-                      <circle cx="18.5" cy="17.5" r="2.5" />
-                      <path d="M15 17.5H8.5M12 17.5V11M10.5 7.5c1.5 0 2.5 1 3.5 2h4M12 11h3.5l1.5 3H8M10 5.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                    </svg>
-                    <span>Free</span>
-                  </div>
-                  <span className="text-[10px] font-black text-gray-300 dark:text-gray-600">•</span>
+                  {restaurant.isFreeDelivery !== false && (
+                    <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-black shadow-sm border border-emerald-100/50 dark:border-emerald-900/30">
+                      <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
+                        <circle cx="5.5" cy="17.5" r="2.5" />
+                        <circle cx="18.5" cy="17.5" r="2.5" />
+                        <path d="M15 17.5H8.5M12 17.5V11M10.5 7.5c1.5 0 2.5 1 3.5 2h4M12 11h3.5l1.5 3H8M10 5.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                      </svg>
+                      <span>Free</span>
+                    </div>
+                  )}
+                  {restaurant.isFreeDelivery !== false && <span className="text-[10px] font-black text-gray-300 dark:text-gray-600">•</span>}
                   <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-semibold">
-                    ₹{restaurant.costForTwo || restaurant.featuredPrice || 200} for two
+                    ₹{restaurant.costForTwo || '--'} for two
                   </span>
                 </div>
 

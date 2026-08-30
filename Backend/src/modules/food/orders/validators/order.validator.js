@@ -42,7 +42,8 @@ const pricingSchema = z.object({
     discount: z.number().min(0).optional(),
     total: z.number().min(0),
     currency: z.string().optional(),
-    couponCode: z.string().nullable().optional()
+    couponCode: z.string().nullable().optional(),
+    deliveryTip: z.number().min(0).max(500).optional().or(z.literal(0))
 });
 
 export function validateCalculateOrderDto(body) {
@@ -64,7 +65,8 @@ export function validateCalculateOrderDto(body) {
             })
             .passthrough()
             .optional(),
-        scheduledAt: z.string().datetime().optional()
+        scheduledAt: z.string().datetime().optional(),
+        pricing: pricingSchema.partial().optional()
     });
     const result = schema.safeParse(body);
     if (!result.success) {

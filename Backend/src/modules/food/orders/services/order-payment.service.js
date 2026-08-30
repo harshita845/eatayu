@@ -124,6 +124,17 @@ export async function createCollectQr(
     throw new ValidationError('QR payment not configured');
   }
 
+  if (payment.qr && payment.qr.shortUrl) {
+    const isExpired = payment.qr.expiresAt && new Date(payment.qr.expiresAt) < new Date();
+    if (!isExpired) {
+      return {
+        shortUrl: payment.qr.shortUrl,
+        paymentLinkId: payment.qr.paymentLinkId,
+        status: payment.qr.status,
+      };
+    }
+  }
+
   const user = order.userId || {};
   const link = await createPaymentLink({
     amountPaise: Math.round(amountDue * 100),

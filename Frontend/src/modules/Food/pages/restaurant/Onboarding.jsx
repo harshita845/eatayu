@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import { Input } from "@food/components/ui/input"
 import { Button } from "@food/components/ui/button"
 import { Label } from "@food/components/ui/label"
-import { Image as ImageIcon, Upload, Clock, Calendar as CalendarIcon, BadgeCheck, Wallet, Info, X, Percent } from "lucide-react"
+import { Image as ImageIcon, Upload, Clock, Calendar as CalendarIcon, BadgeCheck, Wallet, Info, X, Percent, Navigation } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@food/components/ui/popover"
 import { Calendar } from "@food/components/ui/calendar"
 import {
@@ -854,6 +854,68 @@ export default function RestaurantOnboarding() {
     void saveFileToDB("profileImage", file)
     void triggerBackgroundUpload(file, 'profile', 'profileImage')
   }
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    
+    setIsSearchingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        if (window.google && window.google.maps) {
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode({ location: { lat: latitude, lng: longitude } }, async (results, status) => {
+            setIsSearchingLocation(false);
+            if (status === "OK" && results[0]) {
+              const place = results[0];
+              const comps = place.address_components || [];
+              const get = (types) => comps.find((c) => types.some((t) => c.types?.includes(t)))?.long_name || "";
+              const formattedAddress = place.formatted_address || "";
+              const area = get(["sublocality_level_1", "sublocality", "neighborhood"]) || get(["locality"]);
+              const city = get(["locality"]) || get(["administrative_area_level_2"]);
+              const state = get(["administrative_area_level_1"]) || get(["administrative_area_level_2"]);
+              const pincode = get(["postal_code"]);
+
+              setStep1((prev) => ({
+                ...prev,
+                location: {
+                  ...prev.location,
+                  formattedAddress,
+                  addressLine1: formattedAddress,
+                  area: area || prev.location.area,
+                  city: city || prev.location.city,
+                  state: state || prev.location.state,
+                  pincode: pincode || prev.location.pincode,
+                  latitude: Number(latitude.toFixed(6)),
+                  longitude: Number(longitude.toFixed(6)),
+                },
+              }));
+              setIsAutoFilledLocationLocked(true);
+              suppressSuggestionFetchRef.current = true;
+              setLocationSearchValue(formattedAddress);
+              setLocationSuggestions([]);
+              toast.success("Location detected successfully");
+              await detectAndSetZoneForLocation(latitude, longitude);
+            } else {
+              toast.error("Could not find address for your location");
+            }
+          });
+        } else {
+          setIsSearchingLocation(false);
+          toast.error("Google Maps API not loaded");
+        }
+      },
+      (error) => {
+        setIsSearchingLocation(false);
+        toast.error("Failed to detect location. Please check your browser permissions.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
 
   const handlePanImageSelected = (file) => {
     if (!file) return
@@ -2004,24 +2066,40 @@ export default function RestaurantOnboarding() {
               Zone will be auto detected according to the selected location.
             </p>
             <div className="relative">
-              <Input
-                ref={locationSearchInputRef}
-                value={locationSearchValue}
-                onChange={(e) => {
-                  setLocationSearchValue(e.target.value)
-                  setZoneDetectionState((prev) =>
-                    prev.status === "idle" ? prev : { status: "idle", message: "", zoneName: "" }
-                  )
-                }}
-                className={ONBOARDING_INPUT}
-                placeholder="Start typing your restaurant address..."
-              />
-              {isSearchingLocation && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#fa3c02] border-t-transparent" />
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    ref={locationSearchInputRef}
+                    value={locationSearchValue}
+                    onChange={(e) => {
+                      setLocationSearchValue(e.target.value)
+                      setZoneDetectionState((prev) =>
+                        prev.status === "idle" ? prev : { status: "idle", message: "", zoneName: "" }
+                      )
+                    }}
+                    className={ONBOARDING_INPUT}
+                    placeholder="Start typing your restaurant address..."
+                  />
+                  {isSearchingLocation && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#fa3c02] border-t-transparent" />
+                    </div>
+                  )}
                 </div>
-              )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleDetectLocation}
+                  disabled={isSearchingLocation}
+                  title="Detect Current Location"
+                  className="h-11 w-11 shrink-0 border-[#fa3c02] text-[#fa3c02] hover:bg-[#fff2ed] rounded-lg"
+                >
+                  <Navigation className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
+
 
             {/* Fallback suggestions dropdown */}
             {locationSuggestions.length > 0 && (
@@ -2150,6 +2228,22 @@ export default function RestaurantOnboarding() {
                 {zoneDetectionState.message}
               </p>
             )}
+          </div>
+          <div>
+            <Label className={ONBOARDING_LABEL}>Service Zone (Auto-detected or select manually)</Label>
+            <select
+              value={step1.zoneId || ""}
+              onChange={(e) => setStep1({ ...step1, zoneId: e.target.value })}
+              className={ONBOARDING_INPUT}
+            >
+              <option value="">Select a zone</option>
+              {zones.map((z) => (
+                <option key={z._id} value={z._id}>{z.name}</option>
+              ))}
+            </select>
+            <p className={ONBOARDING_HINT}>
+              If auto-detection fails, you can manually select your zone here.
+            </p>
           </div>
           <Input
             value={step1.location?.addressLine1 || ""}

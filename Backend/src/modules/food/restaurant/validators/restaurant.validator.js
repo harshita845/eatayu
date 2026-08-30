@@ -59,6 +59,11 @@ const restaurantRegisterSchema = z.object({
     ownerPhone: phoneSchema.optional(),
     primaryContactNumber: phoneSchema.optional(),
     pureVegRestaurant: requiredBooleanSchema,
+    isFreeDelivery: z.preprocess((val) => {
+        if (typeof val === 'boolean') return val;
+        if (typeof val === 'string') return val === 'true' || val === '1';
+        return true; // default true as per user preference
+    }, z.boolean().optional()),
     addressLine1: z.string().optional(),
     addressLine2: z.string().optional(),
     area: z.string().optional(),

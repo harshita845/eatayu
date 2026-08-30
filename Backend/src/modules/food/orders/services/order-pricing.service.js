@@ -156,15 +156,17 @@ function matchFeeRange(ranges, distanceKm, pickValue) {
     const max = Number(range.max);
     if (!Number.isFinite(min) || !Number.isFinite(max)) continue;
 
-    const isLast = i === sorted.length - 1;
-    const inRange = isLast
-      ? distanceKm >= min && distanceKm <= max
-      : distanceKm >= min && distanceKm < max;
-
-    if (inRange) {
+    if (distanceKm <= max) {
       const value = pickValue(range);
       return Number.isFinite(value) ? value : null;
     }
+  }
+
+  // If distance exceeds the maximum configured bucket, apply the highest bucket.
+  if (sorted.length > 0) {
+    const lastRange = sorted[sorted.length - 1];
+    const value = pickValue(lastRange);
+    return Number.isFinite(value) ? value : null;
   }
 
   return null;
@@ -361,11 +363,12 @@ export async function calculateOrderPricing(userId, dto, options = {}) {
       : 0;
 
   const deliveryFeeGst = computeDeliveryFeeGst(deliveryFee);
+  const deliveryTip = Number(dto.pricing?.deliveryTip) || 0;
 
   const total = round2(
     Math.max(
       0,
-      subtotal + packagingFee + deliveryFee + deliveryFeeGst + platformFee + tax - discount,
+      subtotal + packagingFee + deliveryFee + deliveryFeeGst + platformFee + tax + deliveryTip - discount,
     ),
   );
 
@@ -376,6 +379,7 @@ export async function calculateOrderPricing(userId, dto, options = {}) {
     deliveryFee,
     deliveryFeeGst,
     platformFee,
+    deliveryTip,
     discount,
     total,
     currency: "INR",

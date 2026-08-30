@@ -41,6 +41,11 @@ export const OrderSummaryModal = ({ order, onDone }) => {
               <Wallet className="w-5 h-5" />
               <span>Transferred to Wallet</span>
             </div>
+            {(Number(order?.pricing?.deliveryTip) > 0 || Number(order?.deliveryTip) > 0) && (
+              <div className="mt-3 text-center text-xs font-semibold text-pink-600 bg-pink-50 rounded-xl py-2 border border-pink-100">
+                Includes ₹{(Number(order?.pricing?.deliveryTip) || Number(order?.deliveryTip) || 0).toFixed(2)} Tip
+              </div>
+            )}
           </div>
 
           <button 

@@ -458,6 +458,7 @@ export async function createOrder(userId, dto) {
         deliveryAddress,
         couponCode: dto.pricing?.couponCode || undefined,
         deliveryMode: dto.deliveryMode || "basic",
+        pricing: dto.pricing,
       },
       { at: orderAt, restaurant, skipAvailabilityCheck: true },
     );
@@ -475,6 +476,7 @@ export async function createOrder(userId, dto) {
         pricingResult.pricing?.deliveryMode === "quick" || dto.deliveryMode === "quick"
           ? "quick"
           : "basic",
+      deliveryTip: Number(pricingResult.pricing?.deliveryTip) || 0,
       discount: Number(pricingResult.pricing?.discount) || 0,
       couponCode: pricingResult.pricing?.couponCode
         ? String(pricingResult.pricing.couponCode).trim().toUpperCase()
@@ -524,7 +526,8 @@ export async function createOrder(userId, dto) {
     }
 
     const feeSettings = await loadActiveFeeSettings();
-    const riderEarning = calculateRiderEarning(feeSettings, distanceKm) || 0;
+    const baseRiderEarning = calculateRiderEarning(feeSettings, distanceKm) || 0;
+    const riderEarning = baseRiderEarning + (Number(normalizedPricing.deliveryTip) || 0);
 
     // Calculate restaurant commission from subtotal
     let restaurantCommission = 0;

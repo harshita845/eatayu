@@ -61,6 +61,7 @@ function CartBillBreakdown({ pricing, fallbackSubtotal = 0, items = [] }) {
   const platformFee = Number(pricing?.platformFee) || 0
   const deliveryMode = pricing?.deliveryMode === "quick" ? "quick" : "basic"
   const quickDeliveryFee = Number(pricing?.quickDeliveryFee) || 0
+  const deliveryTip = Number(pricing?.deliveryTip) || 0
   const basePlatformFee = Math.max(0, platformFee - quickDeliveryFee)
   const gstCharges = Number(pricing?.tax) || 0
   const discount = Number(pricing?.discount) || 0
@@ -131,6 +132,12 @@ function CartBillBreakdown({ pricing, fallbackSubtotal = 0, items = [] }) {
           <span className="text-slate-600">Platform Fee</span>
           <span className="font-medium text-slate-800">{formatMoney(basePlatformFee)}</span>
         </div>
+        {deliveryTip > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-600">Delivery Tip</span>
+            <span className="font-medium text-slate-800">{formatMoney(deliveryTip)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm">
           <span className="text-slate-600">GST and Restaurant Charges</span>
           <span className="font-medium text-slate-800">{formatMoney(gstCharges)}</span>

@@ -58,6 +58,7 @@ const pricingSchema = new mongoose.Schema(
         /** Driving / road restaurant ↔ customer km (Directions API) */
         roadDistanceKm: { type: Number, default: null, min: 0 },
         roadDurationMins: { type: Number, default: null, min: 0 },
+        deliveryTip: { type: Number, default: 0, min: 0 },
     },
     { _id: false }
 );

@@ -127,6 +127,10 @@ const restaurantSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    isFreeDelivery: {
+      type: Boolean,
+      default: true,
+    },
     /**
      * Legacy field. No longer used to keep a restaurant online outside outlet hours.
      * Cleared whenever the Online/Offline toggle is updated.

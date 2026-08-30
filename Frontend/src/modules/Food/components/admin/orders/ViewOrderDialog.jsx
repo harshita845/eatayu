@@ -560,6 +560,12 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
                   <span className="font-medium text-slate-900">₹{order.vatTax.toFixed(2)}</span>
                 </div>
               )}
+              {orderPricing.deliveryTip !== undefined && orderPricing.deliveryTip > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Delivery Tip</span>
+                  <span className="font-medium text-slate-900">₹{orderPricing.deliveryTip.toFixed(2)}</span>
+                </div>
+              )}
               <div className="pt-2 border-t border-slate-200">
                 <div className="flex justify-between items-start gap-3">
                   <span className="text-base font-semibold text-slate-700 shrink-0">Total Amount</span>

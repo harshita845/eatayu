@@ -178,6 +178,22 @@ export const registerDeliveryPartner = async (payload, files) => {
         // eslint-disable-next-line no-console
         console.error('Failed to notify admins of new delivery partner registration:', e);
     }
+    
+    // Emit socket event for real-time admin toast
+    try {
+        const { getIO, rooms } = await import('../../../../config/socket.js');
+        const io = getIO();
+        if (io) {
+            io.to(rooms.ADMIN).emit("play_notification_sound");
+            io.to(rooms.ADMIN).emit("admin_new_delivery_partner", {
+                partnerId: partner._id,
+                name: partner.name,
+                message: `New Delivery Partner "${partner.name}" has registered.`
+            });
+        }
+    } catch (e) {
+        logger.error(`Failed to emit socket for new delivery partner: ${e.message}`);
+    }
 
     return {
         partner: partner.toObject(),

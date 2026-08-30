@@ -94,6 +94,7 @@ const finalizeAbsoluteUrl = (url) => {
       && (
         (appHost && !isLocalhostHost(appHost))
         || isProdBuild
+        || (appHost && isLocalhostHost(appHost) && parsed.port !== window.location.port)
       );
 
     if (shouldRewriteLocalhost) {

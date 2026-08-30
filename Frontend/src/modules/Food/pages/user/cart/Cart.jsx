@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from "react"
 import { createPortal } from "react-dom"
 import { Link, useNavigate } from "react-router-dom"
-import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Share2, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2, Sparkles, Banknote, Zap, CheckCircle2, MessageCircle, Send, Mail, Copy, Home, Briefcase, Pencil, Square, Receipt, ShoppingCart, DoorOpen, PhoneOff, BellOff } from "lucide-react"
+import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Share2, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2, Sparkles, Banknote, Zap, CheckCircle2, MessageCircle, Send, Mail, Copy, Home, Briefcase, Pencil, Square, Receipt, ShoppingCart, DoorOpen, PhoneOff, BellOff, Heart } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
 
@@ -44,6 +44,7 @@ import {
 } from "@food/utils/autoCoupon"
 import CartAutoCouponBanner from "@food/components/user/CartAutoCouponBanner"
 import zoopSound from "@food/assets/audio/zomato_sms.mp3"
+import { normalizeImageUrl } from "../../../../../shared/utils/mediaUrl.js"
 const debugLog = (...args) => { }
 const debugWarn = (...args) => { }
 const debugError = (...args) => { }
@@ -351,6 +352,9 @@ export default function Cart() {
   const [scheduledDate, setScheduledDate] = useState("")
   const [scheduledTime, setScheduledTime] = useState("")
   const [orderProgress, setOrderProgress] = useState(0)
+  const [deliveryTip, setDeliveryTip] = useState(0)
+  const [customTip, setCustomTip] = useState("")
+  const [showCustomTip, setShowCustomTip] = useState(false)
   const [showOrderSuccess, setShowOrderSuccess] = useState(false)
   const [placedOrderId, setPlacedOrderId] = useState(null)
   const [selectedAddressId, setSelectedAddressId] = useState(null)
@@ -681,10 +685,24 @@ export default function Cart() {
   ])
 
   const defaultAddress = useMemo(() => {
-    return deliveryAddressMode === "current"
+    let addr = deliveryAddressMode === "current"
       ? currentLocationAddress || selectedAddress || savedAddress || null
       : selectedAddress || savedAddress || currentLocationAddress || null
-  }, [deliveryAddressMode, currentLocationAddress, selectedAddress, savedAddress])
+
+    if (addr && restaurantData?.location?.city) {
+      const zoneName = restaurantData.location.city.toLowerCase();
+      const addrString = (addr.formattedAddress || "").toLowerCase();
+      
+      if (!addrString.includes(zoneName)) {
+        return {
+          ...addr,
+          city: restaurantData.location.city,
+          formattedAddress: addr.street ? `${addr.street}, ${restaurantData.location.city}` : restaurantData.location.city,
+        }
+      }
+    }
+    return addr
+  }, [deliveryAddressMode, currentLocationAddress, selectedAddress, savedAddress, restaurantData?.location?.city])
 
   const pricingAddress = useMemo(
     () => normalizeLocationForPricing(defaultAddress),
@@ -1229,6 +1247,7 @@ export default function Cart() {
           deliveryAddress: pricingAddress,
           couponCode: resolvedCouponCode,
           deliveryMode,
+          pricing: { deliveryTip }
         }
 
         if (scheduledOrderAt) {
@@ -1313,7 +1332,7 @@ export default function Cart() {
     }
 
     calculatePricing()
-  }, [cart, pricingAddress, appliedCoupon, couponCode, restaurantId, restaurantData, scheduledOrderAt, replaceCart, deliveryMode])
+  }, [cart, pricingAddress, appliedCoupon, couponCode, restaurantId, restaurantData, scheduledOrderAt, replaceCart, deliveryMode, deliveryTip])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -2187,6 +2206,7 @@ export default function Cart() {
         deliveryAddress: pricingAddress,
         couponCode: resolvedCouponCode,
         deliveryMode,
+        pricing: { deliveryTip }
       }
       if (isScheduled) {
         calculatePayload.scheduledAt = new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString()
@@ -2216,6 +2236,7 @@ export default function Cart() {
         deliveryFee: Number(serverPricing.deliveryFee) || 0,
         tax: Number(serverPricing.tax) || 0,
         platformFee: Number(serverPricing.platformFee) || 0,
+        deliveryTip: Number(serverPricing.deliveryTip) || 0,
         discount: Number(serverPricing.discount) || 0,
         total: Number(serverPricing.total),
         couponCode: serverPricing.couponCode || serverPricing.appliedCoupon?.code || resolvedCouponCode || null,
@@ -2747,7 +2768,7 @@ export default function Cart() {
                         <div key={addon._id || addon.id} className="flex-shrink-0 w-[84px] md:w-[92px]">
                           <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden aspect-square">
                             <img
-                              src={addon.image || (addon.images && addon.images[0]) || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop"}
+                              src={normalizeImageUrl(addon.image || (addon.images && addon.images[0])) || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop"}
                               alt={addon.name}
                               className="w-full h-full object-cover"
                               onError={(e) => {
@@ -2812,6 +2833,92 @@ export default function Cart() {
                   )}
                 </div>
               )}
+              {/* Delivery Tip row */}
+              <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-slate-100 dark:border-gray-800 shadow-sm p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-9 w-9 rounded-lg bg-pink-50 dark:bg-pink-950/40 flex items-center justify-center shrink-0">
+                    <Heart className="h-4 w-4 text-[#FA0272]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Tip your delivery partner</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">100% of the tip goes to the partner</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                  {[10, 20, 30].map(amt => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => {
+                        if (deliveryTip === amt) {
+                          setDeliveryTip(0)
+                          setCustomTip("")
+                        } else {
+                          setDeliveryTip(amt)
+                          setCustomTip("")
+                          setShowCustomTip(false)
+                        }
+                      }}
+                      className={`px-4 py-1.5 rounded-full text-sm font-semibold border whitespace-nowrap transition-colors ${
+                        deliveryTip === amt
+                          ? "bg-[#FA0272] border-[#FA0272] text-white"
+                          : "bg-white dark:bg-[#222] border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                      }`}
+                    >
+                      ₹{amt}
+                    </button>
+                  ))}
+                  {!showCustomTip && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomTip(true)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-semibold border whitespace-nowrap transition-colors ${
+                        deliveryTip > 0 && ![10, 20, 30].includes(deliveryTip)
+                          ? "bg-[#FA0272] border-[#FA0272] text-white"
+                          : "bg-white dark:bg-[#222] border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                      }`}
+                    >
+                      {deliveryTip > 0 && ![10, 20, 30].includes(deliveryTip) ? `₹${deliveryTip}` : 'Custom'}
+                    </button>
+                  )}
+                  {showCustomTip && (
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">₹</span>
+                        <input
+                          type="number"
+                          value={customTip}
+                          onChange={(e) => {
+                            const val = e.target.value
+                            setCustomTip(val)
+                            if (Number(val) > 0 && Number(val) <= 500) {
+                              setDeliveryTip(Number(val))
+                            } else if (val === "") {
+                              setDeliveryTip(0)
+                            }
+                          }}
+                          placeholder="Tip"
+                          className="w-20 pl-6 pr-3 py-1.5 text-sm font-semibold rounded-full border border-[#FA0272] focus:outline-none focus:ring-1 focus:ring-[#FA0272] bg-white dark:bg-[#222] text-gray-900 dark:text-white placeholder:font-normal"
+                          autoFocus
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomTip(false)
+                          if (!customTip || Number(customTip) <= 0 || Number(customTip) > 500) {
+                            setDeliveryTip(0)
+                            setCustomTip("")
+                          }
+                        }}
+                        className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Offers row */}
               <button
@@ -3164,6 +3271,12 @@ export default function Cart() {
                       <span className="text-gray-600 dark:text-gray-400 border-b border-dotted border-gray-300">Platform Fee</span>
                       <span className="text-gray-800 dark:text-gray-200 font-medium">{RUPEE_SYMBOL}{Math.max(0, platformFee - quickDeliveryFee).toFixed(2)}</span>
                     </div>
+                    {deliveryTip > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400 border-b border-dotted border-gray-300">Delivery Tip</span>
+                        <span className="text-gray-800 dark:text-gray-200 font-medium">{RUPEE_SYMBOL}{deliveryTip.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400 border-b border-dotted border-gray-300">Government Taxes</span>
                       <span className="text-gray-800 dark:text-gray-200 font-medium">{RUPEE_SYMBOL}{gstCharges.toFixed(2)}</span>

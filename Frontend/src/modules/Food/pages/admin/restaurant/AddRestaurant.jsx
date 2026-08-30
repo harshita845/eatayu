@@ -168,6 +168,7 @@ export default function AddRestaurant() {
   const [step1, setStep1] = useState({
     restaurantName: "",
     pureVegRestaurant: null,
+    isFreeDelivery: true,
     ownerName: "",
     ownerEmail: "",
     ownerPhone: "",
@@ -604,6 +605,7 @@ export default function AddRestaurant() {
         // Step 1
         restaurantName: step1.restaurantName,
         pureVegRestaurant: step1.pureVegRestaurant,
+        isFreeDelivery: step1.isFreeDelivery,
         ownerName: step1.ownerName,
         ownerEmail: step1.ownerEmail,
         ownerPhone: step1.ownerPhone,
@@ -944,6 +946,36 @@ export default function AddRestaurant() {
             </div>
             <p className="text-[11px] text-gray-500 mt-1">
               This helps users filter restaurants by dietary preference.
+            </p>
+          </div>
+          <div>
+            <Label className="text-xs text-gray-700">Free Delivery?*</Label>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStep1({ ...step1, isFreeDelivery: true })}
+                className={`px-3 py-1.5 text-xs rounded-full border ${
+                  step1.isFreeDelivery === true
+                    ? "bg-green-600 text-white border-green-600"
+                    : "bg-white text-gray-700 border-gray-200"
+                }`}
+              >
+                Yes, Free
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep1({ ...step1, isFreeDelivery: false })}
+                className={`px-3 py-1.5 text-xs rounded-full border ${
+                  step1.isFreeDelivery === false
+                    ? "bg-gray-900 text-white border-gray-900"
+                    : "bg-white text-gray-700 border-gray-200"
+                }`}
+              >
+                No
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Displays a 'Free' delivery badge for this restaurant.
             </p>
           </div>
         </div>
