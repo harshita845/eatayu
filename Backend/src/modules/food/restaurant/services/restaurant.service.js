@@ -1969,7 +1969,8 @@ export const listApprovedRestaurants = async (query = {}) => {
         openingTime: 1,
         closingTime: 1,
         openDays: 1,
-        isFreeDelivery: 1
+        isFreeDelivery: 1,
+        costForTwo: 1
     };
 
     // Use $geoNear only when geo is explicitly needed (radius filter or nearest sorting).

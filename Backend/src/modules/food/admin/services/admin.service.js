@@ -412,7 +412,7 @@ export async function getRestaurants(query) {
         .sort(sort)
         .skip(skip)
         .limit(limit)
-        .select('restaurantName slug location area city status ownerName ownerPhone primaryContactNumber zoneId profileImage coverImages menuImages rating totalRatings isActive')
+        .select('restaurantName slug location area city status ownerName ownerPhone primaryContactNumber zoneId profileImage coverImages menuImages rating totalRatings isActive costForTwo isFreeDelivery')
         .populate('zoneId', 'name zoneName')
         .lean();
     const countPromise = FoodRestaurant.countDocuments(filter);
@@ -3053,6 +3053,14 @@ export async function updateRestaurantById(id, body = {}) {
         doc.outsideHoursOverride = false;
     }
 
+    if (body.isFreeDelivery !== undefined) {
+        doc.isFreeDelivery = parseBooleanLike(body.isFreeDelivery, 'isFreeDelivery');
+    }
+
+    if (body.costForTwo !== undefined) {
+        doc.costForTwo = toFinite(body.costForTwo);
+    }
+
     if (body.cuisines !== undefined) {
         if (Array.isArray(body.cuisines)) {
             doc.cuisines = body.cuisines
@@ -3129,12 +3137,12 @@ export async function updateRestaurantById(id, body = {}) {
 
     await doc.save();
 
+    const { invalidateCache } = await import('../../../../middleware/cache.js');
+    void invalidateCache('restaurants:*');
+    void invalidateCache('restaurant_detail:*');
+
     if (body.openingTime !== undefined || body.closingTime !== undefined) {
         await syncAdminRestaurantOutletTimings(doc);
-
-        const { invalidateCache } = await import('../../../../middleware/cache.js');
-        void invalidateCache('restaurants:*');
-        void invalidateCache('restaurant_detail:*');
         void invalidateCache('restaurant_timings:*');
     }
 
@@ -4100,6 +4108,10 @@ export async function createRestaurantByAdmin(body) {
         featuredDish: toStr(body.featuredDish),
         featuredPrice: typeof body.featuredPrice === 'number' ? body.featuredPrice : (parseFloat(body.featuredPrice) || undefined),
         offer: toStr(body.offer),
+        isFreeDelivery: body.isFreeDelivery !== undefined
+            ? parseBooleanLike(body.isFreeDelivery, 'isFreeDelivery')
+            : true,
+        costForTwo: body.costForTwo !== undefined ? toFiniteNumber(body.costForTwo) : undefined,
         diningSettings: body.diningSettings && typeof body.diningSettings === 'object'
             ? {
                 isEnabled: Boolean(body.diningSettings.isEnabled),

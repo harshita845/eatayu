@@ -210,17 +210,6 @@ const RestaurantImageCarousel = React.memo(
     );
 
     const images = useMemo(() => {
-      const hasRecommended = Array.isArray(restaurant.recommendedItems) && restaurant.recommendedItems.length > 0;
-
-      if (hasRecommended) {
-        const recImages = restaurant.recommendedItems
-          .filter(item => item && typeof item.image === 'string' && item.image.trim() !== '')
-          .map(item => withCacheBuster(item.image));
-        if (recImages.length > 0) {
-          return recImages;
-        }
-      }
-
       const sourceImages =
         Array.isArray(restaurant.images) && restaurant.images.length > 0
           ? restaurant.images
@@ -2081,6 +2070,8 @@ export default function Home() {
                 slug: restaurant.slug,
                 restaurantId: restaurant.restaurantId,
                 pureVegRestaurant: restaurant.pureVegRestaurant === true,
+                costForTwo: restaurant.costForTwo,
+                isFreeDelivery: restaurant.isFreeDelivery,
                 location: restaurantLoc || restaurant.location, // Normalized for distance recalculation
                 isActive: restaurant.isActive !== false, // Default to true if not specified
                 isAcceptingOrders: restaurant.isAcceptingOrders !== false, // Default to true if not specified
@@ -2826,6 +2817,10 @@ export default function Home() {
         isAcceptingOrders: liveRestaurant?.isAcceptingOrders !== false,
         featuredPrice: liveRestaurant?.featuredPrice || restaurant?.featuredPrice || 200,
         recommendedItems: liveRestaurant?.recommendedItems || [],
+        costForTwo: liveRestaurant?.costForTwo || restaurant?.costForTwo || null,
+        isFreeDelivery: liveRestaurant 
+          ? (liveRestaurant.isFreeDelivery !== false) 
+          : (restaurant?.isFreeDelivery !== false),
       };
     });
 
@@ -3366,17 +3361,21 @@ export default function Home() {
 
                               {/* Row 2: Free Delivery Pill & Price */}
                               <div className="flex items-center gap-1.5 mt-1.5">
-                                <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md text-[9px] font-extrabold shadow-sm border border-emerald-100/50 dark:border-emerald-900/30">
-                                  <svg className="w-3 h-3 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-                                    <circle cx="5.5" cy="17.5" r="2.5" />
-                                    <circle cx="18.5" cy="17.5" r="2.5" />
-                                    <path d="M15 17.5H8.5M12 17.5V11M10.5 7.5c1.5 0 2.5 1 3.5 2h4M12 11h3.5l1.5 3H8M10 5.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                                  </svg>
-                                  <span>Free</span>
-                                </div>
-                                <span className="text-[9px] font-black text-gray-300 dark:text-gray-600">•</span>
+                                {restaurant.isFreeDelivery !== false && (
+                                  <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md text-[9px] font-extrabold shadow-sm border border-emerald-100/50 dark:border-emerald-900/30">
+                                    <svg className="w-3 h-3 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
+                                      <circle cx="5.5" cy="17.5" r="2.5" />
+                                      <circle cx="18.5" cy="17.5" r="2.5" />
+                                      <path d="M15 17.5H8.5M12 17.5V11M10.5 7.5c1.5 0 2.5 1 3.5 2h4M12 11h3.5l1.5 3H8M10 5.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                                    </svg>
+                                    <span>Free</span>
+                                  </div>
+                                )}
+                                {restaurant.isFreeDelivery !== false && (
+                                  <span className="text-[9px] font-black text-gray-300 dark:text-gray-600">•</span>
+                                )}
                                 <span className="text-[10px] sm:text-[11px] text-gray-600 dark:text-gray-400 font-semibold">
-                                  ₹{restaurant.featuredPrice || 200} for two
+                                  ₹{restaurant.costForTwo || restaurant.featuredPrice || '--'} for two
                                 </span>
                               </div>
                             </div>

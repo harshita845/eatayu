@@ -169,6 +169,7 @@ export default function AddRestaurant() {
     restaurantName: "",
     pureVegRestaurant: null,
     isFreeDelivery: true,
+    costForTwo: "",
     ownerName: "",
     ownerEmail: "",
     ownerPhone: "",
@@ -606,6 +607,7 @@ export default function AddRestaurant() {
         restaurantName: step1.restaurantName,
         pureVegRestaurant: step1.pureVegRestaurant,
         isFreeDelivery: step1.isFreeDelivery,
+        costForTwo: step1.costForTwo,
         ownerName: step1.ownerName,
         ownerEmail: step1.ownerEmail,
         ownerPhone: step1.ownerPhone,
@@ -976,6 +978,21 @@ export default function AddRestaurant() {
             </div>
             <p className="text-[11px] text-gray-500 mt-1">
               Displays a 'Free' delivery badge for this restaurant.
+            </p>
+          </div>
+          
+          <div>
+            <Label className="text-xs text-gray-700">Cost for Two (₹)</Label>
+            <Input
+              type="number"
+              placeholder="e.g. 300"
+              className="mt-1 border-gray-200 shadow-sm text-sm"
+              value={step1.costForTwo}
+              onChange={(e) => setStep1({ ...step1, costForTwo: e.target.value })}
+              min="0"
+            />
+            <p className="text-[11px] text-gray-500 mt-1">
+              Estimated cost for two people dining at this restaurant.
             </p>
           </div>
         </div>

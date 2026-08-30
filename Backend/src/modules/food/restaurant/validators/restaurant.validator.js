@@ -64,6 +64,11 @@ const restaurantRegisterSchema = z.object({
         if (typeof val === 'string') return val === 'true' || val === '1';
         return true; // default true as per user preference
     }, z.boolean().optional()),
+    costForTwo: z.preprocess((val) => {
+        if (val === '' || val === null || val === undefined) return undefined;
+        const n = Number(val);
+        return Number.isFinite(n) ? n : undefined;
+    }, z.number().nonnegative().optional()),
     addressLine1: z.string().optional(),
     addressLine2: z.string().optional(),
     area: z.string().optional(),

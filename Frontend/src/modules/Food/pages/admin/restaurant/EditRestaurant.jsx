@@ -75,6 +75,7 @@ const normalizeDetailsFormFromRestaurant = (restaurant) => {
       typeof restaurant?.isFreeDelivery === "boolean"
         ? restaurant.isFreeDelivery
         : false,
+    costForTwo: restaurant?.costForTwo || "",
     ownerName: restaurant?.ownerName || "",
     ownerEmail: restaurant?.ownerEmail || "",
     ownerPhone: restaurant?.ownerPhone || "",
@@ -308,6 +309,7 @@ export default function EditRestaurant() {
         name: detailsForm.name,
         pureVegRestaurant: detailsForm.pureVegRestaurant === true,
         isFreeDelivery: detailsForm.isFreeDelivery === true,
+        costForTwo: detailsForm.costForTwo,
         ownerName: detailsForm.ownerName,
         ownerEmail: detailsForm.ownerEmail,
         ownerPhone: detailsForm.ownerPhone,
@@ -490,6 +492,21 @@ export default function EditRestaurant() {
                       No
                     </button>
                   </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs text-gray-700">Cost for Two (₹)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 300"
+                    className="mt-1 border-gray-200 shadow-sm text-sm"
+                    value={detailsForm.costForTwo}
+                    onChange={(e) => setDetailsForm((p) => ({ ...p, costForTwo: e.target.value }))}
+                    min="0"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Estimated cost for two people dining at this restaurant.
+                  </p>
                 </div>
                 <div>
                   <Label>Primary Email</Label>

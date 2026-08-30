@@ -337,6 +337,8 @@ export default function SearchResults() {
                 restaurantId: restaurantId,
                 hasPaneer: false, // Will be updated after menu fetch
                 category: 'all',
+                costForTwo: restaurant.costForTwo,
+                isFreeDelivery: restaurant.isFreeDelivery,
               }
             })
 

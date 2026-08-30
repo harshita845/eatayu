@@ -10,9 +10,9 @@ import { getGoogleMapsApiKey } from "@food/utils/googleMapsApiKey"
 import locationIcon from "@food/assets/Dashboard-icons/image1.png"
 import restaurantIcon from "@food/assets/Dashboard-icons/image2.png"
 import inactiveIcon from "@food/assets/Dashboard-icons/image3.png"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 // Inline placeholder (no external request, avoids referrer policy / 500 from via.placeholder)
 const PLACEHOLDER_40 = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect fill='%23e2e8f0' width='40' height='40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-size='12' font-family='sans-serif'%3E?%3C/text%3E%3C/svg%3E"
@@ -323,7 +323,7 @@ export default function RestaurantsList() {
           setTotalRestaurants(0)
           try {
             clearModuleAuth("admin")
-          } catch (_) {}
+          } catch (_) { }
           navigate("/admin/login", { replace: true, state: { from: "/admin/food/restaurants" } })
           return
         }
@@ -403,9 +403,9 @@ export default function RestaurantsList() {
     return (
       <div className="flex items-center gap-0.5">
         {[...Array(5)].map((_, i) => (
-          <Star 
-            key={i} 
-            className={`w-3.5 h-3.5 ${i < fullStars ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`} 
+          <Star
+            key={i}
+            className={`w-3.5 h-3.5 ${i < fullStars ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`}
           />
         ))}
         <span className="ml-1 text-slate-600">({rating || 0})</span>
@@ -486,7 +486,7 @@ export default function RestaurantsList() {
         try {
           await window.google.maps.importLibrary("places")
           if (window.google?.maps?.places?.Autocomplete) return true
-        } catch {}
+        } catch { }
       }
     }
 
@@ -960,6 +960,7 @@ export default function RestaurantsList() {
         typeof restaurant.isFreeDelivery === "boolean"
           ? restaurant.isFreeDelivery
           : true,
+      costForTwo: restaurant.costForTwo || "",
       ownerName: restaurant.ownerName || "",
       ownerEmail: restaurant.ownerEmail || "",
       ownerPhone: restaurant.ownerPhone || restaurant.phone || "",
@@ -1028,6 +1029,7 @@ export default function RestaurantsList() {
         name: detailsForm.name.trim(),
         pureVegRestaurant: detailsForm.pureVegRestaurant === true,
         isFreeDelivery: detailsForm.isFreeDelivery === true,
+        costForTwo: detailsForm.costForTwo,
         ownerName: detailsForm.ownerName.trim(),
         ownerEmail: detailsForm.ownerEmail.trim(),
         ownerPhone: detailsForm.ownerPhone.trim(),
@@ -1320,13 +1322,13 @@ export default function RestaurantsList() {
                     <FileText className="w-4 h-4" />
                     PDF
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={async () => {
                       const dataToExport = filteredRestaurants.length > 0 ? filteredRestaurants : restaurants
                       const filename = "restaurants_list"
                       const utils = await loadRestaurantsExportUtils()
                       utils.exportRestaurantsToExcel(dataToExport, filename)
-                    }} 
+                    }}
                     className="cursor-pointer flex items-center gap-2"
                   >
                     <FileSpreadsheet className="w-4 h-4" />
@@ -1444,7 +1446,7 @@ export default function RestaurantsList() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div 
+                            <div
                               className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 cursor-pointer hover:opacity-80 transition-all border border-slate-100"
                               onClick={() => handleViewDetails(restaurant)}
                             >
@@ -1458,7 +1460,7 @@ export default function RestaurantsList() {
                               />
                             </div>
                             <div className="flex flex-col">
-                              <span 
+                              <span
                                 className="text-sm font-medium text-slate-900 cursor-pointer hover:text-blue-600 transition-colors"
                                 onClick={() => handleViewDetails(restaurant)}
                               >
@@ -1666,22 +1668,20 @@ export default function RestaurantsList() {
                         <button
                           type="button"
                           onClick={() => setDetailsForm((prev) => ({ ...prev, pureVegRestaurant: true }))}
-                          className={`px-3 py-1.5 text-xs rounded-full border ${
-                            detailsForm.pureVegRestaurant === true
-                              ? "bg-green-600 text-white border-green-600"
-                              : "bg-white text-slate-700 border-slate-300"
-                          }`}
+                          className={`px-3 py-1.5 text-xs rounded-full border ${detailsForm.pureVegRestaurant === true
+                            ? "bg-green-600 text-white border-green-600"
+                            : "bg-white text-slate-700 border-slate-300"
+                            }`}
                         >
                           Yes
                         </button>
                         <button
                           type="button"
                           onClick={() => setDetailsForm((prev) => ({ ...prev, pureVegRestaurant: false }))}
-                          className={`px-3 py-1.5 text-xs rounded-full border ${
-                            detailsForm.pureVegRestaurant === false
-                              ? "bg-slate-900 text-white border-slate-900"
-                              : "bg-white text-slate-700 border-slate-300"
-                          }`}
+                          className={`px-3 py-1.5 text-xs rounded-full border ${detailsForm.pureVegRestaurant === false
+                            ? "bg-slate-900 text-white border-slate-900"
+                            : "bg-white text-slate-700 border-slate-300"
+                            }`}
                         >
                           No
                         </button>
@@ -1693,26 +1693,35 @@ export default function RestaurantsList() {
                         <button
                           type="button"
                           onClick={() => setDetailsForm((prev) => ({ ...prev, isFreeDelivery: true }))}
-                          className={`px-3 py-1.5 text-xs rounded-full border ${
-                            detailsForm.isFreeDelivery === true
-                              ? "bg-green-600 text-white border-green-600"
-                              : "bg-white text-slate-700 border-slate-300"
-                          }`}
+                          className={`px-3 py-1.5 text-xs rounded-full border ${detailsForm.isFreeDelivery === true
+                            ? "bg-green-600 text-white border-green-600"
+                            : "bg-white text-slate-700 border-slate-300"
+                            }`}
                         >
                           Yes
                         </button>
                         <button
                           type="button"
                           onClick={() => setDetailsForm((prev) => ({ ...prev, isFreeDelivery: false }))}
-                          className={`px-3 py-1.5 text-xs rounded-full border ${
-                            detailsForm.isFreeDelivery === false
-                              ? "bg-slate-900 text-white border-slate-900"
-                              : "bg-white text-slate-700 border-slate-300"
-                          }`}
+                          className={`px-3 py-1.5 text-xs rounded-full border ${detailsForm.isFreeDelivery === false
+                            ? "bg-slate-900 text-white border-slate-900"
+                            : "bg-white text-slate-700 border-slate-300"
+                            }`}
                         >
                           No
                         </button>
                       </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Cost for Two (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 300"
+                        className="w-full text-sm p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+                        value={detailsForm.costForTwo}
+                        onChange={(e) => setDetailsForm({ ...detailsForm, costForTwo: e.target.value })}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs text-slate-500 mb-1">Restaurant Email</label>
@@ -1977,700 +1986,700 @@ export default function RestaurantsList() {
                 )
                 const hasRegistrationDocuments = hasPanSection || hasGstSection || hasFssaiSection || hasBankSection
                 return (
-                <div className="space-y-10">
-                  {/* Restaurant Basic Info */}
-                  <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-                    <div className="w-32 h-32 rounded-3xl overflow-hidden bg-slate-50 shrink-0 shadow-inner group">
-                      <img
-                        src={profileImgUrl || PLACEHOLDER_128}
-                        alt={r?.restaurantName || r?.name || "Restaurant"}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => {
-                          e.target.src = PLACEHOLDER_128
-                        }}
-                      />
-                    </div>
-                    <div className="flex-1 text-center md:text-left pt-2">
-                      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
-                        <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                          {r?.restaurantName || r?.name || "N/A"}
-                        </h3>
-                        <div className="flex items-center justify-center md:justify-start gap-2">
-                          <span className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${r?.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {r?.isActive !== false ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
+                  <div className="space-y-10">
+                    {/* Restaurant Basic Info */}
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                      <div className="w-32 h-32 rounded-3xl overflow-hidden bg-slate-50 shrink-0 shadow-inner group">
+                        <img
+                          src={profileImgUrl || PLACEHOLDER_128}
+                          alt={r?.restaurantName || r?.name || "Restaurant"}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          onError={(e) => {
+                            e.target.src = PLACEHOLDER_128
+                          }}
+                        />
                       </div>
-                      <div className="flex items-center justify-center md:justify-start gap-6 flex-wrap">
-                        {(r?.ratings?.average != null) && (
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 rounded-xl">
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-500" />
-                            <span className="text-sm font-bold text-yellow-700">
-                              {(r.ratings?.average ?? 0).toFixed(1)}
-                            </span>
-                            <span className="text-xs text-yellow-600/70 ml-1 font-medium">
-                              ({(r.ratings?.count ?? 0)} reviews)
+                      <div className="flex-1 text-center md:text-left pt-2">
+                        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+                          <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                            {r?.restaurantName || r?.name || "N/A"}
+                          </h3>
+                          <div className="flex items-center justify-center md:justify-start gap-2">
+                            <span className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${r?.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {r?.isActive !== false ? 'Active' : 'Inactive'}
                             </span>
                           </div>
-                        )}
-                        <div className="flex items-center gap-2 text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                          <Building2 className="w-4 h-4" />
-                          <span className="text-xs font-bold tracking-wider">{formatRestaurantId(r?.restaurantId || r?._id)}</span>
+                        </div>
+                        <div className="flex items-center justify-center md:justify-start gap-6 flex-wrap">
+                          {(r?.ratings?.average != null) && (
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 rounded-xl">
+                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-500" />
+                              <span className="text-sm font-bold text-yellow-700">
+                                {(r.ratings?.average ?? 0).toFixed(1)}
+                              </span>
+                              <span className="text-xs text-yellow-600/70 ml-1 font-medium">
+                                ({(r.ratings?.count ?? 0)} reviews)
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                            <Building2 className="w-4 h-4" />
+                            <span className="text-xs font-bold tracking-wider">{formatRestaurantId(r?.restaurantId || r?._id)}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                    {/* Owner Information */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                        <User className="w-4 h-4 text-blue-600" />
-                        <h4 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Owner Information</h4>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50/30 border border-blue-100/30">
-                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-                            <User className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-0.5">Full Name</p>
-                            <p className="text-base font-bold text-slate-800">
-                              {r?.ownerName || "N/A"}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-emerald-50/30 border border-emerald-100/30">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-                            <Phone className="w-5 h-5 text-emerald-600" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-0.5">Contact Number</p>
-                            <p className="text-base font-bold text-slate-800">
-                              {r?.ownerPhone || r?.phone || "N/A"}
-                            </p>
-                          </div>
-                        </div>
-                        {(r?.ownerEmail || r?.email) && (
-                          <div className="flex items-start gap-4 p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100/30">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                              <Mail className="w-5 h-5 text-indigo-600" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider mb-0.5">Email Address</p>
-                              <p className="text-base font-bold text-slate-800">{r.ownerEmail || r.email}</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Location & Contact */}
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-lg font-semibold text-slate-900">Location & Contact</h4>
-                        {isEditingLocation ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-semibold">
-                            <Settings className="w-3.5 h-3.5" />
-                            Editable Below
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="space-y-3">
-                        {!isEditingLocation && (r?.location || hasFlatAddress) && (
-                          <div className="flex items-start gap-3">
-                            <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
-                            <div>
-                              <p className="text-xs text-slate-500">Address</p>
-                              <p className="text-sm font-medium text-slate-900">
-                                {r?.location ? formatLocationAddress(r.location, selectedRestaurant?.zone) : flatAddress}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        {isEditingLocation && (
-                          <p className="text-xs text-indigo-700 font-medium bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
-                            Location editor is shown at the bottom of this details modal.
-                          </p>
-                        )}
-                        {(r?.primaryContactNumber || r?.phone) && (
-                          <div className="flex items-center gap-3">
-                            <Phone className="w-5 h-5 text-slate-400" />
-                            <div>
-                              <p className="text-xs text-slate-500">Primary Contact</p>
-                              <p className="text-sm font-medium text-slate-900">{r.primaryContactNumber || r.phone}</p>
-                            </div>
-                          </div>
-                        )}
-                        {(r?.email && !r?.ownerEmail) && (
-                          <div className="flex items-center gap-3">
-                            <Mail className="w-5 h-5 text-slate-400" />
-                            <div>
-                              <p className="text-xs text-slate-500">Restaurant Email</p>
-                              <p className="text-sm font-medium text-slate-900">{r.email}</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Timings */}
-                  <div className="grid grid-cols-1 gap-6">
-
-                    <div>
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Timings & Status</h4>
-                      <div className="space-y-3">
-                        {outletDayRows.length > 0 && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Outlet Timings (Day-wise)</p>
-                            <div className="space-y-1.5">
-                              {outletDayRows.map((slot) => (
-                                <div key={slot.day} className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-600 font-medium">{slot.day}</span>
-                                  <span className="text-slate-900">
-                                    {slot.isOpen
-                                      ? `${formatTime12Hour(slot.openingTime)} – ${formatTime12Hour(slot.closingTime)}`
-                                      : "Closed"}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {estimatedDeliveryTimeVal && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Estimated Delivery Time</p>
-                            <p className="text-sm font-medium text-slate-900">{estimatedDeliveryTimeVal}</p>
-                          </div>
-                        )}
-                        {openDaysVal && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Open Days</p>
-                            <div className="flex flex-wrap gap-2">
-                              {openDaysVal.map((day, idx) => (
-                                <span key={idx} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium capitalize">{day}</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-xs text-slate-500 mb-1">Status</p>
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${approvalStatusBadgeClass(detailsApprovalStatus)}`}>
-                            {approvalStatusLabel(detailsApprovalStatus)}
-                          </span>
-                          <p className="mt-2 text-xs text-slate-500">
-                            Outlet: {(r?.isActive !== false) ? "Active" : "Inactive"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Media */}
-                  {(profileImgUrl || coverImages.length > 0 || menuImages.length > 0) && (
-                    <div className="pt-6 border-t border-slate-200">
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Media</h4>
-                      <div className="space-y-4">
-                        {profileImgUrl && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-2">Profile Image</p>
-                            <a
-                              href={profileImgUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700"
-                            >
-                              <ImageIcon className="w-4 h-4" />
-                              <span>View Profile Image</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </div>
-                        )}
-                        {coverImages.length > 0 && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-2">Restaurant Photos</p>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                              {coverImages.map((url, idx) => (
-                                <a
-                                  key={`${url}-${idx}`}
-                                  href={url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="relative aspect-4/5 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300"
-                                  title="Open restaurant photo"
-                                >
-                                  <img
-                                    src={url}
-                                    alt={`Restaurant ${idx + 1}`}
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                    onError={(e) => {
-                                      e.target.style.display = "none"
-                                    }}
-                                  />
-                                </a>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {menuImages.length > 0 && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-2">Menu Images</p>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                              {menuImages.map((url, idx) => (
-                                <a
-                                  key={`${url}-${idx}`}
-                                  href={url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="relative aspect-4/5 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300"
-                                  title="Open menu image"
-                                >
-                                  <img
-                                    src={url}
-                                    alt={`Menu ${idx + 1}`}
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                    onError={(e) => {
-                                      e.target.style.display = "none"
-                                    }}
-                                  />
-                                </a>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Registration Information */}
-                  {(r?.createdAt || r?.updatedAt) && (
-                    <div className="pt-6 border-t border-slate-200">
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Information</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        {r.createdAt && (
-                          <div className="flex items-center gap-3">
-                            <Calendar className="w-5 h-5 text-slate-400" />
-                            <div>
-                              <p className="text-xs text-slate-500 mb-1">Registration Date & Time</p>
-                              <p className="font-medium text-slate-900">
-                                {new Date(r.createdAt).toLocaleString('en-IN', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        {r.updatedAt && (
-                          <div className="flex items-center gap-3">
-                            <Calendar className="w-5 h-5 text-slate-400" />
-                            <div>
-                              <p className="text-xs text-slate-500 mb-1">Last Updated</p>
-                              <p className="font-medium text-slate-900">
-                                {new Date(r.updatedAt).toLocaleString('en-IN', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        {r.restaurantId && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Restaurant ID</p>
-                            <p className="font-medium text-slate-900">{formatRestaurantId(r.restaurantId)}</p>
-                          </div>
-                        )}
-                        {r.slug && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Slug</p>
-                            <p className="font-medium text-slate-900">{r.slug}</p>
-                          </div>
-                        )}
-                        {r.phoneVerified !== undefined && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Phone Verified</p>
-                            <p className="font-medium text-slate-900">{r.phoneVerified ? "Yes" : "No"}</p>
-                          </div>
-                        )}
-                        {r.signupMethod && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Signup Method</p>
-                            <p className="font-medium text-slate-900 capitalize">{r.signupMethod}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Registration Documents - flat (PAN, GST, FSSAI, Bank) or onboarding.step3 */}
-                  {hasRegistrationDocuments && (
-                    <div className="pt-6 border-t border-slate-200">
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Documents</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                      {/* Owner Information */}
                       <div className="space-y-6">
-                        {/* PAN – flat or onboarding.step3 */}
-                        {hasPanSection && (
-                          <div className="bg-slate-50 rounded-lg p-4">
-                            <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                              <FileText className="w-4 h-4" />
-                              PAN Details
-                            </h5>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              {(r.panNumber || r?.onboarding?.step3?.pan?.panNumber) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">PAN Number</p>
-                                  <p className="font-medium text-slate-900">{r.panNumber || r.onboarding?.step3?.pan?.panNumber}</p>
-                                </div>
-                              )}
-                              {(r.nameOnPan || r?.onboarding?.step3?.pan?.nameOnPan) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">Name on PAN</p>
-                                  <p className="font-medium text-slate-900">{r.nameOnPan || r.onboarding?.step3?.pan?.nameOnPan}</p>
-                                </div>
-                              )}
-                              {panDocumentUrl && (
-                                <div className="md:col-span-2">
-                                  <p className="text-xs text-slate-500 mb-2">PAN Document</p>
-                                  <a href={panDocumentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
-                                    <ImageIcon className="w-4 h-4" />
-                                    <span>View PAN Document</span>
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
-                                </div>
-                              )}
+                        <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                          <User className="w-4 h-4 text-blue-600" />
+                          <h4 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Owner Information</h4>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50/30 border border-blue-100/30">
+                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                              <User className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-0.5">Full Name</p>
+                              <p className="text-base font-bold text-slate-800">
+                                {r?.ownerName || "N/A"}
+                              </p>
                             </div>
                           </div>
-                        )}
+                          <div className="flex items-start gap-4 p-4 rounded-2xl bg-emerald-50/30 border border-emerald-100/30">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                              <Phone className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-0.5">Contact Number</p>
+                              <p className="text-base font-bold text-slate-800">
+                                {r?.ownerPhone || r?.phone || "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                          {(r?.ownerEmail || r?.email) && (
+                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100/30">
+                              <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                                <Mail className="w-5 h-5 text-indigo-600" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider mb-0.5">Email Address</p>
+                                <p className="text-base font-bold text-slate-800">{r.ownerEmail || r.email}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                        {/* GST – flat or onboarding.step3 */}
-                        {hasGstSection && (
-                          <div className="bg-slate-50 rounded-lg p-4">
-                            <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                              <FileText className="w-4 h-4" />
-                              GST Details
-                            </h5>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              {(r.gstRegistered != null || r?.onboarding?.step3?.gst?.isRegistered != null) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">GST Registered</p>
-                                  <p className="font-medium text-slate-900">
-                                    {r.gstRegistered != null ? (r.gstRegistered ? "Yes" : "No") : (r?.onboarding?.step3?.gst?.isRegistered ? "Yes" : "No")}
-                                  </p>
-                                </div>
-                              )}
-                              {(r.gstNumber || r?.onboarding?.step3?.gst?.gstNumber) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">GST Number</p>
-                                  <p className="font-medium text-slate-900">{r.gstNumber || r.onboarding?.step3?.gst?.gstNumber}</p>
-                                </div>
-                              )}
-                              {(r.gstLegalName || r?.onboarding?.step3?.gst?.legalName) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">Legal Name</p>
-                                  <p className="font-medium text-slate-900">{r.gstLegalName || r.onboarding?.step3?.gst?.legalName}</p>
-                                </div>
-                              )}
-                              {(r.gstAddress || r?.onboarding?.step3?.gst?.address) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">GST Address</p>
-                                  <p className="font-medium text-slate-900">{r.gstAddress || r.onboarding?.step3?.gst?.address}</p>
-                                </div>
-                              )}
-                              {gstDocumentUrl && (
-                                <div className="md:col-span-2">
-                                  <p className="text-xs text-slate-500 mb-2">GST Document</p>
-                                  <a href={gstDocumentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
-                                    <ImageIcon className="w-4 h-4" />
-                                    <span>View GST Document</span>
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
-                                </div>
-                              )}
+                      {/* Location & Contact */}
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-lg font-semibold text-slate-900">Location & Contact</h4>
+                          {isEditingLocation ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                              <Settings className="w-3.5 h-3.5" />
+                              Editable Below
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="space-y-3">
+                          {!isEditingLocation && (r?.location || hasFlatAddress) && (
+                            <div className="flex items-start gap-3">
+                              <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
+                              <div>
+                                <p className="text-xs text-slate-500">Address</p>
+                                <p className="text-sm font-medium text-slate-900">
+                                  {r?.location ? formatLocationAddress(r.location, selectedRestaurant?.zone) : flatAddress}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        )}
-
-                        {/* FSSAI – flat or onboarding.step3 */}
-                        {hasFssaiSection && (
-                          <div className="bg-slate-50 rounded-lg p-4">
-                            <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                              <FileText className="w-4 h-4" />
-                              FSSAI Details
-                            </h5>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              {(r.fssaiNumber || r?.onboarding?.step3?.fssai?.registrationNumber) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">FSSAI Registration Number</p>
-                                  <p className="font-medium text-slate-900">{r.fssaiNumber || r.onboarding?.step3?.fssai?.registrationNumber}</p>
-                                </div>
-                              )}
-                              {(r.fssaiExpiry || r?.onboarding?.step3?.fssai?.expiryDate) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">FSSAI Expiry Date</p>
-                                  <p className="font-medium text-slate-900">
-                                    {new Date(r.fssaiExpiry || r.onboarding?.step3?.fssai?.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                  </p>
-                                </div>
-                              )}
-                              {fssaiDocumentUrl && (
-                                <div className="md:col-span-2">
-                                  <p className="text-xs text-slate-500 mb-2">FSSAI Document</p>
-                                  <a href={fssaiDocumentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
-                                    <ImageIcon className="w-4 h-4" />
-                                    <span>View FSSAI Document</span>
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
-                                </div>
-                              )}
+                          )}
+                          {isEditingLocation && (
+                            <p className="text-xs text-indigo-700 font-medium bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
+                              Location editor is shown at the bottom of this details modal.
+                            </p>
+                          )}
+                          {(r?.primaryContactNumber || r?.phone) && (
+                            <div className="flex items-center gap-3">
+                              <Phone className="w-5 h-5 text-slate-400" />
+                              <div>
+                                <p className="text-xs text-slate-500">Primary Contact</p>
+                                <p className="text-sm font-medium text-slate-900">{r.primaryContactNumber || r.phone}</p>
+                              </div>
                             </div>
-                          </div>
-                        )}
-
-                        {/* Bank – flat or onboarding.step3 */}
-                        {hasBankSection && (
-                          <div className="bg-slate-50 rounded-lg p-4">
-                            <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                              <CreditCard className="w-4 h-4" />
-                              Bank Details
-                            </h5>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              {(r.accountNumber || r?.onboarding?.step3?.bank?.accountNumber) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">Account Number</p>
-                                  <p className="font-medium text-slate-900">{r.accountNumber || r.onboarding?.step3?.bank?.accountNumber}</p>
-                                </div>
-                              )}
-                              {(r.ifscCode || r?.onboarding?.step3?.bank?.ifscCode) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">IFSC Code</p>
-                                  <p className="font-medium text-slate-900">{r.ifscCode || r.onboarding?.step3?.bank?.ifscCode}</p>
-                                </div>
-                              )}
-                              {(r.accountHolderName || r?.onboarding?.step3?.bank?.accountHolderName) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">Account Holder Name</p>
-                                  <p className="font-medium text-slate-900">{r.accountHolderName || r.onboarding?.step3?.bank?.accountHolderName}</p>
-                                </div>
-                              )}
-                              {(r.accountType || r?.onboarding?.step3?.bank?.accountType) && (
-                                <div>
-                                  <p className="text-xs text-slate-500 mb-1">Account Type</p>
-                                  <p className="font-medium text-slate-900 capitalize">{r.accountType || r.onboarding?.step3?.bank?.accountType}</p>
-                                </div>
-                              )}
+                          )}
+                          {(r?.email && !r?.ownerEmail) && (
+                            <div className="flex items-center gap-3">
+                              <Mail className="w-5 h-5 text-slate-400" />
+                              <div>
+                                <p className="text-xs text-slate-500">Restaurant Email</p>
+                                <p className="text-sm font-medium text-slate-900">{r.email}</p>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
-                  )}
 
-                  {/* Address at registration (flat) */}
-                  {hasFlatAddress && !r?.onboarding?.step1?.location && (
-                    <div className="pt-6 border-t border-slate-200">
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Address (at registration)</h4>
-                      <p className="text-sm font-medium text-slate-900">{flatAddress}</p>
-                    </div>
-                  )}
+                    {/* Timings */}
+                    <div className="grid grid-cols-1 gap-6">
 
-                  {/* Onboarding Step 1 Details */}
-                  {r?.onboarding?.step1 && (
-                    <div className="pt-6 border-t border-slate-200">
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Step 1 Details</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        {r.onboarding.step1.restaurantName && (
+                      <div>
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Timings & Status</h4>
+                        <div className="space-y-3">
+                          {outletDayRows.length > 0 && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Outlet Timings (Day-wise)</p>
+                              <div className="space-y-1.5">
+                                {outletDayRows.map((slot) => (
+                                  <div key={slot.day} className="flex items-center justify-between text-sm">
+                                    <span className="text-slate-600 font-medium">{slot.day}</span>
+                                    <span className="text-slate-900">
+                                      {slot.isOpen
+                                        ? `${formatTime12Hour(slot.openingTime)} – ${formatTime12Hour(slot.closingTime)}`
+                                        : "Closed"}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {estimatedDeliveryTimeVal && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Estimated Delivery Time</p>
+                              <p className="text-sm font-medium text-slate-900">{estimatedDeliveryTimeVal}</p>
+                            </div>
+                          )}
+                          {openDaysVal && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Open Days</p>
+                              <div className="flex flex-wrap gap-2">
+                                {openDaysVal.map((day, idx) => (
+                                  <span key={idx} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium capitalize">{day}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           <div>
-                            <p className="text-xs text-slate-500 mb-1">Restaurant Name (at registration)</p>
-                            <p className="font-medium text-slate-900">{r.onboarding.step1.restaurantName}</p>
-                          </div>
-                        )}
-                        {r.onboarding.step1.ownerName && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Owner Name (at registration)</p>
-                            <p className="font-medium text-slate-900">{r.onboarding.step1.ownerName}</p>
-                          </div>
-                        )}
-                        {r.onboarding.step1.ownerEmail && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Owner Email (at registration)</p>
-                            <p className="font-medium text-slate-900">{r.onboarding.step1.ownerEmail}</p>
-                          </div>
-                        )}
-                        {r.onboarding.step1.ownerPhone && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Owner Phone (at registration)</p>
-                            <p className="font-medium text-slate-900">{r.onboarding.step1.ownerPhone}</p>
-                          </div>
-                        )}
-                        {r.onboarding.step1.primaryContactNumber && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Primary Contact (at registration)</p>
-                            <p className="font-medium text-slate-900">{r.onboarding.step1.primaryContactNumber}</p>
-                          </div>
-                        )}
-                        {r.onboarding.step1.location && (
-                          <div className="md:col-span-2">
-                            <p className="text-xs text-slate-500 mb-1">Location (at registration)</p>
-                            <p className="font-medium text-slate-900">
-                              {r.onboarding.step1.location.addressLine1 || ""}
-                              {r.onboarding.step1.location.addressLine2 && `, ${r.onboarding.step1.location.addressLine2}`}
-                              {r.onboarding.step1.location.area && `, ${r.onboarding.step1.location.area}`}
-                              {r.onboarding.step1.location.city && `, ${r.onboarding.step1.location.city}`}
-                              {r.onboarding.step1.location.landmark && `, ${r.onboarding.step1.location.landmark}`}
+                            <p className="text-xs text-slate-500 mb-1">Status</p>
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${approvalStatusBadgeClass(detailsApprovalStatus)}`}>
+                              {approvalStatusLabel(detailsApprovalStatus)}
+                            </span>
+                            <p className="mt-2 text-xs text-slate-500">
+                              Outlet: {(r?.isActive !== false) ? "Active" : "Inactive"}
                             </p>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
-                  )}
 
-                  {/* Onboarding Step 2 Details */}
-                  {r?.onboarding?.step2 && (
-                    <div className="pt-6 border-t border-slate-200">
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Step 2 Details</h4>
-                      <div className="space-y-4">
-                        {r.onboarding.step2.cuisines && Array.isArray(r.onboarding.step2.cuisines) && r.onboarding.step2.cuisines.length > 0 && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-2">Cuisines (at registration)</p>
-                            <div className="flex flex-wrap gap-2">
-                              {r.onboarding.step2.cuisines.map((cuisine, idx) => (
-                                <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                                  {cuisine}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {r.onboarding.step2.deliveryTimings && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {/* Media */}
+                    {(profileImgUrl || coverImages.length > 0 || menuImages.length > 0) && (
+                      <div className="pt-6 border-t border-slate-200">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Media</h4>
+                        <div className="space-y-4">
+                          {profileImgUrl && (
                             <div>
-                              <p className="text-xs text-slate-500 mb-1">Opening Time (at registration)</p>
-                              <p className="font-medium text-slate-900">{formatTime12Hour(r.onboarding.step2.deliveryTimings.openingTime)}</p>
+                              <p className="text-xs text-slate-500 mb-2">Profile Image</p>
+                              <a
+                                href={profileImgUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                              >
+                                <ImageIcon className="w-4 h-4" />
+                                <span>View Profile Image</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
                             </div>
+                          )}
+                          {coverImages.length > 0 && (
                             <div>
-                              <p className="text-xs text-slate-500 mb-1">Closing Time (at registration)</p>
-                              <p className="font-medium text-slate-900">{formatTime12Hour(r.onboarding.step2.deliveryTimings.closingTime)}</p>
+                              <p className="text-xs text-slate-500 mb-2">Restaurant Photos</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                {coverImages.map((url, idx) => (
+                                  <a
+                                    key={`${url}-${idx}`}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="relative aspect-4/5 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300"
+                                    title="Open restaurant photo"
+                                  >
+                                    <img
+                                      src={url}
+                                      alt={`Restaurant ${idx + 1}`}
+                                      className="w-full h-full object-cover"
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        e.target.style.display = "none"
+                                      }}
+                                    />
+                                  </a>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        {r.onboarding.step2.openDays && Array.isArray(r.onboarding.step2.openDays) && r.onboarding.step2.openDays.length > 0 && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-2">Open Days (at registration)</p>
-                            <div className="flex flex-wrap gap-2">
-                              {r.onboarding.step2.openDays.map((day, idx) => (
-                                <span key={idx} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium capitalize">
-                                  {day}
-                                </span>
-                              ))}
+                          )}
+                          {menuImages.length > 0 && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-2">Menu Images</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                {menuImages.map((url, idx) => (
+                                  <a
+                                    key={`${url}-${idx}`}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="relative aspect-4/5 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300"
+                                    title="Open menu image"
+                                  >
+                                    <img
+                                      src={url}
+                                      alt={`Menu ${idx + 1}`}
+                                      className="w-full h-full object-cover"
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        e.target.style.display = "none"
+                                      }}
+                                    />
+                                  </a>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        {r.onboarding.step2.profileImageUrl?.url && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-2">Profile Image (at registration)</p>
-                            <a
-                              href={r.onboarding.step2.profileImageUrl.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-block"
-                            >
-                              <img
-                                src={r.onboarding.step2.profileImageUrl.url}
-                                alt="Profile"
-                                className="w-32 h-32 rounded-lg object-cover border border-slate-200 hover:border-blue-500 transition-colors"
-                                onError={(e) => {
-                                  e.target.src = PLACEHOLDER_128
-                                }}
-                              />
-                            </a>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Onboarding Step 4 Details */}
-                  {r?.onboarding?.step4 && (
-                    <div className="pt-6 border-t border-slate-200">
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Step 4 Details</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        {r.onboarding.step4.estimatedDeliveryTime && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Estimated Delivery Time (at registration)</p>
-                            <p className="font-medium text-slate-900">{r.onboarding.step4.estimatedDeliveryTime}</p>
-                          </div>
-                        )}
-                        {r.onboarding.step4.distance && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Distance (at registration)</p>
-                            <p className="font-medium text-slate-900">{r.onboarding.step4.distance}</p>
-                          </div>
-                        )}
-                        {r.onboarding.step4.featuredDish && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Featured Dish (at registration)</p>
-                            <p className="font-medium text-slate-900">{r.onboarding.step4.featuredDish}</p>
-                          </div>
-                        )}
-                        {r.onboarding.step4.offer && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Offer (at registration)</p>
-                            <p className="font-medium text-green-600">{r.onboarding.step4.offer}</p>
-                          </div>
-                        )}
+                    {/* Registration Information */}
+                    {(r?.createdAt || r?.updatedAt) && (
+                      <div className="pt-6 border-t border-slate-200">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Information</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          {r.createdAt && (
+                            <div className="flex items-center gap-3">
+                              <Calendar className="w-5 h-5 text-slate-400" />
+                              <div>
+                                <p className="text-xs text-slate-500 mb-1">Registration Date & Time</p>
+                                <p className="font-medium text-slate-900">
+                                  {new Date(r.createdAt).toLocaleString('en-IN', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {r.updatedAt && (
+                            <div className="flex items-center gap-3">
+                              <Calendar className="w-5 h-5 text-slate-400" />
+                              <div>
+                                <p className="text-xs text-slate-500 mb-1">Last Updated</p>
+                                <p className="font-medium text-slate-900">
+                                  {new Date(r.updatedAt).toLocaleString('en-IN', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {r.restaurantId && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Restaurant ID</p>
+                              <p className="font-medium text-slate-900">{formatRestaurantId(r.restaurantId)}</p>
+                            </div>
+                          )}
+                          {r.slug && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Slug</p>
+                              <p className="font-medium text-slate-900">{r.slug}</p>
+                            </div>
+                          )}
+                          {r.phoneVerified !== undefined && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Phone Verified</p>
+                              <p className="font-medium text-slate-900">{r.phoneVerified ? "Yes" : "No"}</p>
+                            </div>
+                          )}
+                          {r.signupMethod && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Signup Method</p>
+                              <p className="font-medium text-slate-900 capitalize">{r.signupMethod}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Additional Information */}
-                  {(r?.slug || r?.restaurantId || r?.phoneVerified !== undefined || r?.signupMethod) && (
-                    <div className="pt-6 border-t border-slate-200">
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Additional Information</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        {r?.slug && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Slug</p>
-                            <p className="font-medium text-slate-900">{r.slug}</p>
-                          </div>
-                        )}
-                        {r?.restaurantId && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Restaurant ID</p>
-                            <p className="font-medium text-slate-900">{formatRestaurantId(r.restaurantId)}</p>
-                          </div>
-                        )}
-                        {r?.phoneVerified !== undefined && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Phone Verified</p>
-                            <p className="font-medium text-slate-900">{r.phoneVerified ? "Yes" : "No"}</p>
-                          </div>
-                        )}
-                        {r?.signupMethod && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Signup Method</p>
-                            <p className="font-medium text-slate-900 capitalize">{r.signupMethod}</p>
-                          </div>
-                        )}
-                        {r?.onboarding?.completedSteps !== undefined && (
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Onboarding Steps Completed</p>
-                            <p className="font-medium text-slate-900">{r.onboarding.completedSteps} / 4</p>
-                          </div>
-                        )}
+                    {/* Registration Documents - flat (PAN, GST, FSSAI, Bank) or onboarding.step3 */}
+                    {hasRegistrationDocuments && (
+                      <div className="pt-6 border-t border-slate-200">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Documents</h4>
+                        <div className="space-y-6">
+                          {/* PAN – flat or onboarding.step3 */}
+                          {hasPanSection && (
+                            <div className="bg-slate-50 rounded-lg p-4">
+                              <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                <FileText className="w-4 h-4" />
+                                PAN Details
+                              </h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                {(r.panNumber || r?.onboarding?.step3?.pan?.panNumber) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">PAN Number</p>
+                                    <p className="font-medium text-slate-900">{r.panNumber || r.onboarding?.step3?.pan?.panNumber}</p>
+                                  </div>
+                                )}
+                                {(r.nameOnPan || r?.onboarding?.step3?.pan?.nameOnPan) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Name on PAN</p>
+                                    <p className="font-medium text-slate-900">{r.nameOnPan || r.onboarding?.step3?.pan?.nameOnPan}</p>
+                                  </div>
+                                )}
+                                {panDocumentUrl && (
+                                  <div className="md:col-span-2">
+                                    <p className="text-xs text-slate-500 mb-2">PAN Document</p>
+                                    <a href={panDocumentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
+                                      <ImageIcon className="w-4 h-4" />
+                                      <span>View PAN Document</span>
+                                      <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* GST – flat or onboarding.step3 */}
+                          {hasGstSection && (
+                            <div className="bg-slate-50 rounded-lg p-4">
+                              <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                <FileText className="w-4 h-4" />
+                                GST Details
+                              </h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                {(r.gstRegistered != null || r?.onboarding?.step3?.gst?.isRegistered != null) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">GST Registered</p>
+                                    <p className="font-medium text-slate-900">
+                                      {r.gstRegistered != null ? (r.gstRegistered ? "Yes" : "No") : (r?.onboarding?.step3?.gst?.isRegistered ? "Yes" : "No")}
+                                    </p>
+                                  </div>
+                                )}
+                                {(r.gstNumber || r?.onboarding?.step3?.gst?.gstNumber) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">GST Number</p>
+                                    <p className="font-medium text-slate-900">{r.gstNumber || r.onboarding?.step3?.gst?.gstNumber}</p>
+                                  </div>
+                                )}
+                                {(r.gstLegalName || r?.onboarding?.step3?.gst?.legalName) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Legal Name</p>
+                                    <p className="font-medium text-slate-900">{r.gstLegalName || r.onboarding?.step3?.gst?.legalName}</p>
+                                  </div>
+                                )}
+                                {(r.gstAddress || r?.onboarding?.step3?.gst?.address) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">GST Address</p>
+                                    <p className="font-medium text-slate-900">{r.gstAddress || r.onboarding?.step3?.gst?.address}</p>
+                                  </div>
+                                )}
+                                {gstDocumentUrl && (
+                                  <div className="md:col-span-2">
+                                    <p className="text-xs text-slate-500 mb-2">GST Document</p>
+                                    <a href={gstDocumentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
+                                      <ImageIcon className="w-4 h-4" />
+                                      <span>View GST Document</span>
+                                      <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* FSSAI – flat or onboarding.step3 */}
+                          {hasFssaiSection && (
+                            <div className="bg-slate-50 rounded-lg p-4">
+                              <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                <FileText className="w-4 h-4" />
+                                FSSAI Details
+                              </h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                {(r.fssaiNumber || r?.onboarding?.step3?.fssai?.registrationNumber) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">FSSAI Registration Number</p>
+                                    <p className="font-medium text-slate-900">{r.fssaiNumber || r.onboarding?.step3?.fssai?.registrationNumber}</p>
+                                  </div>
+                                )}
+                                {(r.fssaiExpiry || r?.onboarding?.step3?.fssai?.expiryDate) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">FSSAI Expiry Date</p>
+                                    <p className="font-medium text-slate-900">
+                                      {new Date(r.fssaiExpiry || r.onboarding?.step3?.fssai?.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </p>
+                                  </div>
+                                )}
+                                {fssaiDocumentUrl && (
+                                  <div className="md:col-span-2">
+                                    <p className="text-xs text-slate-500 mb-2">FSSAI Document</p>
+                                    <a href={fssaiDocumentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
+                                      <ImageIcon className="w-4 h-4" />
+                                      <span>View FSSAI Document</span>
+                                      <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Bank – flat or onboarding.step3 */}
+                          {hasBankSection && (
+                            <div className="bg-slate-50 rounded-lg p-4">
+                              <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                <CreditCard className="w-4 h-4" />
+                                Bank Details
+                              </h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                {(r.accountNumber || r?.onboarding?.step3?.bank?.accountNumber) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Account Number</p>
+                                    <p className="font-medium text-slate-900">{r.accountNumber || r.onboarding?.step3?.bank?.accountNumber}</p>
+                                  </div>
+                                )}
+                                {(r.ifscCode || r?.onboarding?.step3?.bank?.ifscCode) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">IFSC Code</p>
+                                    <p className="font-medium text-slate-900">{r.ifscCode || r.onboarding?.step3?.bank?.ifscCode}</p>
+                                  </div>
+                                )}
+                                {(r.accountHolderName || r?.onboarding?.step3?.bank?.accountHolderName) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Account Holder Name</p>
+                                    <p className="font-medium text-slate-900">{r.accountHolderName || r.onboarding?.step3?.bank?.accountHolderName}</p>
+                                  </div>
+                                )}
+                                {(r.accountType || r?.onboarding?.step3?.bank?.accountType) && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Account Type</p>
+                                    <p className="font-medium text-slate-900 capitalize">{r.accountType || r.onboarding?.step3?.bank?.accountType}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                </div>
+                    {/* Address at registration (flat) */}
+                    {hasFlatAddress && !r?.onboarding?.step1?.location && (
+                      <div className="pt-6 border-t border-slate-200">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Address (at registration)</h4>
+                        <p className="text-sm font-medium text-slate-900">{flatAddress}</p>
+                      </div>
+                    )}
+
+                    {/* Onboarding Step 1 Details */}
+                    {r?.onboarding?.step1 && (
+                      <div className="pt-6 border-t border-slate-200">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Step 1 Details</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          {r.onboarding.step1.restaurantName && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Restaurant Name (at registration)</p>
+                              <p className="font-medium text-slate-900">{r.onboarding.step1.restaurantName}</p>
+                            </div>
+                          )}
+                          {r.onboarding.step1.ownerName && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Owner Name (at registration)</p>
+                              <p className="font-medium text-slate-900">{r.onboarding.step1.ownerName}</p>
+                            </div>
+                          )}
+                          {r.onboarding.step1.ownerEmail && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Owner Email (at registration)</p>
+                              <p className="font-medium text-slate-900">{r.onboarding.step1.ownerEmail}</p>
+                            </div>
+                          )}
+                          {r.onboarding.step1.ownerPhone && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Owner Phone (at registration)</p>
+                              <p className="font-medium text-slate-900">{r.onboarding.step1.ownerPhone}</p>
+                            </div>
+                          )}
+                          {r.onboarding.step1.primaryContactNumber && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Primary Contact (at registration)</p>
+                              <p className="font-medium text-slate-900">{r.onboarding.step1.primaryContactNumber}</p>
+                            </div>
+                          )}
+                          {r.onboarding.step1.location && (
+                            <div className="md:col-span-2">
+                              <p className="text-xs text-slate-500 mb-1">Location (at registration)</p>
+                              <p className="font-medium text-slate-900">
+                                {r.onboarding.step1.location.addressLine1 || ""}
+                                {r.onboarding.step1.location.addressLine2 && `, ${r.onboarding.step1.location.addressLine2}`}
+                                {r.onboarding.step1.location.area && `, ${r.onboarding.step1.location.area}`}
+                                {r.onboarding.step1.location.city && `, ${r.onboarding.step1.location.city}`}
+                                {r.onboarding.step1.location.landmark && `, ${r.onboarding.step1.location.landmark}`}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Onboarding Step 2 Details */}
+                    {r?.onboarding?.step2 && (
+                      <div className="pt-6 border-t border-slate-200">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Step 2 Details</h4>
+                        <div className="space-y-4">
+                          {r.onboarding.step2.cuisines && Array.isArray(r.onboarding.step2.cuisines) && r.onboarding.step2.cuisines.length > 0 && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-2">Cuisines (at registration)</p>
+                              <div className="flex flex-wrap gap-2">
+                                {r.onboarding.step2.cuisines.map((cuisine, idx) => (
+                                  <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                                    {cuisine}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {r.onboarding.step2.deliveryTimings && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <p className="text-xs text-slate-500 mb-1">Opening Time (at registration)</p>
+                                <p className="font-medium text-slate-900">{formatTime12Hour(r.onboarding.step2.deliveryTimings.openingTime)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-slate-500 mb-1">Closing Time (at registration)</p>
+                                <p className="font-medium text-slate-900">{formatTime12Hour(r.onboarding.step2.deliveryTimings.closingTime)}</p>
+                              </div>
+                            </div>
+                          )}
+                          {r.onboarding.step2.openDays && Array.isArray(r.onboarding.step2.openDays) && r.onboarding.step2.openDays.length > 0 && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-2">Open Days (at registration)</p>
+                              <div className="flex flex-wrap gap-2">
+                                {r.onboarding.step2.openDays.map((day, idx) => (
+                                  <span key={idx} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium capitalize">
+                                    {day}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {r.onboarding.step2.profileImageUrl?.url && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-2">Profile Image (at registration)</p>
+                              <a
+                                href={r.onboarding.step2.profileImageUrl.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block"
+                              >
+                                <img
+                                  src={r.onboarding.step2.profileImageUrl.url}
+                                  alt="Profile"
+                                  className="w-32 h-32 rounded-lg object-cover border border-slate-200 hover:border-blue-500 transition-colors"
+                                  onError={(e) => {
+                                    e.target.src = PLACEHOLDER_128
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Onboarding Step 4 Details */}
+                    {r?.onboarding?.step4 && (
+                      <div className="pt-6 border-t border-slate-200">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Step 4 Details</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          {r.onboarding.step4.estimatedDeliveryTime && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Estimated Delivery Time (at registration)</p>
+                              <p className="font-medium text-slate-900">{r.onboarding.step4.estimatedDeliveryTime}</p>
+                            </div>
+                          )}
+                          {r.onboarding.step4.distance && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Distance (at registration)</p>
+                              <p className="font-medium text-slate-900">{r.onboarding.step4.distance}</p>
+                            </div>
+                          )}
+                          {r.onboarding.step4.featuredDish && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Featured Dish (at registration)</p>
+                              <p className="font-medium text-slate-900">{r.onboarding.step4.featuredDish}</p>
+                            </div>
+                          )}
+                          {r.onboarding.step4.offer && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Offer (at registration)</p>
+                              <p className="font-medium text-green-600">{r.onboarding.step4.offer}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Information */}
+                    {(r?.slug || r?.restaurantId || r?.phoneVerified !== undefined || r?.signupMethod) && (
+                      <div className="pt-6 border-t border-slate-200">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Additional Information</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          {r?.slug && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Slug</p>
+                              <p className="font-medium text-slate-900">{r.slug}</p>
+                            </div>
+                          )}
+                          {r?.restaurantId && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Restaurant ID</p>
+                              <p className="font-medium text-slate-900">{formatRestaurantId(r.restaurantId)}</p>
+                            </div>
+                          )}
+                          {r?.phoneVerified !== undefined && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Phone Verified</p>
+                              <p className="font-medium text-slate-900">{r.phoneVerified ? "Yes" : "No"}</p>
+                            </div>
+                          )}
+                          {r?.signupMethod && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Signup Method</p>
+                              <p className="font-medium text-slate-900 capitalize">{r.signupMethod}</p>
+                            </div>
+                          )}
+                          {r?.onboarding?.completedSteps !== undefined && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Onboarding Steps Completed</p>
+                              <p className="font-medium text-slate-900">{r.onboarding.completedSteps} / 4</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
                 )
               })()}
               {!loadingDetails && !restaurantDetails && !selectedRestaurant && (

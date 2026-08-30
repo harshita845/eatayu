@@ -131,6 +131,9 @@ const restaurantSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    costForTwo: {
+      type: Number,
+    },
     /**
      * Legacy field. No longer used to keep a restaurant online outside outlet hours.
      * Cleared whenever the Online/Offline toggle is updated.
