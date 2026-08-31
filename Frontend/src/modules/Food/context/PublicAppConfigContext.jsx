@@ -15,6 +15,7 @@ import {
   loadUserHomePublicConfig,
 } from "@food/services/publicAppConfig";
 import {
+  applyModuleBranding,
   applyModulePowerScanning,
   setCachedSettings,
 } from "@food/utils/businessSettings";
@@ -64,10 +65,9 @@ export function PublicAppConfigProvider({ children }) {
         if (cancelled) return;
         if (snapshot.businessSettings) {
           setCachedSettings(snapshot.businessSettings);
-          applyModulePowerScanning(
-            resolveModuleFromPath(window.location?.pathname || ""),
-            snapshot.businessSettings,
-          );
+          const currentModule = resolveModuleFromPath(window.location?.pathname || "");
+          applyModulePowerScanning(currentModule, snapshot.businessSettings);
+          applyModuleBranding(currentModule, snapshot.businessSettings);
         }
         setConfig(snapshot);
       } finally {
@@ -78,10 +78,9 @@ export function PublicAppConfigProvider({ children }) {
     const handleSettingsUpdate = () => {
       void refreshCore(true).then((snapshot) => {
         if (snapshot?.businessSettings) {
-          applyModulePowerScanning(
-            resolveModuleFromPath(window.location?.pathname || ""),
-            snapshot.businessSettings,
-          );
+          const currentModule = resolveModuleFromPath(window.location?.pathname || "");
+          applyModulePowerScanning(currentModule, snapshot.businessSettings);
+          applyModuleBranding(currentModule, snapshot.businessSettings);
         }
       });
     };
@@ -98,6 +97,7 @@ export function PublicAppConfigProvider({ children }) {
     const cached = config.businessSettings;
     if (cached) {
       applyModulePowerScanning(moduleName, cached);
+      applyModuleBranding(moduleName, cached);
     }
   }, [location.pathname, config.businessSettings]);
 

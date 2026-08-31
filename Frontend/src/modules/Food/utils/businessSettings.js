@@ -352,6 +352,27 @@ const buildThemeOverrideCss = () => {
   `;
 };
 
+// Resolve module name based on current window location path
+const getCurrentModule = () => {
+  if (typeof window === "undefined") return "user";
+  const pathname = window.location.pathname;
+  if (pathname.startsWith("/food/restaurant")) return "restaurant";
+  if (pathname.startsWith("/food/delivery")) return "delivery";
+  return "user";
+};
+
+const resolveFaviconByModule = (settings, moduleName = "user") => {
+  if (!settings || typeof settings !== "object") return "";
+  const moduleKey = String(moduleName || "").trim().toLowerCase();
+  if (moduleKey === "restaurant") {
+    return settings.restaurantFavicon?.url || settings.favicon?.url || "";
+  }
+  if (moduleKey === "delivery") {
+    return settings.deliveryFavicon?.url || settings.favicon?.url || "";
+  }
+  return settings.favicon?.url || "";
+};
+
 // Initialize from localStorage immediately so it's available for components on mount
 let cachedSettings = (() => {
   try {
@@ -365,7 +386,7 @@ let cachedSettings = (() => {
 // Apply cached settings immediately on module load if they exist
 if (cachedSettings) {
   setTimeout(() => {
-    updateFavicon(cachedSettings.favicon?.url);
+    updateFavicon(resolveFaviconByModule(cachedSettings, getCurrentModule()));
     updateTitle(cachedSettings.companyName);
   }, 0);
 }
@@ -402,7 +423,7 @@ export const loadBusinessSettings = async ({ force = false } = {}) => {
           localStorage.setItem(SETTINGS_KEY, JSON.stringify(mergedSettings));
         } catch (e) {}
 
-        updateFavicon(mergedSettings.favicon?.url);
+        updateFavicon(resolveFaviconByModule(mergedSettings, getCurrentModule()));
         updateTitle(mergedSettings.companyName);
         return mergedSettings;
       }
@@ -449,18 +470,6 @@ const resolveLogoByModule = (settings, moduleName = "user") => {
   return settings.logo?.url || "";
 };
 
-const resolveFaviconByModule = (settings, moduleName = "user") => {
-  if (!settings || typeof settings !== "object") return "";
-  const moduleKey = String(moduleName || "").trim().toLowerCase();
-  if (moduleKey === "restaurant") {
-    return settings.restaurantFavicon?.url || settings.favicon?.url || "";
-  }
-  if (moduleKey === "delivery") {
-    return settings.deliveryFavicon?.url || settings.favicon?.url || "";
-  }
-  return settings.favicon?.url || "";
-};
-
 /**
  * Update page title
  */
@@ -480,7 +489,7 @@ export const setCachedSettings = (settings) => {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     } catch (e) {}
     
-    updateFavicon(settings.favicon?.url);
+    updateFavicon(resolveFaviconByModule(settings, getCurrentModule()));
     updateTitle(settings.companyName);
   }
 };
