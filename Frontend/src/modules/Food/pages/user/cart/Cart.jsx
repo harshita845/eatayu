@@ -288,6 +288,7 @@ export default function Cart() {
   const orderSuccessAudioRef = useRef(null)
   const hasRestoredRecipientRef = useRef(false)
   const appliedCouponRef = useRef(null)
+  const lastFetchedRestaurantIdRef = useRef(null)
 
   // Defensive check: Ensure CartProvider is available
   let cartContext;
@@ -1049,27 +1050,24 @@ export default function Cart() {
 
   // Fetch approved addons for the restaurant
   useEffect(() => {
+    let cancelled = false
+    const currentId = restaurantData ? (restaurantData._id || restaurantData.restaurantId) : null
+
+    if (cart.length === 0 || !currentId) {
+      setAddons([])
+      lastFetchedRestaurantIdRef.current = null
+    } else if (lastFetchedRestaurantIdRef.current !== String(currentId)) {
+      // Clear addons immediately when switching to a different restaurant to prevent flickering/showing stale list
+      setAddons([])
+    }
+
     const fetchAddonsWithId = async (idToUse) => {
-
-      debugLog("?? Addons fetch - Using ID:", {
-        restaurantData: restaurantData ? {
-          _id: restaurantData._id,
-          restaurantId: restaurantData.restaurantId,
-          name: restaurantData.name
-        } : 'Not loaded',
-        cartRestaurantId: restaurantId,
-        idToUse: idToUse
-      })
-
       // Convert to string for validation
       const idString = String(idToUse)
-      debugLog("?? Restaurant ID string:", idString, "Type:", typeof idString, "Length:", idString.length)
-
       // Validate ID format (should be ObjectId or restaurantId format)
       const isValidIdFormat = /^[a-zA-Z0-9\-_]+$/.test(idString) && idString.length >= 3
 
       if (!isValidIdFormat) {
-        debugWarn("?? Restaurant ID format invalid:", idString)
         setAddons([])
         return
       }
@@ -1078,84 +1076,64 @@ export default function Cart() {
         setLoadingAddons(true)
         debugLog("?? Fetching addons for restaurant ID:", idString)
         const response = await restaurantAPI.getAddonsByRestaurantId(idString)
-        debugLog("? Addons API response received:", response?.data)
-        debugLog("?? Response structure:", {
-          success: response?.data?.success,
-          data: response?.data?.data,
-          addons: response?.data?.data?.addons,
-          directAddons: response?.data?.addons
-        })
+        if (cancelled) return
 
         const data = response?.data?.data?.addons || response?.data?.addons || []
-        debugLog("?? Fetched addons count:", data.length)
-        debugLog("?? Fetched addons data:", JSON.stringify(data, null, 2))
-
-        if (data.length === 0) {
-          debugWarn("?? No addons returned from API. Response:", response?.data)
-        } else {
-          debugLog("? Successfully fetched", data.length, "addons:", data.map(a => a.name))
-        }
-
+        
         setAddons(data.map(addon => ({
           ...addon,
           isVeg: addon.isVeg ?? (restaurantData?.pureVegRestaurant === true),
           foodType: addon.foodType || (restaurantData?.pureVegRestaurant ? "Veg" : "Non-Veg")
         })))
+        lastFetchedRestaurantIdRef.current = idString
       } catch (error) {
-        // Log error for debugging
-        debugError("? Addons fetch error:", {
-          code: error.code,
-          status: error.response?.status,
-          message: error.message,
-          url: error.config?.url,
-          data: error.response?.data
-        })
-        // Silently handle network errors and 404 errors
-        // Network errors (ERR_NETWORK) happen when backend is not running - this is OK for development
-        // 404 errors mean restaurant might not have addons or restaurant not found - also OK
+        if (cancelled) return
         if (error.code !== 'ERR_NETWORK' && error.response?.status !== 404) {
           debugError("Error fetching addons:", error)
         }
-        // Continue with cart even if addons fetch fails
         setAddons([])
       } finally {
-        setLoadingAddons(false)
+        if (!cancelled) {
+          setLoadingAddons(false)
+        }
       }
     }
 
     const fetchAddons = async () => {
       if (cart.length === 0) {
-        setAddons([])
         return
       }
 
       // Wait for restaurantData to be loaded (including fallback search)
       if (loadingRestaurant) {
-        debugLog("? Waiting for restaurantData to load (including fallback search)...")
         return
       }
 
       // Must have restaurantData to fetch addons
       if (!restaurantData) {
-        debugWarn("?? No restaurantData available for addons fetch")
-        setAddons([])
         return
       }
 
       // Use restaurantData ID (most reliable)
       const idToUse = restaurantData._id || restaurantData.restaurantId
       if (!idToUse) {
-        debugWarn("?? No valid restaurant ID in restaurantData")
-        setAddons([])
         return
       }
 
-      debugLog("? Using restaurantData ID for addons:", idToUse)
+      // If addons for this restaurant are already loaded, bypass redundant fetch to prevent flickering/unnecessary loading states
+      if (lastFetchedRestaurantIdRef.current === String(idToUse)) {
+        return
+      }
+
       fetchAddonsWithId(idToUse)
     }
 
     fetchAddons()
-  }, [restaurantData, loadingRestaurant])
+
+    return () => {
+      cancelled = true
+    }
+  }, [restaurantData, loadingRestaurant, cart.length])
 
   // Fetch coupons for items in cart
   useEffect(() => {
