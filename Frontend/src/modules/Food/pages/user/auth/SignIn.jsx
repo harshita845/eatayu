@@ -83,7 +83,8 @@ export default function SignIn() {
         return
       }
       const fullPhone = `${countryCode} ${phoneDigits}`
-      await authAPI.sendOTP(fullPhone, "login", null)
+      const response = await authAPI.sendOTP(fullPhone, "login", null)
+      const devOtp = response?.data?.data?.otp || response?.data?.otp || null
 
       const ref = String(searchParams.get("ref") || "").trim()
       const authData = {
@@ -94,6 +95,7 @@ export default function SignIn() {
         referralCode: ref || null,
         isSignUp: false,
         module: "user",
+        devOtp: devOtp,
       }
 
       sessionStorage.setItem("userAuthData", JSON.stringify(authData))

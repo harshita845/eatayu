@@ -39,6 +39,8 @@ export const config = {
     smsApiKey: process.env.SMS_INDIA_HUB_API_KEY,
     smsSenderId: process.env.SMS_INDIA_HUB_SENDER_ID,
     smsDltTemplateId: process.env.SMS_INDIA_HUB_DLT_TEMPLATE_ID,
+    smsPeId: process.env.SMS_INDIA_HUB_PE_ID,
+    smsMessageTemplate: process.env.SMS_INDIA_HUB_MESSAGE_TEMPLATE,
 
     // Rate limiting
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED !== 'false',

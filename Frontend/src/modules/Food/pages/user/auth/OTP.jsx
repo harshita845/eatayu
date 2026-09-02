@@ -24,6 +24,8 @@ export default function OTP() {
   const [name, setName] = useState("")
   const [nameError, setNameError] = useState("")
   const [verifiedData, setVerifiedData] = useState(null)
+  const [devOtp, setDevOtp] = useState(null)
+  const [infoNotice, setInfoNotice] = useState("OTP sent successfully to your number")
   const [contactInfo, setContactInfo] = useState("")
   const [contactType, setContactType] = useState("phone")
   const [deviceToken, setDeviceToken] = useState(null)
@@ -47,6 +49,9 @@ export default function OTP() {
     }
     const data = JSON.parse(stored)
     setAuthData(data)
+    if (data.devOtp) {
+      setDevOtp(data.devOtp)
+    }
 
     if (data.method === "email" && data.email) {
       setContactType("email")
@@ -273,7 +278,12 @@ export default function OTP() {
       const phone = authData?.method === "phone" ? authData.phone : null
       const email = authData?.method === "email" ? authData.email : null
       const purpose = authData?.isSignUp ? "register" : "login"
-      await authAPI.sendOTP(phone, purpose, email)
+      const res = await authAPI.sendOTP(phone, purpose, email)
+      const resOtp = res?.data?.data?.otp || res?.data?.otp || null
+      if (resOtp) {
+        setDevOtp(resOtp)
+      }
+      setInfoNotice("New OTP sent successfully!")
       setResendTimer(60)
     } catch (err) {
       setError("Failed to resend OTP.")
@@ -359,6 +369,47 @@ export default function OTP() {
                     </motion.div>
                   ))}
                 </div>
+
+                {infoNotice && !error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 py-3 px-4 rounded-2xl border border-emerald-500/20 text-center"
+                  >
+                    <span>✅ {infoNotice}</span>
+                  </motion.div>
+                )}
+
+                {devOtp && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-orange-500/10 dark:bg-orange-950/20 border border-orange-500/30 rounded-2xl p-4 text-center space-y-3 shadow-sm"
+                  >
+                    <div className="flex flex-col items-center gap-1.5">
+                      <span className="text-[11px] font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">
+                        Development Verification Code
+                      </span>
+                      <span className="font-mono font-black text-2xl tracking-[0.25em] text-[#FA0272] bg-white dark:bg-zinc-900 px-4 py-1.5 rounded-xl border border-orange-500/20 shadow-inner">
+                        {devOtp}
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const digits = String(devOtp).slice(0, 4).split("")
+                        setOtp(digits)
+                        handleVerify(devOtp)
+                      }}
+                      className="w-full h-11 bg-[#FA0272] hover:bg-[#FA0272]/90 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition-all cursor-pointer"
+                    >
+                      {isLoading ? "Logging in..." : "Auto-Fill Code & Login"}
+                    </Button>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      Telecom SMS delivery can take several minutes or get filtered by DND. Click above to continue immediately.
+                    </p>
+                  </motion.div>
+                )}
 
                 {error && (
                   <motion.div

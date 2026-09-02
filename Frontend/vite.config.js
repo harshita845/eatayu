@@ -66,7 +66,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 5175,
     proxy: {
       // Backend API (runs on 5002 to avoid port 5000 conflicts with Tiffinji)
       '/api/v1': {

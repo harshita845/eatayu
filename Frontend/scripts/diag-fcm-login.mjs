@@ -1,6 +1,6 @@
 import { chromium, devices } from "playwright";
 
-const BASE = "http://localhost:5173";
+const BASE = "http://localhost:5175";
 const PHONE = "7974161582";
 const OTP = "1234";
 
