@@ -408,13 +408,15 @@ export async function calculateOrder(userId, dto) {
 }
 
 // Helper to safely convert string to ObjectId or throw ValidationError (400)
-function toObjectId(id, fieldName = 'ID') {
+function toObjectId(id, fieldName = 'ID', required = true) {
   if (!id) return null;
   if (id instanceof mongoose.Types.ObjectId) return id;
-  if (typeof id !== 'string' || !/^[0-9a-fA-F]{24}$/.test(id)) {
+  const str = String(id).trim();
+  if (!/^[0-9a-fA-F]{24}$/.test(str)) {
+    if (!required) return null;
     throw new ValidationError(`Invalid ${fieldName} format`);
   }
-  return new mongoose.Types.ObjectId(id);
+  return new mongoose.Types.ObjectId(str);
 }
 
 // ----- Create order -----
@@ -559,10 +561,10 @@ export async function createOrder(userId, dto) {
     const order = new FoodOrder({
       userId: toObjectId(userId, 'User ID'),
       restaurantId: restaurantId,
-      zoneId: dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID') : toObjectId(restaurant.zoneId, 'Restaurant Zone ID'),
+      zoneId: (dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID', false) : null) || toObjectId(restaurant.zoneId, 'Restaurant Zone ID', false),
       items: resolvedItems.map(item => ({
         ...item,
-        itemId: toObjectId(item.itemId, 'Item ID')
+        itemId: toObjectId(item.itemId, 'Item ID', false) || new mongoose.Types.ObjectId()
       })),
       deliveryAddress,
       customerName: String(dto.customerName || deliveryAddress.fullName || ""),
@@ -613,7 +615,10 @@ export async function createOrder(userId, dto) {
       } catch (err) {
         const rzErrMsg = err?.error?.description || err?.message || "Payment gateway error";
         logger.error(`Razorpay order creation failed: ${rzErrMsg}`);
-        throw new ValidationError(rzErrMsg);
+        if (String(rzErrMsg).toLowerCase().includes('authentication failed')) {
+          throw new ValidationError("Razorpay payment gateway error: Authentication failed. Please verify your RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Backend/.env.");
+        }
+        throw new ValidationError(`Payment gateway error: ${rzErrMsg}`);
       }
     }
 

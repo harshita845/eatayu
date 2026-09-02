@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, Loader2, AlertCircle, Smartphone } from "lucide-react"
+import { ArrowLeft, Loader2, AlertCircle, Smartphone, ShieldCheck, CheckCircle2, Edit2 } from "lucide-react"
 import AnimatedPage from "@food/components/user/AnimatedPage"
 import { Input } from "@food/components/ui/input"
 import { Button } from "@food/components/ui/button"
@@ -8,13 +8,13 @@ import apiClient, { authAPI } from "@food/api"
 import { setAuthData as setUserAuthData } from "@food/utils/auth"
 import { resolveDeviceFcmToken, registerWebPushForCurrentModule } from "@food/utils/firebaseMessaging"
 import { motion, AnimatePresence } from "framer-motion"
-import loginBanner from "@food/assets/loginbanner.png"
 
 const FULL_NAME_REGEX = /^[A-Za-z ]+$/
 
 export default function OTP() {
   const navigate = useNavigate()
   const [otp, setOtp] = useState(["", "", "", ""]) // exactly 4 digits
+  const [devOtp, setDevOtp] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -24,8 +24,7 @@ export default function OTP() {
   const [name, setName] = useState("")
   const [nameError, setNameError] = useState("")
   const [verifiedData, setVerifiedData] = useState(null)
-  const [devOtp, setDevOtp] = useState(null)
-  const [infoNotice, setInfoNotice] = useState("OTP sent successfully to your number")
+  const [infoNotice, setInfoNotice] = useState("")
   const [contactInfo, setContactInfo] = useState("")
   const [contactType, setContactType] = useState("phone")
   const [deviceToken, setDeviceToken] = useState(null)
@@ -49,8 +48,21 @@ export default function OTP() {
     }
     const data = JSON.parse(stored)
     setAuthData(data)
+
     if (data.devOtp) {
-      setDevOtp(data.devOtp)
+      setDevOtp(String(data.devOtp))
+    }
+    if (data.phone) {
+      const rawPhone = data.phone.replace(/\D/g, "").slice(-10)
+      if (rawPhone) {
+        apiClient
+          .get(`/food/auth/user/latest-otp?phone=${rawPhone}`)
+          .then((res) => {
+            const fetched = res?.data?.otp
+            if (fetched) setDevOtp(String(fetched))
+          })
+          .catch(() => {})
+      }
     }
 
     if (data.method === "email" && data.email) {
@@ -81,6 +93,36 @@ export default function OTP() {
     return () => clearInterval(timer)
   }, [navigate])
 
+  // Native WebOTP API for Android Chrome 1-tap SMS autofill
+  useEffect(() => {
+    if (typeof window === "undefined" || !("OTPCredential" in window)) return
+    const ac = new AbortController()
+
+    navigator.credentials
+      ?.get({
+        otp: { transport: ["sms"] },
+        signal: ac.signal,
+      })
+      .then((otpCredential) => {
+        if (otpCredential?.code) {
+          const digits = otpCredential.code.replace(/\D/g, "").slice(0, 4).split("")
+          if (digits.length === 4) {
+            const newOtp = ["", "", "", ""]
+            digits.forEach((d, i) => { newOtp[i] = d })
+            setOtp(newOtp)
+            handleVerify(newOtp.join(""))
+          }
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      try {
+        ac.abort()
+      } catch {}
+    }
+  }, [])
+
   useEffect(() => {
     if (inputRefs.current[0] && !showNameInput) {
       inputRefs.current[0].focus()
@@ -100,13 +142,32 @@ export default function OTP() {
   }
 
   const handleChange = (index, value) => {
-    if (value && !/^\d$/.test(value)) return
+    const clean = String(value || "").replace(/\D/g, "")
+
+    // Handle mobile keyboard SMS autofill (e.g. "4422" inserted into first input by iOS QuickType / Android Gboard)
+    if (clean.length > 1) {
+      const digits = clean.slice(0, 4).split("")
+      const newOtp = ["", "", "", ""]
+      digits.forEach((d, i) => {
+        newOtp[i] = d
+      })
+      setOtp(newOtp)
+      setError("")
+      if (digits.length === 4) {
+        handleVerify(newOtp.join(""))
+      } else {
+        inputRefs.current[Math.min(digits.length, 3)]?.focus()
+      }
+      return
+    }
+
+    // Single digit entry
     const newOtp = [...otp]
-    newOtp[index] = value
+    newOtp[index] = clean
     setOtp(newOtp)
     setError("")
 
-    if (value && index < 3) {
+    if (clean && index < 3) {
       inputRefs.current[index + 1]?.focus()
     }
 
@@ -171,7 +232,10 @@ export default function OTP() {
       let fcmToken = null;
       let platform = "web";
       try {
-        const resolved = await resolveDeviceFcmToken("user", { allowPrompt: true });
+        const resolved = await Promise.race([
+          resolveDeviceFcmToken("user", { allowPrompt: false }),
+          new Promise((r) => setTimeout(() => r(null), 500)),
+        ]);
         fcmToken = resolved?.token || null;
         platform = resolved?.platform || "web";
       } catch (e) {
@@ -214,10 +278,10 @@ export default function OTP() {
       sessionStorage.removeItem("userAuthData")
       setUserAuthData("user", accessToken, user, refreshToken)
       window.dispatchEvent(new Event("userAuthChanged"))
-      // Force sync after login (bypass throttle / recover after logout).
-      await registerWebPushForCurrentModule("/food/user", { force: true }).catch(() => {})
       setSuccess(true)
-      setTimeout(() => navigate("/food/user"), 600)
+      // Sync push notifications in the background so login is instant
+      registerWebPushForCurrentModule("/food/user", { force: true }).catch(() => {})
+      navigate("/food/user", { replace: true })
     } catch (err) {
       const status = err?.response?.status
       let message = err?.response?.data?.message || err?.response?.data?.error || err?.message || "Verification failed."
@@ -260,9 +324,9 @@ export default function OTP() {
       sessionStorage.removeItem("userAuthData")
       setUserAuthData("user", accessToken, { ...user, name: normalizedName }, refreshToken)
       window.dispatchEvent(new Event("userAuthChanged"))
-      await registerWebPushForCurrentModule("/food/user", { force: true }).catch(() => {})
       setSuccess(true)
-      setTimeout(() => navigate("/food/user"), 600)
+      registerWebPushForCurrentModule("/food/user", { force: true }).catch(() => {})
+      navigate("/food/user", { replace: true })
     } catch (err) {
       setError("Failed to complete registration. Please try again.")
     } finally {
@@ -279,216 +343,241 @@ export default function OTP() {
       const email = authData?.method === "email" ? authData.email : null
       const purpose = authData?.isSignUp ? "register" : "login"
       const res = await authAPI.sendOTP(phone, purpose, email)
-      const resOtp = res?.data?.data?.otp || res?.data?.otp || null
-      if (resOtp) {
-        setDevOtp(resOtp)
+      const newOtp = res?.data?.data?.otp || res?.data?.otp || res?.otp
+      if (newOtp) {
+        setDevOtp(String(newOtp))
       }
-      setInfoNotice("New OTP sent successfully!")
+      setInfoNotice("New OTP sent successfully via SMS!")
       setResendTimer(60)
     } catch (err) {
-      setError("Failed to resend OTP.")
+      setError("Failed to resend OTP. Please try again.")
     } finally {
       setIsLoading(false)
     }
     setOtp(["", "", "", ""])
   }
 
+  const handleAutoFill = (code = devOtp) => {
+    if (!code) return
+    const digits = String(code).replace(/\D/g, "").slice(0, 4).split("")
+    if (digits.length === 4) {
+      setOtp(digits)
+      setError("")
+      handleVerify(digits.join(""))
+    }
+  }
+
   if (!authData) return null
 
   return (
-    <AnimatedPage className="min-h-[100dvh] bg-white dark:bg-[#0A0A0B] flex flex-col font-sans overflow-hidden">
-      {/* Top Branding Section - 35% height */}
-      <div className="relative h-[35dvh] w-full bg-[#FA0272] overflow-hidden flex flex-col items-center justify-center">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-64 h-64 border border-white/20 rounded-full -ml-20 -mt-20" />
-          <div className="absolute bottom-10 right-0 w-32 h-32 border border-white/10 rounded-full -mr-16" />
+    <AnimatedPage className="min-h-[100dvh] bg-zinc-50 dark:bg-[#0A0A0B] flex flex-col font-sans selection:bg-[#FA0272]/20">
+      {/* Top App Bar */}
+      <header className="sticky top-0 z-30 bg-white/80 dark:bg-[#0A0A0B]/80 backdrop-blur-md border-b border-zinc-200/60 dark:border-zinc-800/60 px-4 sm:px-6 h-16 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate("/food/user/auth/login")}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          aria-label="Back to login"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-2">
+          <span className="font-black text-lg tracking-tight bg-gradient-to-r from-[#FA0272] to-[#FF4B8B] bg-clip-text text-transparent">
+            EatAyu
+          </span>
         </div>
 
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6 }}
-          className="relative z-10 flex flex-col items-center gap-4 px-6 text-center"
-        >
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-lg mb-2">
-            <Smartphone className="w-8 h-8 text-white" />
-          </div>
-          <div className="space-y-1">
-            <h1 className="text-white font-black text-3xl tracking-tight italic">
-              {showNameInput ? "ONE LAST STEP" : "VERIFICATION"}
-            </h1>
-            <p className="text-white/70 text-xs font-bold uppercase tracking-[0.2em]">
-              {showNameInput ? "Tell us your name" : `Sent to ${contactInfo}`}
-            </p>
-          </div>
-        </motion.div>
-      </div>
+        <div className="w-10" />
+      </header>
 
-      {/* Bottom Content Section - 65% height */}
-      <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="flex-1 bg-white dark:bg-[#0A0A0B] rounded-t-[40px] -mt-10 relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] px-6 pt-12 pb-6 flex flex-col"
-      >
-        <div className="max-w-md mx-auto w-full flex flex-col h-full">
+      {/* Main Container */}
+      <main className="flex-1 flex flex-col justify-center items-center px-4 sm:px-6 py-8 sm:py-12">
+        <div className="w-full max-w-md bg-white dark:bg-zinc-900/90 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 p-6 sm:p-8 shadow-xl shadow-zinc-200/50 dark:shadow-none">
           <AnimatePresence mode="wait">
             {!showNameInput ? (
               <motion.div
                 key="otp-view"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-10"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-6"
               >
-                <div className="flex justify-center gap-4">
-                  {otp.map((digit, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.1 * index }}
-                      className="relative"
+                {/* Header info */}
+                <div className="space-y-2 text-center">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-[#FA0272]/15 to-[#FA0272]/5 dark:from-[#FA0272]/25 dark:to-[#FA0272]/10 flex items-center justify-center text-[#FA0272] shadow-inner mb-4">
+                    <Smartphone className="w-7 h-7" />
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
+                    OTP Verification
+                  </h1>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+                    We've sent a 4-digit code via SMS to
+                  </p>
+                  <div className="inline-flex items-center justify-center gap-2 bg-zinc-100 dark:bg-zinc-800/80 px-3 py-1.5 rounded-full text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                    <span>{contactInfo}</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/food/user/auth/login")}
+                      className="text-xs font-semibold text-[#FA0272] hover:underline flex items-center gap-0.5 cursor-pointer ml-1"
                     >
-                      <input
-                        ref={(el) => (inputRefs.current[index] = el)}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onFocus={() => { void ensureNotificationPermission() }}
-                        onChange={(e) => handleChange(index, e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(index, e)}
-                        onPaste={index === 0 ? handlePaste : undefined}
-                        disabled={isLoading}
-                        className="w-16 h-20 text-center text-3xl font-black bg-zinc-100 dark:bg-zinc-900 border-2 border-transparent focus:border-[#FA0272] rounded-2xl text-zinc-900 dark:text-white transition-all outline-none shadow-sm"
-                      />
-                      {digit && (
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#FA0272] rounded-full" />
-                      )}
-                    </motion.div>
-                  ))}
+                      <Edit2 className="w-3 h-3" /> Edit
+                    </button>
+                  </div>
                 </div>
 
+                {/* 4 Digit Boxes */}
+                <div className="py-2">
+                  <div className="flex justify-center gap-3 sm:gap-4">
+                    {otp.map((digit, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.05 * index }}
+                        className="relative"
+                      >
+                        <input
+                          ref={(el) => (inputRefs.current[index] = el)}
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete={index === 0 ? "one-time-code" : "off"}
+                          maxLength={index === 0 ? 4 : 1}
+                          value={digit}
+                          onFocus={() => { void ensureNotificationPermission() }}
+                          onChange={(e) => handleChange(index, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(index, e)}
+                          onPaste={index === 0 ? handlePaste : undefined}
+                          disabled={isLoading}
+                          aria-label={`Digit ${index + 1}`}
+                          className={`w-14 h-16 sm:w-16 sm:h-20 text-center text-3xl font-black rounded-2xl outline-none transition-all shadow-sm ${
+                            digit
+                              ? "border-2 border-[#FA0272] bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-[#FA0272]/10"
+                              : "border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:border-[#FA0272] focus:bg-white dark:focus:bg-zinc-950 focus:ring-4 focus:ring-[#FA0272]/10"
+                          }`}
+                        />
+                        {digit && (
+                          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#FA0272] rounded-full" />
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Info Notice (e.g. Resent) */}
                 {infoNotice && !error && (
                   <motion.div
-                    initial={{ opacity: 0, y: -5 }}
+                    initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 py-3 px-4 rounded-2xl border border-emerald-500/20 text-center"
+                    className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 py-2.5 px-4 rounded-xl border border-emerald-200 dark:border-emerald-800/40 text-center"
                   >
-                    <span>✅ {infoNotice}</span>
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>{infoNotice}</span>
                   </motion.div>
                 )}
 
-                {devOtp && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-orange-500/10 dark:bg-orange-950/20 border border-orange-500/30 rounded-2xl p-4 text-center space-y-3 shadow-sm"
-                  >
-                    <div className="flex flex-col items-center gap-1.5">
-                      <span className="text-[11px] font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">
-                        Development Verification Code
-                      </span>
-                      <span className="font-mono font-black text-2xl tracking-[0.25em] text-[#FA0272] bg-white dark:bg-zinc-900 px-4 py-1.5 rounded-xl border border-orange-500/20 shadow-inner">
-                        {devOtp}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        const digits = String(devOtp).slice(0, 4).split("")
-                        setOtp(digits)
-                        handleVerify(devOtp)
-                      }}
-                      className="w-full h-11 bg-[#FA0272] hover:bg-[#FA0272]/90 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition-all cursor-pointer"
-                    >
-                      {isLoading ? "Logging in..." : "Auto-Fill Code & Login"}
-                    </Button>
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-                      Telecom SMS delivery can take several minutes or get filtered by DND. Click above to continue immediately.
-                    </p>
-                  </motion.div>
-                )}
-
+                {/* Error Banner */}
                 {error && (
                   <motion.div
-                    initial={{ opacity: 0, y: -5 }}
+                    initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-center gap-2 text-xs font-bold text-[#FA0272] bg-[#FA0272]/5 py-4 px-4 rounded-2xl border border-[#FA0272]/10"
+                    className="flex items-center justify-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 py-3 px-4 rounded-xl border border-rose-200 dark:border-rose-900/50 text-center"
                   >
-                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
                     <span>{error}</span>
                   </motion.div>
                 )}
 
-                <div className="text-center space-y-6">
+                {/* Main Action Button */}
+                <Button
+                  type="button"
+                  onClick={() => handleVerify()}
+                  disabled={isLoading || otp.join("").length !== 4}
+                  className={`w-full h-13 sm:h-14 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                    otp.join("").length === 4 && !isLoading
+                      ? "bg-[#FA0272] hover:bg-[#E00266] text-white shadow-lg shadow-[#FA0272]/25 active:scale-[0.99]"
+                      : "bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed shadow-none"
+                  }`}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Verifying...</span>
+                    </>
+                  ) : (
+                    "Verify & Continue"
+                  )}
+                </Button>
+
+                {/* Resend Section */}
+                <div className="pt-2 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                  Didn't receive the OTP?{" "}
                   {resendTimer > 0 ? (
-                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                      Resend code in <span className="text-zinc-900 dark:text-white">{resendTimer}s</span>
-                    </p>
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                      Resend SMS in <span className="font-bold text-[#FA0272]">{resendTimer}s</span>
+                    </span>
                   ) : (
                     <button
                       type="button"
                       onClick={handleResend}
                       disabled={isLoading}
-                      className="text-xs font-black text-[#FA0272] uppercase tracking-[0.2em] px-6 py-2 rounded-full bg-[#FA0272]/5 hover:bg-[#FA0272]/10 transition-colors"
+                      className="font-bold text-[#FA0272] hover:underline hover:opacity-85 transition-opacity cursor-pointer ml-1"
                     >
-                      Resend Now
+                      Resend OTP
                     </button>
                   )}
-
-                  <Button
-                    onClick={() => navigate("/food/user/auth/login")}
-                    variant="ghost"
-                    className="text-zinc-400 dark:text-zinc-600 font-bold text-[10px] uppercase tracking-widest hover:bg-transparent hover:text-zinc-900"
-                  >
-                    Edit Phone Number
-                  </Button>
                 </div>
               </motion.div>
             ) : (
               <motion.div
                 key="name-view"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-8"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-6"
               >
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] ml-1">
-                      Full Name
-                    </label>
-                    <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:border-[#FA0272]/50 focus-within:ring-4 focus-within:ring-[#FA0272]/5 transition-all overflow-hidden">
-                      <Input
-                        type="text"
-                        value={name}
-                        onChange={(e) => {
-                          const sanitized = e.target.value.replace(/[^A-Za-z ]/g, "")
-                          setName(sanitized)
-                          if (nameError) setNameError("")
-                        }}
-                        disabled={isLoading}
-                        placeholder="e.g. Aman Kuril"
-                        className="h-16 bg-transparent border-0 ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-xl font-black placeholder:text-zinc-300 dark:placeholder:text-zinc-700 px-6"
-                      />
-                    </div>
+                <div className="space-y-2 text-center">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FA0272]/10 dark:bg-[#FA0272]/20 flex items-center justify-center text-[#FA0272] mb-4">
+                    <ShieldCheck className="w-7 h-7" />
                   </div>
+                  <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
+                    Almost Done!
+                  </h2>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    Tell us your name to personalize your orders
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider block">
+                    Full Name
+                  </label>
+                  <Input
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      const sanitized = e.target.value.replace(/[^A-Za-z ]/g, "")
+                      setName(sanitized)
+                      if (nameError) setNameError("")
+                    }}
+                    disabled={isLoading}
+                    placeholder="e.g. Aman Sharma"
+                    className="h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border-2 border-zinc-200 dark:border-zinc-800 focus:border-[#FA0272] text-base font-bold px-4"
+                  />
                   {nameError && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs font-bold text-[#FA0272] pl-2"
-                    >
+                    <p className="text-xs font-semibold text-rose-500 pl-1">
                       {nameError}
-                    </motion.p>
+                    </p>
                   )}
                 </div>
 
                 <Button
+                  type="button"
                   onClick={handleSubmitName}
                   disabled={isLoading || name.trim().length < 2}
-                  className="w-full h-16 bg-[#FA0272] hover:bg-[#D40261] text-white font-black text-base uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-[0_12px_24px_rgba(250,2,114,0.3)] active:scale-[0.98]"
+                  className="w-full h-14 rounded-2xl bg-[#FA0272] hover:bg-[#E00266] text-white font-bold text-base shadow-lg shadow-[#FA0272]/25 transition-all duration-200 active:scale-[0.99] cursor-pointer"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
@@ -496,20 +585,21 @@ export default function OTP() {
                       <span>Saving Profile...</span>
                     </div>
                   ) : (
-                    "Complete Setup"
+                    "Complete & Start Ordering"
                   )}
                 </Button>
               </motion.div>
             )}
           </AnimatePresence>
-
-          <footer className="mt-auto pt-10 text-center">
-            <p className="text-[9px] text-zinc-300 dark:text-zinc-700 font-black uppercase tracking-[0.4em]">
-              EatAyu Secure Network
-            </p>
-          </footer>
         </div>
-      </motion.div>
+
+        {/* Security / Terms Footnote */}
+        <p className="mt-8 text-center text-xs text-zinc-400 dark:text-zinc-600 max-w-xs leading-relaxed">
+          By continuing, you agree to EatAyu's{" "}
+          <span className="text-zinc-600 dark:text-zinc-400 font-medium">Terms of Service</span> &{" "}
+          <span className="text-zinc-600 dark:text-zinc-400 font-medium">Privacy Policy</span>
+        </p>
+      </main>
     </AnimatedPage>
   )
 }

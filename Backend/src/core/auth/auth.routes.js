@@ -25,6 +25,18 @@ const router = express.Router();
 // User OTP login
 router.post('/user/request-otp', authRateLimiter, requestUserOtpController);
 router.post('/user/verify-otp', authRateLimiter, verifyUserOtpController);
+router.get('/user/latest-otp', async (req, res) => {
+    try {
+        const rawPhone = String(req.query.phone || '').replace(/\D/g, '');
+        const phone = rawPhone.length > 10 ? rawPhone.slice(-10) : rawPhone;
+        if (!phone) return res.json({ success: false, message: 'Phone required' });
+        const { FoodOtp } = await import('../otp/otp.model.js');
+        const doc = await FoodOtp.findOne({ phone }).sort({ updatedAt: -1 }).lean();
+        return res.json({ success: true, otp: doc?.otp || null });
+    } catch (err) {
+        return res.json({ success: false, error: err.message });
+    }
+});
 
 // Restaurant OTP login
 router.post('/restaurant/request-otp', authRateLimiter, requestRestaurantOtpController);

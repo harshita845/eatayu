@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
 let Razorpay;
 try {
@@ -10,20 +12,50 @@ try {
 
 import { config } from '../../../../config/env.js';
 
-const KEY_ID = config.razorpayKeyId || process.env.RAZORPAY_KEY_ID || '';
-const KEY_SECRET = config.razorpayKeySecret || process.env.RAZORPAY_KEY_SECRET || '';
+import { fileURLToPath } from 'url';
 
-export function isRazorpayConfigured() {
-    return Boolean(KEY_ID && KEY_SECRET && Razorpay);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const BACKEND_ENV_PATH = path.resolve(__dirname, '../../../../../.env');
+
+function readFreshEnvKey(key) {
+    if (process.env[key]) return process.env[key];
+    try {
+        const pathsToTry = [
+            BACKEND_ENV_PATH,
+            path.resolve(process.cwd(), '.env'),
+            path.resolve(process.cwd(), 'Backend/.env')
+        ];
+        for (const envPath of pathsToTry) {
+            if (fs.existsSync(envPath)) {
+                const content = fs.readFileSync(envPath, 'utf8');
+                const match = content.match(new RegExp(`^${key}=(.*)$`, 'm'));
+                if (match && match[1]) {
+                    const val = match[1].trim().replace(/^['"]|['"]$/g, '');
+                    process.env[key] = val;
+                    return val;
+                }
+            }
+        }
+    } catch {}
+    return process.env[key] || '';
 }
 
 export function getRazorpayKeyId() {
-    return KEY_ID;
+    return readFreshEnvKey('RAZORPAY_KEY_ID') || config.razorpayKeyId || '';
+}
+
+export function getRazorpayKeySecret() {
+    return readFreshEnvKey('RAZORPAY_KEY_SECRET') || config.razorpayKeySecret || '';
+}
+
+export function isRazorpayConfigured() {
+    return Boolean(getRazorpayKeyId() && getRazorpayKeySecret() && Razorpay);
 }
 
 export function getRazorpayInstance() {
     if (!isRazorpayConfigured()) return null;
-    return new Razorpay({ key_id: KEY_ID, key_secret: KEY_SECRET });
+    return new Razorpay({ key_id: getRazorpayKeyId(), key_secret: getRazorpayKeySecret() });
 }
 
 export function createRazorpayOrder(amountPaise, currency = 'INR', receipt = '') {
@@ -52,9 +84,10 @@ export function createPaymentLink({ amountPaise, currency = 'INR', description, 
 }
 
 export function verifyPaymentSignature(orderId, paymentId, signature) {
-    if (!KEY_SECRET) return false;
+    const secret = getRazorpayKeySecret();
+    if (!secret) return false;
     const body = `${orderId}|${paymentId}`;
-    const expected = crypto.createHmac('sha256', KEY_SECRET).update(body).digest('hex');
+    const expected = crypto.createHmac('sha256', secret).update(body).digest('hex');
     return expected === signature;
 }
 

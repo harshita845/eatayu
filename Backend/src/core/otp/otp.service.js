@@ -48,13 +48,9 @@ const sendSmsViaIndiaHub = async (phone, otp) => {
         }
         if (config.smsDltTemplateId) {
             url.searchParams.append('DLT_TE_ID', config.smsDltTemplateId);
-            url.searchParams.append('dlt_te_id', config.smsDltTemplateId);
         }
         if (config.smsPeId) {
-            url.searchParams.append('entity_id', config.smsPeId);
             url.searchParams.append('entityid', config.smsPeId);
-            url.searchParams.append('PE_ID', config.smsPeId);
-            url.searchParams.append('DLT_PE_ID', config.smsPeId);
         }
 
         logger.info(`[SMS] Sending OTP to ${msisdn} via SMS India Hub (sid=${config.smsSenderId})...`);
@@ -86,7 +82,21 @@ const sendSmsViaIndiaHub = async (phone, otp) => {
         }
 
         if (isSuccess) {
-            logger.info(`✅ SMS sent successfully to ${msisdn}`);
+            const msgId = parsed?.MessageData?.[0]?.MessageId;
+            const jobId = parsed?.JobId;
+            logger.info(`✅ SMS gateway accepted OTP for ${msisdn} (JobId: ${jobId || 'N/A'}, MessageId: ${msgId || 'N/A'})`);
+
+            // Check carrier delivery status after 3.5s
+            if (msgId && config.smsApiKey) {
+                setTimeout(async () => {
+                    try {
+                        const checkUrl = `http://cloud.smsindiahub.in/vendorsms/checkdelivery.aspx?APIKey=${config.smsApiKey}&messageid=${msgId}`;
+                        const checkRes = await fetch(checkUrl);
+                        const checkText = await checkRes.text();
+                        logger.info(`📡 [CARRIER DELIVERY STATUS] ${msisdn}: ${checkText.trim()}`);
+                    } catch (_) {}
+                }, 3500);
+            }
         } else {
             logger.error(errMsg);
             // eslint-disable-next-line no-console

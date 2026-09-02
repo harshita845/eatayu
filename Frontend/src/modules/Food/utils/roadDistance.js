@@ -31,6 +31,11 @@ export async function ensureGoogleMapsLoaded() {
   if (mapsLoadPromise) return mapsLoadPromise
 
   mapsLoadPromise = (async () => {
+    if (typeof window !== "undefined" && !window.gm_authFailure) {
+      window.gm_authFailure = () => {
+        console.warn("[Google Maps] Authentication failed - using fallback distance service.");
+      };
+    }
     const apiKey = await getGoogleMapsApiKey()
     if (!apiKey) return false
 

@@ -582,6 +582,7 @@ function RestaurantDetailsContent() {
           }
 
           setRestaurant(transformedRestaurant)
+          setLoadingRestaurant(false)
           fetchedRestaurantRef.current = true // Mark as fetched
           fetchedSlugRef.current = slug
 
@@ -661,8 +662,9 @@ function RestaurantDetailsContent() {
 
           setLoadingMenuItems(true)
           if (normalizedLookupIds.length > 0) {
-            let hasPreviousOrderForRestaurant = false
-            if (isModuleAuthenticated('user')) {
+            // Check previous orders in parallel with menu fetch (never blocks menu rendering)
+            const previousOrderCheckPromise = (async () => {
+              if (!isModuleAuthenticated('user')) return false
               try {
                 const normalize = (value) => (value ? String(value).trim().toLowerCase() : "")
                 const targetRestaurantName = normalize(transformedRestaurant.name)
@@ -678,38 +680,18 @@ function RestaurantDetailsContent() {
                   ].map(normalize).filter(Boolean)
                 )
 
-                const FETCH_LIMIT = 100
-                const firstResponse = await orderAPI.getOrders({ limit: FETCH_LIMIT, page: 1 })
-                let allOrders = []
-                let totalPages = 1
+                // Fast check with 1.2s timeout so menu is never delayed
+                const firstResponse = await Promise.race([
+                  orderAPI.getOrders({ limit: 20, page: 1 }),
+                  new Promise((resolve) => setTimeout(() => resolve(null), 1200))
+                ])
 
-                if (firstResponse?.data?.success && firstResponse?.data?.data?.orders) {
-                  allOrders = firstResponse.data.data.orders || []
-                  totalPages = firstResponse.data.data?.pagination?.pages || 1
-                } else if (firstResponse?.data?.orders) {
-                  allOrders = firstResponse.data.orders || []
-                  totalPages = firstResponse.data?.pagination?.pages || 1
-                } else if (Array.isArray(firstResponse?.data?.data)) {
-                  allOrders = firstResponse.data.data || []
-                }
+                const allOrders =
+                  firstResponse?.data?.data?.orders ||
+                  firstResponse?.data?.orders ||
+                  (Array.isArray(firstResponse?.data?.data) ? firstResponse.data.data : [])
 
-                if (totalPages > 1) {
-                  const pagePromises = []
-                  for (let p = 2; p <= totalPages; p += 1) {
-                    pagePromises.push(orderAPI.getOrders({ limit: FETCH_LIMIT, page: p }))
-                  }
-
-                  const pageResponses = await Promise.all(pagePromises)
-                  const remainingOrders = pageResponses.flatMap((resp) => {
-                    if (resp?.data?.success && resp?.data?.data?.orders) return resp.data.data.orders || []
-                    if (resp?.data?.orders) return resp.data.orders || []
-                    if (Array.isArray(resp?.data?.data)) return resp.data.data || []
-                    return []
-                  })
-                  allOrders = [...allOrders, ...remainingOrders]
-                }
-
-                hasPreviousOrderForRestaurant = allOrders.some((order) => {
+                return allOrders.some((order) => {
                   const orderRestaurantField = order?.restaurantId
                   const candidateIds = [
                     order?.restaurantId,
@@ -732,10 +714,10 @@ function RestaurantDetailsContent() {
 
                   return !!targetRestaurantName && candidateNames.includes(targetRestaurantName)
                 })
-              } catch (orderCheckError) {
-                debugWarn("Could not verify previous orders for recommendation section:", orderCheckError)
+              } catch {
+                return false
               }
-            }
+            })()
 
             try {
               debugLog('? Fetching menu for restaurant ID:', restaurantIdForMenu)
@@ -872,6 +854,7 @@ function RestaurantDetailsContent() {
                   }
                 }
 
+                const hasPreviousOrderForRestaurant = await previousOrderCheckPromise.catch(() => false)
                 let finalMenuSections = [...menuSections]
                 if (hasPreviousOrderForRestaurant) {
                   finalMenuSections = [{ name: "Recommended for you", items: recommendedItems, subsections: [] }, ...finalMenuSections]

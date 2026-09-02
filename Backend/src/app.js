@@ -74,20 +74,17 @@ app.use('/api', responseTimeLogger);
 // API Routes
 app.use('/api', routes);
 
-// Dev-only: serve uploaded files when nginx is not in front.
-// If the file is missing locally, gracefully redirect to the production CDN.
-if (config.nodeEnv === 'development') {
-    app.use('/uploads', (req, res, next) => {
-        const localPath = path.join(path.resolve(config.uploadStorageRoot), req.path);
-        fs.access(localPath, fs.constants.F_OK, (err) => {
-            if (!err) {
-                next();
-            } else {
-                res.redirect(`https://eatayu.com/uploads${req.path}`);
-            }
-        });
-    }, express.static(path.resolve(config.uploadStorageRoot)));
-}
+// Serve uploaded files statically. If the file is missing locally, gracefully redirect to production CDN.
+app.use('/uploads', (req, res, next) => {
+    const localPath = path.join(path.resolve(config.uploadStorageRoot), req.path);
+    fs.access(localPath, fs.constants.F_OK, (err) => {
+        if (!err) {
+            next();
+        } else {
+            res.redirect(`https://eatayu.com/uploads${req.path}`);
+        }
+    });
+}, express.static(path.resolve(config.uploadStorageRoot)));
 
 // Error Handling
 app.use(errorHandler);

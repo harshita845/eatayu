@@ -6,45 +6,45 @@ const orderItemSchema = z.object({
     name: z.string().min(1, 'Item name required'),
     variantId: z.string().optional(),
     variantName: z.string().optional(),
-    variantPrice: z.number().min(0).optional(),
-    price: z.number().min(0),
-    otherPrice: z.number().min(0).optional(),
-    quantity: z.number().int().min(1),
+    variantPrice: z.coerce.number().min(0).optional(),
+    price: z.coerce.number().min(0),
+    otherPrice: z.coerce.number().min(0).optional(),
+    quantity: z.coerce.number().int().min(1),
     isVeg: z.boolean().optional().default(true),
     image: z.string().optional(),
     notes: z.string().optional()
-});
+}).passthrough();
 
 const addressSchema = z.object({
-    label: z.enum(['Home', 'Office', 'Other']).optional(),
+    label: z.string().optional().default('Home'),
     name: z.string().optional(),
     fullName: z.string().optional(),
-    street: z.string().min(1, 'Street required'),
-    additionalDetails: z.string().optional(),
-    city: z.string().min(1, 'City required'),
-    state: z.string().min(1, 'State required'),
-    zipCode: z.string().optional(),
-    phone: z.string().optional(),
+    street: z.string().optional().default(''),
+    additionalDetails: z.string().optional().default(''),
+    city: z.string().optional().default(''),
+    state: z.string().optional().default(''),
+    zipCode: z.string().optional().default(''),
+    phone: z.string().optional().default(''),
     location: z
         .object({
-            type: z.literal('Point').optional(),
-            coordinates: z.tuple([z.number(), z.number()]).optional()
+            type: z.string().optional(),
+            coordinates: z.array(z.number()).optional()
         })
         .optional()
-});
+}).passthrough();
 
 const pricingSchema = z.object({
-    subtotal: z.number().min(0),
-    tax: z.number().min(0).optional(),
-    packagingFee: z.number().min(0).optional(),
-    deliveryFee: z.number().min(0).optional(),
-    platformFee: z.number().min(0).optional(),
-    discount: z.number().min(0).optional(),
-    total: z.number().min(0),
+    subtotal: z.coerce.number().min(0),
+    tax: z.coerce.number().min(0).optional(),
+    packagingFee: z.coerce.number().min(0).optional(),
+    deliveryFee: z.coerce.number().min(0).optional(),
+    platformFee: z.coerce.number().min(0).optional(),
+    discount: z.coerce.number().min(0).optional(),
+    total: z.coerce.number().min(0),
     currency: z.string().optional(),
     couponCode: z.string().nullable().optional(),
-    deliveryTip: z.number().min(0).max(500).optional().or(z.literal(0))
-});
+    deliveryTip: z.coerce.number().min(0).max(500).optional().or(z.literal(0))
+}).passthrough();
 
 export function validateCalculateOrderDto(body) {
     const schema = z.object({
@@ -59,7 +59,7 @@ export function validateCalculateOrderDto(body) {
             .object({
                 location: z
                     .object({
-                        coordinates: z.tuple([z.number(), z.number()]).optional()
+                        coordinates: z.array(z.number()).optional()
                     })
                     .optional()
             })
@@ -100,7 +100,10 @@ export function validateCreateOrderDto(body) {
     });
     const result = schema.safeParse(body);
     if (!result.success) {
-        const msg = result.error.errors?.[0]?.message || 'Validation failed';
+        const first = result.error.issues?.[0] || result.error.errors?.[0];
+        const path = first?.path?.length ? first.path.join('.') : '';
+        const msg = path ? `${path}: ${first?.message || 'Validation failed'}` : first?.message || 'Validation failed';
+        console.error(`❌ [ORDER VALIDATION ERROR] ${msg}`, JSON.stringify(result.error.issues));
         throw new ValidationError(msg);
     }
     return result.data;

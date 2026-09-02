@@ -1999,13 +1999,13 @@ export default function Cart() {
       // Include all cart items (main items + addons)
       // Note: Addons are added as separate cart items when user clicks the + button
       const orderItems = cart.map(item => ({
-        itemId: item.itemId || item.id,
-        name: item.name,
-        price: item.price,
-        variantId: item.variantId || undefined,
-        variantName: item.variantName || undefined,
-        variantPrice: item.variantPrice || item.price,
-        quantity: item.quantity || 1,
+        itemId: String(item.itemId || item.id || item._id || "").trim(),
+        name: String(item.name || "Item").trim(),
+        price: Number(item.price) || 0,
+        variantId: item.variantId ? String(item.variantId) : undefined,
+        variantName: item.variantName ? String(item.variantName) : undefined,
+        variantPrice: item.variantPrice !== undefined ? Number(item.variantPrice) : Number(item.price) || 0,
+        quantity: Math.max(1, Number(item.quantity) || 1),
         image: item.image || "",
         description: item.description || "",
         isVeg: item.isVeg !== false,
@@ -2224,10 +2224,41 @@ export default function Cart() {
 
       debugLog("?? Order pricing (server):", orderPricing)
 
+      const effectiveStreet =
+        pricingAddress?.street ||
+        pricingAddress?.formattedAddress ||
+        pricingAddress?.address ||
+        defaultAddress?.street ||
+        defaultAddress?.formattedAddress ||
+        defaultAddress?.address ||
+        restaurantData?.location?.address ||
+        "Delivery Address";
+
+      const effectiveCity =
+        pricingAddress?.city ||
+        defaultAddress?.city ||
+        restaurantData?.location?.city ||
+        "Indore";
+
+      const effectiveState =
+        pricingAddress?.state ||
+        defaultAddress?.state ||
+        restaurantData?.location?.state ||
+        "Madhya Pradesh";
+
+      const rawLabel = String(pricingAddress?.label || defaultAddress?.label || "").trim();
+      const effectiveLabel = ["Home", "Office", "Other"].includes(rawLabel)
+        ? rawLabel
+        : rawLabel.toLowerCase() === "work" ? "Office" : "Home";
+
       const orderPayload = {
         items: orderItems,
         address: {
           ...pricingAddress,
+          label: effectiveLabel,
+          street: effectiveStreet,
+          city: effectiveCity,
+          state: effectiveState,
           phone: recipientPhone || defaultAddress?.phone || "",
           name: recipientName,
           fullName: recipientName,
