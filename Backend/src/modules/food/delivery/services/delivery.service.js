@@ -123,7 +123,7 @@ export const registerDeliveryPartner = async (payload, files) => {
         isPaymentPending = true;
     }
 
-    const partner = await FoodDeliveryPartner.create({
+    const partnerData = {
         name,
         phone,
         email: normalizedEmail,
@@ -141,7 +141,13 @@ export const registerDeliveryPartner = async (payload, files) => {
         joiningFeeAmount: joiningFee,
         joiningFeePaid: !isPaymentPending,
         ...images
-    });
+    };
+
+    if (payload.zoneId && mongoose.Types.ObjectId.isValid(payload.zoneId)) {
+        partnerData.zoneId = payload.zoneId;
+    }
+
+    const partner = await FoodDeliveryPartner.create(partnerData);
 
     // Ensure referralCode exists for sharing.
     if (!partner.referralCode) {
@@ -208,7 +214,7 @@ export const updateDeliveryPartnerProfile = async (userId, payload, files) => {
     }
 
     const {
-        name, countryCode, address, city, state,
+        name, countryCode, address, city, state, zoneId,
         vehicleType, vehicleName, vehicleNumber, drivingLicenseNumber, panNumber, aadharNumber,
         fcmToken, platform
     } = payload;
@@ -218,6 +224,9 @@ export const updateDeliveryPartnerProfile = async (userId, payload, files) => {
     if (address !== undefined) partner.address = address;
     if (city !== undefined) partner.city = city;
     if (state !== undefined) partner.state = state;
+    if (zoneId !== undefined) {
+        partner.zoneId = (zoneId && mongoose.Types.ObjectId.isValid(zoneId)) ? zoneId : null;
+    }
     if (vehicleType !== undefined) partner.vehicleType = vehicleType;
     if (vehicleName !== undefined) partner.vehicleName = vehicleName;
     if (vehicleNumber !== undefined && String(vehicleNumber).trim().toUpperCase() !== String(partner.vehicleNumber || '').trim().toUpperCase()) {

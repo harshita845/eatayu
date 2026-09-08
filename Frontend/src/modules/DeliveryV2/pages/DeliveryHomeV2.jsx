@@ -16,7 +16,7 @@ import { PickupActionModal } from '@/modules/DeliveryV2/components/modals/Pickup
 import { DeliveryVerificationModal } from '@/modules/DeliveryV2/components/modals/DeliveryVerificationModal';
 import { OrderSummaryModal } from '@/modules/DeliveryV2/components/modals/OrderSummaryModal';
 import ActionSlider from '@/modules/DeliveryV2/components/ui/ActionSlider';
-import { openGoogleMapsForAddress, resolveCustomerAddress } from '@/modules/DeliveryV2/utils/orderAddress';
+import { openGoogleMapsForAddress, openGoogleMapsNavigation, resolveCustomerAddress } from '@/modules/DeliveryV2/utils/orderAddress';
 
 // Sub Pages
 import PocketV2 from '@/modules/DeliveryV2/pages/PocketV2';
@@ -1010,11 +1010,14 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                               })()}
                               {(() => {
                                 const customerAddress = resolveCustomerAddress(activeOrder);
-                                if (!customerAddress) return null;
+                                const cusLat = activeOrder?.customerLocation?.lat || activeOrder?.customerLocation?.latitude || activeOrder?.deliveryAddress?.latitude;
+                                const cusLng = activeOrder?.customerLocation?.lng || activeOrder?.customerLocation?.longitude || activeOrder?.deliveryAddress?.longitude;
+                                if (!customerAddress && !cusLat) return null;
                                 return (
                                   <button
-                                    onClick={() => openGoogleMapsForAddress(customerAddress)}
+                                    onClick={() => openGoogleMapsNavigation({ lat: cusLat, lng: cusLng, address: customerAddress })}
                                     className="w-11 h-11 rounded-2xl bg-gray-950 flex items-center justify-center text-white shadow-xl hover:bg-gray-800 transition-colors active:scale-90 shrink-0"
+                                    title="Open Driving Navigation"
                                   >
                                     <Navigation className="w-5 h-5" />
                                   </button>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
-import { deliveryAPI } from "@food/api"
+import { deliveryAPI, zoneAPI } from "@food/api"
 import useDeliveryBackNavigation from "../../hooks/useDeliveryBackNavigation"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
@@ -23,6 +23,7 @@ export default function SignupStep1() {
       address: "",
       city: "",
       state: "",
+      zoneId: "",
       vehicleType: "bike",
       vehicleName: "",
       vehicleNumber: "",
@@ -41,6 +42,28 @@ export default function SignupStep1() {
   })
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [zones, setZones] = useState([])
+  const [isLoadingZones, setIsLoadingZones] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+    const fetchZones = async () => {
+      setIsLoadingZones(true)
+      try {
+        const res = await zoneAPI.getPublicZones()
+        const list = res?.data?.zones || res?.data?.data?.zones || []
+        if (isMounted) {
+          setZones(Array.isArray(list) ? list : [])
+        }
+      } catch (err) {
+        debugWarn("Failed to fetch public zones", err)
+      } finally {
+        if (isMounted) setIsLoadingZones(false)
+      }
+    }
+    fetchZones()
+    return () => { isMounted = false }
+  }, [])
 
   const sanitizeLocationValue = (value) =>
     value.replace(/[^A-Za-z\s.-]/g, "").replace(/\s{2,}/g, " ")
@@ -220,6 +243,7 @@ export default function SignupStep1() {
         address: formData.address.trim(),
         city: formData.city.trim(),
         state: formData.state.trim(),
+        zoneId: formData.zoneId || "",
         vehicleType: formData.vehicleType || "bike",
         vehicleName: formData.vehicleName?.trim() || "",
         vehicleNumber: formData.vehicleNumber.trim(),
@@ -347,6 +371,32 @@ export default function SignupStep1() {
               />
               {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
             </div>
+          </div>
+
+          {/* Preferred Working Zone (Optional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Preferred Working Zone <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+            </label>
+            <select
+              name="zoneId"
+              value={formData.zoneId || ""}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="">-- Select Preferred Zone (Optional) --</option>
+              {isLoadingZones ? (
+                <option disabled value="">Loading available zones...</option>
+              ) : zones.length > 0 ? (
+                zones.map(z => (
+                  <option key={z._id} value={z._id}>
+                    {z.zoneName || z.name || z.serviceLocation || "Zone"}{z.serviceLocation ? ` (${z.serviceLocation})` : ""}
+                  </option>
+                ))
+              ) : (
+                <option disabled value="">No active zones available</option>
+              )}
+            </select>
           </div>
 
           {/* Vehicle Type */}

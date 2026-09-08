@@ -28,7 +28,7 @@ export function resolveCustomerAddress(order) {
   return addressParts.length ? addressParts.join(', ') : '';
 }
 
-/** Open Google Maps with a searchable address (same pattern as restaurant pickup). */
+/** Open Google Maps with a searchable address (fallback search pattern). */
 export function openGoogleMapsForAddress(address) {
   const query = String(address || '').trim();
   if (!query) return false;
@@ -38,3 +38,23 @@ export function openGoogleMapsForAddress(address) {
   );
   return true;
 }
+
+/** Open Google Maps in turn-by-turn driving navigation mode directly to target lat/lng or address. */
+export function openGoogleMapsNavigation({ lat, lng, address } = {}) {
+  let destination = '';
+  const parsedLat = parseFloat(lat);
+  const parsedLng = parseFloat(lng);
+
+  if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng) && (parsedLat !== 0 || parsedLng !== 0)) {
+    destination = `${parsedLat},${parsedLng}`;
+  } else if (address && String(address).trim()) {
+    destination = encodeURIComponent(String(address).trim());
+  }
+
+  if (!destination) return false;
+
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+  window.open(url, '_blank');
+  return true;
+}
+
