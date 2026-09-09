@@ -1666,6 +1666,7 @@ export default function Home() {
       .catch(() => {
         if (!cancelled) {
           setExploreMoreHeading("Explore More");
+          setRecommendedRestaurantIds([]);
           setRecommendedRestaurantsFromSettings([]);
         }
       })

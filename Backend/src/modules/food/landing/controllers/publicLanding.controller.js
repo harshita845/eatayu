@@ -107,12 +107,17 @@ export const getPublicLandingSettingsController = async (req, res, next) => {
         const ids = settings?.recommendedRestaurantIds || [];
         let recommendedRestaurants = [];
         if (Array.isArray(ids) && ids.length > 0) {
-            const query = { _id: { $in: ids }, status: 'approved' };
+            const query = { _id: { $in: ids }, status: 'approved', isActive: { $ne: false }, isDeleted: { $ne: true } };
             if (zoneId && mongoose.Types.ObjectId.isValid(zoneId)) {
-                query.zoneId = new mongoose.Types.ObjectId(zoneId);
+                query.$or = [
+                    { zoneId: new mongoose.Types.ObjectId(zoneId) },
+                    { zoneId: String(zoneId) }
+                ];
+            } else if (zoneId) {
+                query.zoneId = String(zoneId);
             }
             recommendedRestaurants = await FoodRestaurant.find(query)
-                .select('restaurantName area city profileImage coverImages menuImages slug rating cuisines pureVegRestaurant zoneId estimatedDeliveryTime estimatedDeliveryTimeMinutes offer featuredPrice costForTwo isFreeDelivery')
+                .select('restaurantName area city profileImage coverImages menuImages slug rating cuisines pureVegRestaurant zoneId estimatedDeliveryTime estimatedDeliveryTimeMinutes offer featuredPrice costForTwo isFreeDelivery isActive isAcceptingOrders')
                 .lean();
         }
         const payload = {

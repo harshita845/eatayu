@@ -56,18 +56,16 @@ export const ProfileV2 = () => {
     }).catch(() => {})
   }, [])
 
-  const refId = profile?._id || profile?.id || profile?.referralCode || ""
-  const referralLink = refId ? `${window.location.origin}/food/delivery/signup?ref=${encodeURIComponent(String(refId))}` : ""
+  const playStoreDeliveryUrl = "https://play.google.com/store/apps/details?id=com.eatayu.delivery"
 
   const handleShareReferral = async () => {
-    if (!referralLink) return
     const rewardText = referralReward > 0 ? `₹${referralReward}` : "rewards"
-    const shareText = `Join as a delivery partner and earn ${rewardText}.`
+    const shareText = `Join as a delivery partner and earn ${rewardText}: ${playStoreDeliveryUrl}`
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Delivery referral", text: shareText, url: referralLink })
+        await navigator.share({ text: shareText })
       } else {
-        const fallbackUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${referralLink}`)}`
+        const fallbackUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
         window.open(fallbackUrl, "_blank", "noopener,noreferrer")
       }
     } catch (e) {}
