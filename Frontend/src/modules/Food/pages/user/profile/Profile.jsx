@@ -274,9 +274,10 @@ export default function Profile() {
 
   const refId =
     userProfile?._id || userProfile?.id || userProfile?.referralCode || "";
+  const PLAYSTORE_APP_URL = "https://play.google.com/store/apps/details?id=com.eatayu.newuser";
   const referralLink = refId
-    ? `${window.location.origin}/food/food/user/auth/login?ref=${encodeURIComponent(String(refId))}`
-    : "";
+    ? `${PLAYSTORE_APP_URL}&referrer=${encodeURIComponent(String(refId))}`
+    : PLAYSTORE_APP_URL;
 
   const handleShareReferral = async () => {
     if (!referralLink) return;
