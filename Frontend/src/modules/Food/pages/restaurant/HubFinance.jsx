@@ -979,8 +979,7 @@ export default function HubFinance() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-4 mb-2 shadow-sm cursor-pointer md:col-start-2 md:row-start-1 md:mb-0"
-                onClick={() => navigate('/food/restaurant/subscription')}
+                className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-4 mb-2 shadow-sm md:col-start-2 md:row-start-1 md:mb-0"
               >
                 <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm border border-amber-100">
                   <Info className="w-6 h-6 text-amber-600" />
@@ -988,7 +987,7 @@ export default function HubFinance() {
                 <div className="flex-1">
                   <h3 className="text-sm font-bold text-amber-900">Subscription Due Pending</h3>
                   <p className="text-[11px] text-amber-800 mt-1 leading-relaxed font-medium">
-                    ₹{subscriptionDueAmount.toLocaleString('en-IN')} is locked against your subscription due{subscriptionLockedMonths ? ` for ${subscriptionLockedMonths}` : ''}. Tap to view your billing details.
+                    ₹{subscriptionDueAmount.toLocaleString('en-IN')} is locked against your subscription due{subscriptionLockedMonths ? ` for ${subscriptionLockedMonths}` : ''}.
                   </p>
                 </div>
               </motion.div>
@@ -1419,12 +1418,6 @@ export default function HubFinance() {
             <div className="md:col-start-2">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-base font-bold text-gray-900 md:text-lg md:tracking-tight">Subscription billing</h2>
-                <button
-                  onClick={() => navigate('/food/restaurant/subscription')}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 md:text-[#4f6f9a]"
-                >
-                  View all
-                </button>
               </div>
               <div className="bg-white rounded-lg p-4 md:rounded-2xl md:border md:border-[#d6dce4] md:shadow-[0_18px_40px_-34px_rgba(20,24,32,0.35)]">
                 {loadingSubscriptionHistory ? (
