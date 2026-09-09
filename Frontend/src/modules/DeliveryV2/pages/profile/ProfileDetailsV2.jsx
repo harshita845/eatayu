@@ -59,6 +59,7 @@ export const ProfileDetailsV2 = () => {
   const [activePicker, setActivePicker] = useState(null) // { target: 'profilePhoto' | 'upiQrCode', ref: any, title: string }
   const drivingLicenseInputRef = useRef(null)
   const upiQrCameraInputRef = useRef(null)
+  const [imageError, setImageError] = useState(false)
 
   useCloseOnBrowserBack(showVehiclePopup, () => setShowVehiclePopup(false), "vehicle-popup")
   useCloseOnBrowserBack(showBankDetailsPopup, () => setShowBankDetailsPopup(false), "bank-details-popup")
@@ -488,8 +489,13 @@ export const ProfileDetailsV2 = () => {
         {/* ─── PROFILE AVATAR BLOCK ─── */}
         <div className="relative pt-4 pb-2">
            <div className="w-[140px] h-[140px] rounded-[40px] bg-white border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] mx-auto overflow-hidden relative">
-              {profileImageUrl ? (
-                <img src={profileImageUrl} alt="Avatar" className="w-full h-full object-cover transition-transform hover:scale-105 duration-500" />
+              {profileImageUrl && !imageError ? (
+                <img 
+                  src={profileImageUrl} 
+                  alt="Avatar" 
+                  onError={() => setImageError(true)}
+                  className="w-full h-full object-cover transition-transform hover:scale-105 duration-500" 
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-50"><User className="w-12 h-12 text-gray-300" /></div>
               )}
