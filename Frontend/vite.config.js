@@ -56,6 +56,9 @@ export default defineConfig({
           if (id.includes('framer-motion') || id.includes('gsap') || id.includes('canvas-confetti') || id.includes('lenis')) {
             return 'vendor-motion'
           }
+          if (id.includes('lucide-react') || id.includes('@heroicons') || id.includes('react-icons')) return 'vendor-icons'
+          if (id.includes('@radix-ui')) return 'vendor-radix'
+          if (id.includes('socket.io-client')) return 'vendor-socket'
           if (id.includes('jspdf') || id.includes('jspdf-autotable')) return 'vendor-export-pdf'
           if (id.includes('exceljs')) return 'vendor-export-excel'
           if (id.includes('html2canvas')) return 'vendor-export-canvas'

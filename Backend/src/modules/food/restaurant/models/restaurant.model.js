@@ -487,6 +487,9 @@ restaurantSchema.index(
   },
 );
 restaurantSchema.index({ status: 1, createdAt: -1 });
+restaurantSchema.index({ status: 1, zoneId: 1, isAcceptingOrders: 1 });
+restaurantSchema.index({ status: 1, rating: -1 });
+restaurantSchema.index({ status: 1, featuredPrice: 1 });
 
 export const FoodRestaurant = mongoose.model(
   "FoodRestaurant",

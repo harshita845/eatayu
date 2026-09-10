@@ -537,6 +537,8 @@ const RestaurantCard = React.memo(({
       className="h-full transform transition-all duration-300 hover:-translate-y-3 hover:scale-[1.02]"
       style={{
         perspective: 1000,
+        contentVisibility: "auto",
+        containIntrinsicSize: "0 340px",
         animation:
           index < 10
             ? `fade-in-up 0.5s ease-out ${index * 0.05}s backwards`

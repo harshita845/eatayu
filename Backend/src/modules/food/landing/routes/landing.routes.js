@@ -68,6 +68,7 @@ import {
 } from '../controllers/top10GourmetAdmin.controller.js';
 import { getPublicPageController } from '../../admin/controllers/pageContent.controller.js';
 import { getPublicReferralSettingsController } from '../controllers/publicReferralSettings.controller.js';
+import { cacheResponse } from '../../../../middleware/cache.js';
 
 const router = express.Router();
 
@@ -156,17 +157,17 @@ router.patch('/hero-banners/gourmet/:id/order', updateGourmetOrderAdmin);
 router.patch('/hero-banners/gourmet/:id/status', toggleGourmetStatusAdmin);
 
 // Public landing endpoints (Food user app)
-router.get('/hero-banners/public', getPublicHeroBannersController);
-router.get('/top-banners/public', getPublicTopBannersController);
-router.get('/hero-banners/under-250/public', getPublicUnder250BannersController);
-router.get('/hero-banners/dining/public', getPublicDiningBannersController);
-router.get('/explore-icons/public', getPublicExploreIconsController);
-router.get('/hero-banners/home-promotion/public', getPublicHomePromotionBannersController);
-router.get('/hero-banners/gourmet/public', getPublicGourmetController);
-router.get('/landing/settings/public', getPublicLandingSettingsController);
+router.get('/hero-banners/public', cacheResponse(600, 'hero_banners', { browserTtlSeconds: 120 }), getPublicHeroBannersController);
+router.get('/top-banners/public', cacheResponse(600, 'top_banners', { browserTtlSeconds: 120 }), getPublicTopBannersController);
+router.get('/hero-banners/under-250/public', cacheResponse(600, 'under_250_banners', { browserTtlSeconds: 120 }), getPublicUnder250BannersController);
+router.get('/hero-banners/dining/public', cacheResponse(600, 'dining_banners', { browserTtlSeconds: 120 }), getPublicDiningBannersController);
+router.get('/explore-icons/public', cacheResponse(600, 'explore_icons', { browserTtlSeconds: 120 }), getPublicExploreIconsController);
+router.get('/hero-banners/home-promotion/public', cacheResponse(600, 'promo_banners', { browserTtlSeconds: 120 }), getPublicHomePromotionBannersController);
+router.get('/hero-banners/gourmet/public', cacheResponse(600, 'gourmet_banners', { browserTtlSeconds: 120 }), getPublicGourmetController);
+router.get('/landing/settings/public', cacheResponse(600, 'landing_settings', { browserTtlSeconds: 120 }), getPublicLandingSettingsController);
 router.get('/zones/detect', detectZonePublicController);
-router.get('/zones/nearby', listZonesNearbyPublicController);
-router.get('/zones/public', listZonesPublicController);
+router.get('/zones/nearby', cacheResponse(300, 'zones_nearby', { browserTtlSeconds: 60 }), listZonesNearbyPublicController);
+router.get('/zones/public', cacheResponse(600, 'zones_public', { browserTtlSeconds: 120 }), listZonesPublicController);
 // Admin landing settings
 router.get('/hero-banners/landing/settings', getAdminLandingSettingsController);
 router.patch('/hero-banners/landing/settings', updateAdminLandingSettingsController);

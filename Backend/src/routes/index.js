@@ -21,6 +21,8 @@ import searchRoutes from '../modules/food/search/routes/search.routes.js';
 import { config } from '../config/env.js';
 import { getRateLimitSummary } from '../middleware/rateLimit.js';
 
+import { cacheResponse } from '../middleware/cache.js';
+
 const router = express.Router();
 
 router.get('/v1/health', (req, res) => {
@@ -43,16 +45,16 @@ router.use('/v1/food/restaurant', restaurantRoutes);
 // Landing & hero-banners for Food user app (paths start with /food/hero-banners/...)
 router.use('/v1/food', landingRoutes);
 router.use('/v1/food/search', searchRoutes);
-router.get('/v1/food/dining/categories/public', getPublicDiningCategories);
-router.get('/v1/food/dining/restaurants/public', getPublicDiningRestaurants);
+router.get('/v1/food/dining/categories/public', cacheResponse(600, 'dining_categories', { browserTtlSeconds: 120 }), getPublicDiningCategories);
+router.get('/v1/food/dining/restaurants/public', cacheResponse(300, 'dining_restaurants', { browserTtlSeconds: 60 }), getPublicDiningRestaurants);
 router.use('/v1/uploads', uploadRoutes);
 
 // Mark business-settings/public as truly public (must be before protected admin block)
-router.get('/v1/food/admin/business-settings/public', businessSettingsController.getBusinessSettings);
-router.get('/v1/food/admin/power-scanning/public', businessSettingsController.getPowerScanningSettings);
-router.get('/v1/food/admin/restaurant-subscription-settings/public', adminController.getRestaurantSubscriptionSettings);
-router.get('/v1/food/admin/feature-settings/public', adminController.getFeatureSettings);
-router.get('/v1/food/admin/fee-settings/public', adminController.getFeeSettings);
+router.get('/v1/food/admin/business-settings/public', cacheResponse(600, 'biz_settings', { browserTtlSeconds: 120 }), businessSettingsController.getBusinessSettings);
+router.get('/v1/food/admin/power-scanning/public', cacheResponse(600, 'power_scan', { browserTtlSeconds: 120 }), businessSettingsController.getPowerScanningSettings);
+router.get('/v1/food/admin/restaurant-subscription-settings/public', cacheResponse(600, 'sub_settings', { browserTtlSeconds: 120 }), adminController.getRestaurantSubscriptionSettings);
+router.get('/v1/food/admin/feature-settings/public', cacheResponse(600, 'feat_settings', { browserTtlSeconds: 120 }), adminController.getFeatureSettings);
+router.get('/v1/food/admin/fee-settings/public', cacheResponse(600, 'fee_settings', { browserTtlSeconds: 120 }), adminController.getFeeSettings);
 
 router.use('/v1/food/admin', authMiddleware, requireRoles('ADMIN'), restaurantAdminRoutes);
 router.use('/v1/food/user', authMiddleware, requireRoles('USER'), userRoutes);

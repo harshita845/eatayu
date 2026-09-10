@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import mongoSanitize from 'mongo-sanitize';
 import xssClean from 'xss-clean';
+import compression from 'compression';
 import routes from './routes/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import { apiRateLimiter } from './middleware/rateLimit.js';
@@ -18,6 +19,15 @@ const app = express();
 
 // Trust first proxy (essential for express-rate-limit if behind a proxy)
 app.set('trust proxy', 1);
+
+// HTTP response compression (gzip)
+app.use(compression({
+    level: 6,
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) return false;
+        return compression.filter(req, res);
+    }
+}));
 
 // Request ID tracing (before other middlewares so all logs can use it)
 app.use(requestIdMiddleware);
@@ -74,7 +84,7 @@ app.use('/api', responseTimeLogger);
 // API Routes
 app.use('/api', routes);
 
-// Serve uploaded files statically. If the file is missing locally, gracefully redirect to production CDN.
+// Serve uploaded files statically with cache headers. If missing locally, gracefully redirect to production CDN.
 app.use('/uploads', (req, res, next) => {
     const localPath = path.join(path.resolve(config.uploadStorageRoot), req.path);
     fs.access(localPath, fs.constants.F_OK, (err) => {
@@ -84,7 +94,13 @@ app.use('/uploads', (req, res, next) => {
             res.redirect(`https://eatayu.com/uploads${req.path}`);
         }
     });
-}, express.static(path.resolve(config.uploadStorageRoot)));
+}, express.static(path.resolve(config.uploadStorageRoot), {
+    maxAge: '7d',
+    etag: true,
+    setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+    }
+}));
 
 // Error Handling
 app.use(errorHandler);
