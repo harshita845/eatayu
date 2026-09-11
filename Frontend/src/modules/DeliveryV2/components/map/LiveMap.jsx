@@ -348,6 +348,12 @@ export const LiveMap = ({ onMapClick, onMapLoad, onPathReceived, onPolylineRecei
     };
   }, [activeOrder, tripStatus, directions, targetLocation]);
 
+  const mapCenter = useMemo(() => {
+    if (parsedRiderLocation) return { lat: parsedRiderLocation.lat, lng: parsedRiderLocation.lng };
+    if (targetLocation) return { lat: targetLocation.lat, lng: targetLocation.lng };
+    return { lat: 20.5937, lng: 78.9629 }; // Default India fallback center
+  }, [parsedRiderLocation, targetLocation]);
+
   if (loadError) return <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-red-500 font-bold">Map Load Error</div>;
   if (!isLoaded) return <div className="absolute inset-0 flex items-center justify-center bg-slate-100"><div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>;
 
@@ -378,15 +384,13 @@ export const LiveMap = ({ onMapClick, onMapLoad, onPathReceived, onPolylineRecei
                       )}
                     </span>
                     {navigationInfo.stepDistance && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-gray-300">
-                        In {navigationInfo.stepDistance}
-                      </span>
+                      <span className="text-[10px] text-gray-300 font-medium">• {navigationInfo.stepDistance}</span>
                     )}
                   </div>
-                  <p className="text-sm font-black text-white tracking-tight truncate leading-tight mt-0.5">
+                  <p className="text-xs font-black text-white truncate mt-0.5" title={navigationInfo.nextInstruction}>
                     {navigationInfo.nextInstruction}
                   </p>
-                  <p className="text-xs text-gray-400 truncate mt-0.5 font-medium flex items-center gap-1">
+                  <p className="text-[10px] text-gray-400 truncate flex items-center gap-1 mt-0.5">
                     <MapPin className="w-3 h-3 text-red-400 shrink-0" />
                     <span>{navigationInfo.destinationLabel}</span>
                   </p>
@@ -472,6 +476,7 @@ export const LiveMap = ({ onMapClick, onMapLoad, onPathReceived, onPolylineRecei
       <GoogleMap
         onLoad={handleMapLoad}
         mapContainerStyle={mapContainerStyle}
+        center={mapCenter}
         zoom={14}
         onClick={(e) => onMapClick?.(e.latLng.lat(), e.latLng.lng())}
         options={mapOptions}

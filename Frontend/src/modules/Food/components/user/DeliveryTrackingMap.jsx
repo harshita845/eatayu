@@ -95,6 +95,12 @@ const DeliveryTrackingMap = ({
     }
   }, [order, riderLocation]);
 
+  // Track latest locations via ref to avoid recreating socket on location updates
+  const latestLocationRef = useRef(smoothLocation || riderLocation);
+  useEffect(() => {
+    latestLocationRef.current = smoothLocation || riderLocation;
+  }, [smoothLocation, riderLocation]);
+
   // 2. Core Data Sync (Socket + Firebase)
   useEffect(() => {
     if (!trackingIds.length) return;
@@ -146,7 +152,7 @@ const DeliveryTrackingMap = ({
         
         // Trigger Smooth Interpolation
         interpStateRef.current = {
-           lastPos: smoothLocation || riderLocation || nextPos,
+           lastPos: latestLocationRef.current || nextPos,
            nextPos: nextPos,
            startTime: Date.now()
         };
@@ -159,7 +165,7 @@ const DeliveryTrackingMap = ({
       unsubs.forEach(u => u?.());
       socketRef.current?.disconnect();
     };
-  }, [trackingIds, backendUrl, smoothLocation, riderLocation]);
+  }, [trackingIds, backendUrl]);
 
   // 3. Smooth Animation Loop (60 FPS Glide)
   useEffect(() => {

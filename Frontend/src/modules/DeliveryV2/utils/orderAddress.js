@@ -44,8 +44,9 @@ export function openGoogleMapsNavigation({ lat, lng, address } = {}) {
   let destination = '';
   const parsedLat = parseFloat(lat);
   const parsedLng = parseFloat(lng);
+  const hasCoords = Number.isFinite(parsedLat) && Number.isFinite(parsedLng) && (parsedLat !== 0 || parsedLng !== 0);
 
-  if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng) && (parsedLat !== 0 || parsedLng !== 0)) {
+  if (hasCoords) {
     destination = `${parsedLat},${parsedLng}`;
   } else if (address && String(address).trim()) {
     destination = encodeURIComponent(String(address).trim());
@@ -53,8 +54,34 @@ export function openGoogleMapsNavigation({ lat, lng, address } = {}) {
 
   if (!destination) return false;
 
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
-  window.open(url, '_blank');
+  const userAgent = typeof navigator !== 'undefined' ? (navigator.userAgent || '') : '';
+  const isAndroid = /Android/i.test(userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+
+  let url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+
+  if (isAndroid && hasCoords) {
+    url = `geo:${parsedLat},${parsedLng}?q=${parsedLat},${parsedLng}`;
+  } else if (isIOS && hasCoords) {
+    url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+  }
+
+  try {
+    if (typeof document !== 'undefined' && document.body) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return true;
+    }
+  } catch (_) {
+    // Fallback if DOM element creation fails
+  }
+
+  window.open(url, '_blank', 'noopener,noreferrer');
   return true;
 }
 
