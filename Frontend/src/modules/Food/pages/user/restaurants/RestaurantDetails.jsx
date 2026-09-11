@@ -91,6 +91,7 @@ const buildHeroImages = (restaurant) => {
     if (url && !images.includes(url)) images.push(url)
   }
   if (Array.isArray(restaurant.coverImages)) restaurant.coverImages.forEach(pushUnique)
+  if (Array.isArray(restaurant.menuImages)) restaurant.menuImages.forEach(pushUnique)
   pushUnique(restaurant.profileImage)
   const mainImage = resolveRestaurantImageUrl(restaurant.image)
   if (mainImage && !images.includes(mainImage)) pushUnique(mainImage)

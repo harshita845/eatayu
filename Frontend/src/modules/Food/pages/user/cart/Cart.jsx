@@ -475,6 +475,7 @@ export default function Cart() {
     platformFee: 0,
     quickDeliveryFee: 0,
     gstRate: 0,
+    minOrderSubtotal: 99,
   })
 
   const configuredQuickDeliveryFee = getConfiguredQuickDeliveryFee(feeSettings)
@@ -1450,6 +1451,7 @@ export default function Cart() {
         platformFee: raw.platformFee ?? 0,
         quickDeliveryFee: raw.quickDeliveryFee ?? 0,
         gstRate: raw.gstRate ?? 0,
+        minOrderSubtotal: raw.minOrderSubtotal ?? 99,
       })
     }
 
@@ -1489,6 +1491,9 @@ export default function Cart() {
     [cart, pricing, feeSettings, pricingAddress, restaurantData, appliedCoupon, deliveryMode, roadDistanceKm],
   )
   const subtotal = effectivePricing.subtotal
+  const minOrderSubtotal = Number(feeSettings?.minOrderSubtotal ?? 99)
+  const isBelowMinOrder = subtotal < minOrderSubtotal
+  const minOrderDeficit = Math.max(0, minOrderSubtotal - subtotal)
   const deliveryFee = effectivePricing.deliveryFee
   const deliveryFeeGst = effectivePricing.deliveryFeeGst != null
     ? resolveDeliveryFeeGst(deliveryFee, effectivePricing.deliveryFeeGst)
@@ -1960,6 +1965,11 @@ export default function Cart() {
     if (!hasSavedAddress) {
       toast.error("Please choose a delivery location to continue")
       setShowAddressSheet(true)
+      return
+    }
+
+    if (isBelowMinOrder) {
+      toast.error(`Minimum order amount is ₹${minOrderSubtotal}. Add ₹${minOrderDeficit} more to place order.`)
       return
     }
 
@@ -2929,6 +2939,21 @@ export default function Cart() {
                 </div>
               </div>
 
+              {/* Minimum Order Warning Banner */}
+              {isBelowMinOrder && (
+                <div className="mb-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center gap-3 text-amber-800 dark:text-amber-300">
+                  <ShoppingCart className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <div className="text-xs font-medium">
+                    <p className="font-semibold text-amber-900 dark:text-amber-200">
+                      Minimum order subtotal is {RUPEE_SYMBOL}{minOrderSubtotal}
+                    </p>
+                    <p className="mt-0.5 text-amber-700 dark:text-amber-400">
+                      Add items worth <span className="font-bold">{RUPEE_SYMBOL}{minOrderDeficit}</span> more to place order.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Offers row */}
               <button
                 type="button"
@@ -3343,6 +3368,7 @@ export default function Cart() {
                 isPlacingOrder ||
                 loadingRestaurant ||
                 !canPlaceOrder ||
+                isBelowMinOrder ||
                 (selectedPaymentMethod === "wallet" && walletBalance < total)
               }
               className="shrink-0 min-w-[132px] px-5 rounded-full text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -3357,9 +3383,11 @@ export default function Cart() {
                   ? "Loading..."
                   : !canPlaceOrder
                     ? "Offline"
-                    : !hasSavedAddress
-                      ? "Add Address"
-                      : `Pay ${RUPEE_SYMBOL}${total.toFixed(0)}`}
+                    : isBelowMinOrder
+                      ? `Add ${RUPEE_SYMBOL}${minOrderDeficit} More`
+                      : !hasSavedAddress
+                        ? "Add Address"
+                        : `Pay ${RUPEE_SYMBOL}${total.toFixed(0)}`}
             </button>
           </div>
         </div>

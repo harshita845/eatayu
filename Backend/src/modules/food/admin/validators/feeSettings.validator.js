@@ -16,6 +16,7 @@ const feeSettingsUpsertSchema = z.object({
     quickDeliveryFee: z.number().min(0).nullable().optional(),
     gstRate: z.number().min(0).max(100).nullable().optional(),
     deliveryBoyJoiningFee: z.number().min(0).nullable().optional(),
+    minOrderSubtotal: z.number().min(0).nullable().optional(),
     isActive: z.boolean().optional()
 });
 
@@ -48,6 +49,8 @@ export const validateFeeSettingsUpsertDto = (body) => {
             body?.gstRate === null ? null : body?.gstRate !== undefined ? Number(body.gstRate) : undefined,
         deliveryBoyJoiningFee:
             body?.deliveryBoyJoiningFee === null ? null : body?.deliveryBoyJoiningFee !== undefined ? Number(body.deliveryBoyJoiningFee) : undefined,
+        minOrderSubtotal:
+            body?.minOrderSubtotal === null ? null : body?.minOrderSubtotal !== undefined ? Number(body.minOrderSubtotal) : undefined,
         isActive: body?.isActive !== undefined ? Boolean(body.isActive) : undefined
     };
 

@@ -168,7 +168,9 @@ router.post(
     requireRestaurant,
     upload.array('files', 20),
     async (req, res, next) => {
+        await invalidateCache('restaurants:*');
         await invalidateCache('restaurant_detail:*');
+        await invalidateCache('public_foods:*');
         next();
     },
     uploadRestaurantCoverImagesController
@@ -179,7 +181,10 @@ router.post(
     requireRestaurant,
     upload.array('files', 20),
     async (req, res, next) => {
+        await invalidateCache('restaurants:*');
+        await invalidateCache('restaurant_detail:*');
         await invalidateCache('restaurant_menu:*');
+        await invalidateCache('public_foods:*');
         next();
     },
     uploadRestaurantMenuImagesController

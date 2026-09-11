@@ -20,6 +20,7 @@ const feeSettingsSchema = new mongoose.Schema(
         quickDeliveryFee: { type: Number, min: 0 },
         gstRate: { type: Number, min: 0, max: 100 },
         deliveryBoyJoiningFee: { type: Number, min: 0, default: 0 },
+        minOrderSubtotal: { type: Number, min: 0, default: 99 },
         isActive: { type: Boolean, default: true, index: true }
     },
     { collection: 'food_fee_settings', timestamps: true }

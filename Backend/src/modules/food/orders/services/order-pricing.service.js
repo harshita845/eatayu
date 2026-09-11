@@ -258,6 +258,14 @@ export async function calculateOrderPricing(userId, dto, options = {}) {
 
   const feeSettings = await loadActiveFeeSettings();
 
+  const minOrderSubtotal = Number(feeSettings.minOrderSubtotal ?? 99);
+  if (!options.skipMinOrderCheck && subtotal < minOrderSubtotal) {
+    const deficit = Math.round(minOrderSubtotal - subtotal);
+    throw new ValidationError(
+      `Minimum order subtotal is ₹${minOrderSubtotal}. Please add items worth ₹${deficit} more to place your order.`
+    );
+  }
+
   const packagingFee = 0;
   const platformFee = Number(feeSettings.platformFee || 0);
 

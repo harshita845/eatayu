@@ -536,20 +536,26 @@ export default function OutletInfo() {
 
       // Get current images
       const currentData = await getCurrentRestaurantCached()
-      const existingImages = currentData?.menuImages && Array.isArray(currentData.menuImages)
+      const existingCoverImages = currentData?.coverImages && Array.isArray(currentData.coverImages)
+        ? currentData.coverImages.map(img => ({
+            url: toDisplayImageUrl(img.url || img),
+            publicId: img.publicId || null
+          }))
+        : []
+      const existingMenuImages = currentData?.menuImages && Array.isArray(currentData.menuImages)
         ? currentData.menuImages.map(img => ({
-            url: toDisplayImageUrl(img.url),
-            publicId: img.publicId
+            url: toDisplayImageUrl(img.url || img),
+            publicId: img.publicId || null
           }))
         : []
 
       const uploadedImageData = []
       const failedUploads = []
-      
+
       for (let i = 0; i < fileArray.length; i++) {
         try {
           const uploadResponse = await restaurantAPI.uploadMenuImage(fileArray[i])
-          const uploadedImage = uploadResponse?.data?.data?.menuImage
+          const uploadedImage = uploadResponse?.data?.data?.menuImage || uploadResponse?.data?.data
           if (uploadedImage?.url) {
             uploadedImageData.push({
               url: toDisplayImageUrl(uploadedImage.url),
@@ -562,22 +568,26 @@ export default function OutletInfo() {
       }
 
       if (uploadedImageData.length > 0) {
-        const allImages = [...existingImages]
+        const allCover = [...existingCoverImages]
+        const allMenu = [...existingMenuImages]
         uploadedImageData.forEach(uploaded => {
-          if (!allImages.find(img => img.url === uploaded.url)) {
-            allImages.push(uploaded)
+          if (!allCover.find(img => img.url === uploaded.url)) {
+            allCover.push(uploaded)
+          }
+          if (!allMenu.find(img => img.url === uploaded.url)) {
+            allMenu.push(uploaded)
           }
         })
 
         try {
-          await restaurantAPI.updateProfile({ menuImages: allImages })
+          await restaurantAPI.updateProfile({ coverImages: allCover, menuImages: allMenu })
           toast.success(`Successfully uploaded ${uploadedImageData.length} image(s)`)
         } catch (updateError) {
           toast.error("Images uploaded but failed to save.")
         }
 
-        setCoverImages(allImages)
-        if (allImages.length > 0) setMainImage(allImages[0].url)
+        setCoverImages(allCover)
+        if (allCover.length > 0) setMainImage(allCover[0].url)
       }
     } catch (error) {
       toast.error("Failed to upload images.")

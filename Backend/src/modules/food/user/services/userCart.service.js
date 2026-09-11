@@ -125,7 +125,7 @@ async function enrichStoredCartPricing(cart, storedPricing) {
                 restaurantId: cart.restaurantId,
                 items: mapCartItemsForPricing(cart.items),
             },
-            { skipAvailabilityCheck: true },
+            { skipAvailabilityCheck: true, skipMinOrderCheck: true },
         );
         const recalc = result?.pricing;
         if (!recalc) return storedPricing;
@@ -319,7 +319,7 @@ export async function getUserCartPricingForAdmin(cartId) {
             couponCode: cart.pricing?.couponCode || undefined,
             deliveryMode: cart.pricing?.deliveryMode === 'quick' ? 'quick' : 'basic',
         },
-        { skipAvailabilityCheck: true },
+        { skipAvailabilityCheck: true, skipMinOrderCheck: true },
     );
 
     const recalc = result?.pricing || null;

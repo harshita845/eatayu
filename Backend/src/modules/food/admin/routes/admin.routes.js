@@ -18,6 +18,7 @@ import {
 } from '../../restaurant/controllers/bulkUpload.controller.js';
 import { FoodAdmin } from '../../../../core/admin/admin.model.js';
 import { requireAdminPermission, requireAnyAdminPermission } from '../../../../core/roles/adminPermission.middleware.js';
+import { invalidateCache } from '../../../../middleware/cache.js';
 
 const router = express.Router();
 
@@ -220,15 +221,23 @@ router.get(
     ]),
     adminController.getRestaurantAnalytics
 );
+const clearPublicRestaurantCaches = async (req, res, next) => {
+    await invalidateCache('restaurants:*');
+    await invalidateCache('restaurant_detail:*');
+    await invalidateCache('restaurant_menu:*');
+    await invalidateCache('public_foods:*');
+    next();
+};
+
 router.get('/restaurants/:id/menu', adminController.getRestaurantMenuById);
-router.post('/restaurants', adminController.createRestaurant);
-router.patch('/restaurants/:id', adminController.updateRestaurantById);
-router.patch('/restaurants/:id/status', adminController.updateRestaurantStatus);
-router.patch('/restaurants/:id/location', adminController.updateRestaurantLocation);
-router.patch('/restaurants/:id/menu', adminController.updateRestaurantMenuById);
-router.patch('/restaurants/:id/approve', adminController.approveRestaurant);
-router.patch('/restaurants/:id/reject', adminController.rejectRestaurant);
-router.delete('/restaurants/:id', adminController.deleteRestaurant);
+router.post('/restaurants', clearPublicRestaurantCaches, adminController.createRestaurant);
+router.patch('/restaurants/:id', clearPublicRestaurantCaches, adminController.updateRestaurantById);
+router.patch('/restaurants/:id/status', clearPublicRestaurantCaches, adminController.updateRestaurantStatus);
+router.patch('/restaurants/:id/location', clearPublicRestaurantCaches, adminController.updateRestaurantLocation);
+router.patch('/restaurants/:id/menu', clearPublicRestaurantCaches, adminController.updateRestaurantMenuById);
+router.patch('/restaurants/:id/approve', clearPublicRestaurantCaches, adminController.approveRestaurant);
+router.patch('/restaurants/:id/reject', clearPublicRestaurantCaches, adminController.rejectRestaurant);
+router.delete('/restaurants/:id', clearPublicRestaurantCaches, adminController.deleteRestaurant);
 
 
 // ----- Restaurant Commission -----

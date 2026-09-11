@@ -2009,6 +2009,7 @@ export default function Home() {
               const coverImages = extractImages([
                 ...(Array.isArray(restaurant.coverImages) ? restaurant.coverImages : [restaurant.coverImages]).filter(Boolean),
                 restaurant.coverImage,
+                ...(Array.isArray(restaurant.menuImages) ? restaurant.menuImages : [restaurant.menuImages]).filter(Boolean),
               ]);
 
               const profileImageCandidates = extractImages([
@@ -2797,6 +2798,11 @@ export default function Home() {
         ...(Array.isArray(restaurant?.coverImages)
           ? restaurant.coverImages
           : [restaurant?.coverImages]
+        ).filter(Boolean),
+        restaurant?.coverImage,
+        ...(Array.isArray(restaurant?.menuImages)
+          ? restaurant.menuImages
+          : [restaurant?.menuImages]
         ).filter(Boolean),
         restaurant?.profileImage,
       ]);
