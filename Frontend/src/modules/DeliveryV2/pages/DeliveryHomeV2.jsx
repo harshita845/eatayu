@@ -112,7 +112,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
   const [offerSwapGuard, setOfferSwapGuard] = useState(false);
   const prevOfferKeyRef = useRef(null);
   const swapGuardTimerRef = useRef(null);
-  const [currentTab, setCurrentTab] = useState(tab);
+  const [currentTab, setCurrentTab] = useState(() => tab);
 
   // Track URL changes (Prop changes) to update sub-page content
   useEffect(() => {

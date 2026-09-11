@@ -1995,10 +1995,36 @@ const getDeliveryMeOnce = () => {
   return deliveryMeInFlight;
 };
 
+/** Single in-flight + short cache for delivery /wallet - deduplicate concurrent requests. */
+let deliveryWalletInFlight = null;
+let deliveryWalletCached = null;
+let deliveryWalletCacheTime = 0;
+const DELIVERY_WALLET_CACHE_MS = 3000;
+
+const getDeliveryWalletOnce = () => {
+  const now = Date.now();
+  if (deliveryWalletCached && now - deliveryWalletCacheTime < DELIVERY_WALLET_CACHE_MS) {
+    return Promise.resolve(deliveryWalletCached);
+  }
+  if (!deliveryWalletInFlight) {
+    deliveryWalletInFlight = apiClient
+      .get("/food/delivery/wallet", { contextModule: "delivery" })
+      .then((res) => {
+        deliveryWalletCached = res;
+        deliveryWalletCacheTime = Date.now();
+        return res;
+      })
+      .finally(() => {
+        deliveryWalletInFlight = null;
+      });
+  }
+  return deliveryWalletInFlight;
+};
+
 /** Delivery API - OTP login + registration via new backend. */
 export const deliveryAPI = {
   deleteAccount: () => apiClient.delete('/food/delivery/profile/account', { contextModule: 'delivery' }),
-  getWallet: () => apiClient.get('/food/delivery/wallet', { contextModule: 'delivery' }),
+  getWallet: () => getDeliveryWalletOnce(),
   sendOTP: (phone, _purpose = "login") => {
     if (!phone) return Promise.reject(new Error("Phone is required"));
     return authService.requestDeliveryOtp(phone);
@@ -2025,6 +2051,8 @@ export const deliveryAPI = {
   logout: async (refreshToken, fcmTokenOverride = null, platformOverride = null) => {
     deliveryMeCached = null;
     deliveryMeCacheTime = 0;
+    deliveryWalletCached = null;
+    deliveryWalletCacheTime = 0;
     try {
       localStorage.removeItem("app:isOnline");
     } catch (_) { }
