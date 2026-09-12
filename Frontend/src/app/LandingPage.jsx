@@ -811,7 +811,7 @@ export default function LandingPage() {
                 <span className="text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-500 italic font-light">Operating.</span>
               </h3>
               <p className="text-lg text-slate-600 font-light leading-relaxed">
-                Starting our journey from the progressive landscape of <strong>Telangana</strong>, EatAyu is engineered to scale across India, specifically focusing on empowering Tier-2 and Tier-3 cities.
+                Starting our journey from the progressive landscape of <strong>Punjab</strong>, EatAyu is engineered to scale across India, specifically focusing on empowering Tier-2 and Tier-3 cities.
               </p>
             </div>
 
@@ -822,7 +822,7 @@ export default function LandingPage() {
                   <Award className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">Telangana Launchpad (Active)</h4>
+                  <h4 className="font-bold text-slate-900 mb-1">Punjab Launchpad (Active)</h4>
                   <p className="text-sm text-slate-500 font-light">
                     Our central headquarters and active delivery operations. Reclaiming restaurant revenues with 25% lifetime commission.
                   </p>
@@ -871,7 +871,7 @@ export default function LandingPage() {
                   <span className="text-[10px] uppercase tracking-widest font-black text-slate-400">Live Network Operations</span>
                 </div>
                 <div className="bg-slate-900 border border-slate-800 text-[10px] text-slate-400 font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                  Region: Telangana
+                  Region: Punjab
                 </div>
               </div>
 
@@ -893,7 +893,7 @@ export default function LandingPage() {
                   style={{ transform: "translateY(-50%)" }}
                 />
 
-                {/* Animated Pulsing Pin on top of Telangana in the image */}
+                {/* Animated Pulsing Pin on top of Punjab in the image */}
                 <div className="absolute top-[61.5%] left-[46.8%] -translate-x-1/2 -translate-y-1/2 z-20">
                   {/* Super tight ping beacon */}
                   <span className="absolute inline-flex h-5 w-5 -top-2.5 -left-2.5 rounded-full bg-[#FF6F3C]/85 animate-ping" />
@@ -905,7 +905,7 @@ export default function LandingPage() {
                 {/* Floating Active Info Tag over the beacon, centered above it on mobile, shifted right on desktop */}
                 <div className="absolute top-[61.5%] left-[48%] lg:left-[57%] -translate-x-1/2 lg:translate-x-0 -translate-y-[280%] lg:-translate-y-1/2 bg-slate-900/95 border border-[#FF6F3C]/50 text-[9px] font-black text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xl shadow-orange-500/20 whitespace-nowrap z-30">
                   <span className="w-2 h-2 rounded-full bg-[#FF6F3C] animate-ping" />
-                  TELANGANA (ACTIVE HUB)
+                  PUNJAB (ACTIVE HUB)
                 </div>
               </div>
 
@@ -1218,9 +1218,9 @@ export default function LandingPage() {
                     <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 transition-transform">
                       <MapPin className="w-7 h-7" />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Telangana to Tier 2 & 3 Cities</h3>
+                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Punjab to Tier 2 & 3 Cities</h3>
                     <p className="text-slate-600 font-light leading-relaxed">
-                      EatAyu is starting its journey from Telangana, with a strategic focus on expanding across Tier 2 and Tier 3 cities in India. We aim to empower local businesses in these growing regions and integrate them into the digital market.
+                      EatAyu is starting its journey from Punjab, with a strategic focus on expanding across Tier 2 and Tier 3 cities in India. We aim to empower local businesses in these growing regions and integrate them into the digital market.
                     </p>
                   </div>
                   <div className="mt-8 pt-6 border-t border-slate-100 flex items-center gap-3">
@@ -1337,7 +1337,7 @@ export default function LandingPage() {
 
                 <div className="flex-1 space-y-6 relative z-10">
                   <div className="inline-block text-[10px] uppercase tracking-widest font-black text-[#FF6F3C] bg-[#FF6F3C]/10 border border-[#FF6F3C]/20 px-3 py-1.5 rounded-full">
-                    Active Operations: Telangana Region
+                    Active Operations: Punjab Region
                   </div>
                   <h2 className="text-3xl md:text-4xl font-black leading-tight tracking-tight">Setup Your Live Digital Kitchen</h2>
                   <p className="text-slate-400 font-light max-w-xl leading-relaxed text-sm md:text-base">
@@ -1537,7 +1537,7 @@ export default function LandingPage() {
 
                 <div className="flex-1 space-y-6 relative z-10">
                   <div className="inline-block text-[10px] uppercase tracking-widest font-black text-[#FF6F3C] bg-[#FF6F3C]/10 border border-[#FF6F3C]/20 px-3 py-1.5 rounded-full">
-                    Squad Expanding: Telangana Core Hubs
+                    Squad Expanding: Punjab Core Hubs
                   </div>
                   <h2 className="text-3xl md:text-4xl font-black leading-tight tracking-tight">Join the active delivery crew</h2>
                   <p className="text-slate-400 font-light max-w-xl leading-relaxed text-sm md:text-base">
