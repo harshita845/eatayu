@@ -404,6 +404,7 @@ export async function calculateOrder(userId, dto) {
   const at = dto.scheduledAt ? new Date(dto.scheduledAt) : new Date();
   return calculateOrderPricing(userId, dto, {
     at: Number.isNaN(at.getTime()) ? new Date() : at,
+    skipMinOrderCheck: true,
   });
 }
 

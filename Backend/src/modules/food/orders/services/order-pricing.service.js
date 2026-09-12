@@ -380,6 +380,9 @@ export async function calculateOrderPricing(userId, dto, options = {}) {
     ),
   );
 
+  const isMinOrderSubtotalMet = subtotal >= minOrderSubtotal;
+  const minOrderSubtotalDeficit = isMinOrderSubtotalMet ? 0 : Math.max(0, Math.round(minOrderSubtotal - subtotal));
+
   const basePricing = {
     subtotal,
     tax,
@@ -391,6 +394,9 @@ export async function calculateOrderPricing(userId, dto, options = {}) {
     discount,
     total,
     currency: "INR",
+    minOrderSubtotal,
+    isMinOrderSubtotalMet,
+    minOrderSubtotalDeficit,
     couponCode: appliedCoupon?.code || codeRaw || null,
     appliedCoupon,
     distanceKm: Number.isFinite(distanceKm) ? Number(distanceKm.toFixed(2)) : null,
