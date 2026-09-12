@@ -59,11 +59,19 @@ export default function LandingPage() {
   const [submittingLead, setSubmittingLead] = useState(false);
   const [leadSuccess, setLeadSuccess] = useState(false);
   const [activeCraving, setActiveCraving] = useState(0);
+  const ensureAbsoluteUrl = (url) => {
+    if (!url) return "";
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
+
   const [socialMedia, setSocialMedia] = useState({
     facebook: "https://www.facebook.com/share/1J8C8U4wnK/?mibextid=wwXIfr",
     youtube: "https://youtube.com/@EatAyu?si=EzceIs61zBwz3SGO",
     instagram: "https://www.instagram.com/EatAyu?igsh=MTA3eXJnMTRlMTF5Zw%3D%3D&utm_source=qr",
-    linkedin: "https://www.linkedin.com/company/EatAyu/"
+    linkedin: "https://www.linkedin.com/in/eatayu-food-delivery-48356a432?utm_source=share_via&utm_content=profile&utm_medium=member_android"
   });
 
   useEffect(() => {
@@ -90,10 +98,10 @@ export default function LandingPage() {
         if (data?.socialMedia) {
           setSocialMedia(prev => ({
             ...prev,
-            ...(data.socialMedia.facebook && { facebook: data.socialMedia.facebook }),
-            ...(data.socialMedia.youtube && { youtube: data.socialMedia.youtube }),
-            ...(data.socialMedia.instagram && { instagram: data.socialMedia.instagram }),
-            ...(data.socialMedia.linkedin && { linkedin: data.socialMedia.linkedin }),
+            ...(data.socialMedia.facebook && { facebook: ensureAbsoluteUrl(data.socialMedia.facebook) }),
+            ...(data.socialMedia.youtube && { youtube: ensureAbsoluteUrl(data.socialMedia.youtube) }),
+            ...(data.socialMedia.instagram && { instagram: ensureAbsoluteUrl(data.socialMedia.instagram) }),
+            ...(data.socialMedia.linkedin && { linkedin: ensureAbsoluteUrl(data.socialMedia.linkedin) }),
           }));
         }
       } catch (err) {
@@ -1048,7 +1056,7 @@ export default function LandingPage() {
                 ].filter(item => item.url).map(({ Icon, url }, i) => (
                   <a
                     key={i}
-                    href={url}
+                    href={ensureAbsoluteUrl(url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-11 h-11 rounded-full border border-slate-200 flex items-center justify-center hover:bg-[#FF6F3C] hover:border-[#FF6F3C] hover:text-white cursor-pointer transition-all duration-300 text-slate-700 bg-white shadow-sm"
@@ -1285,14 +1293,16 @@ export default function LandingPage() {
                 <span className="text-[#FF6F3C]">.</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
-                <Link
-                  to="/food/restaurant/login"
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.eatayu.restaurant"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group flex items-center gap-1.5 sm:gap-2 bg-[#FF6F3C]/10 hover:bg-[#FF6F3C] text-[#FF6F3C] hover:text-white px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs font-bold transition-all duration-300 border border-[#FF6F3C]/20 cursor-pointer shadow-sm"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Become a Partner</span>
                   <span className="sm:hidden">Join</span>
-                </Link>
+                </a>
                 <button
                   onClick={() => setIsRestaurantOpen(false)}
                   className="group flex items-center gap-1.5 sm:gap-2 bg-slate-900 text-white px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs font-bold hover:bg-[#FF6F3C] transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer"
@@ -1344,7 +1354,7 @@ export default function LandingPage() {
                       <Apple className="w-5 h-5" /> iOS App Store
                     </a>
                     <a
-                      href="https://play.google.com/store/apps/details?id=com.EatAyu.restaurant1"
+                      href="https://play.google.com/store/apps/details?id=com.eatayu.restaurant"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-3 bg-slate-800 border border-slate-700 text-white hover:bg-[#FF6F3C] hover:border-[#FF6F3C] px-8 py-4 rounded-2xl font-bold transition-all duration-300 text-sm shadow-md cursor-pointer text-center"
@@ -1544,7 +1554,7 @@ export default function LandingPage() {
                       <Apple className="w-5 h-5" /> iOS App Store
                     </a>
                     <a
-                      href="https://play.google.com/store/apps/details?id=com.EatAyu.delivery1"
+                      href="https://play.google.com/store/apps/details?id=com.eatayu.delivery"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-3 bg-slate-800 border border-slate-800 text-white hover:bg-[#FF6F3C] hover:border-[#FF6F3C] px-8 py-4 rounded-2xl font-bold transition-all duration-300 text-sm shadow-md cursor-pointer text-center"
