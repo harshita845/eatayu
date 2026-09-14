@@ -31,6 +31,9 @@ export const ProfileDetailsV2 = () => {
   const [vehicleType, setVehicleType] = useState("")
   const [showVehiclePopup, setShowVehiclePopup] = useState(false)
   const [vehicleInput, setVehicleInput] = useState({ number: "", brand: "", type: "" })
+  const [showPhonePopup, setShowPhonePopup] = useState(false)
+  const [phoneInput, setPhoneInput] = useState("")
+  const [isUpdatingPhone, setIsUpdatingPhone] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState(null)
   const [showDocumentModal, setShowDocumentModal] = useState(false)
   const [showBankDetailsPopup, setShowBankDetailsPopup] = useState(false)
@@ -64,6 +67,7 @@ export const ProfileDetailsV2 = () => {
   useCloseOnBrowserBack(showVehiclePopup, () => setShowVehiclePopup(false), "vehicle-popup")
   useCloseOnBrowserBack(showBankDetailsPopup, () => setShowBankDetailsPopup(false), "bank-details-popup")
   useCloseOnBrowserBack(showDocumentModal, () => setShowDocumentModal(false), "document-viewer")
+  useCloseOnBrowserBack(showPhonePopup, () => setShowPhonePopup(false), "phone-popup")
 
   // Fetch profile data
   useEffect(() => {
@@ -104,6 +108,7 @@ export const ProfileDetailsV2 = () => {
         ) {
           const profileData = profileResponse.value.data.data.profile
           setProfile(profileData)
+          setPhoneInput(profileData?.phone || "")
           const vNum = profileData?.vehicle?.number || ""
           const vBrand = profileData?.vehicle?.brand || ""
           const vType = profileData?.vehicle?.type || ""
@@ -536,9 +541,18 @@ export const ProfileDetailsV2 = () => {
               <div className="bg-emerald-50 text-emerald-600 px-4 py-2.5 rounded-[16px] text-[10px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-2">
                  <CheckCircle className="w-4 h-4" /> {profile?.status || "Pending"}
               </div>
-              <div className="bg-white text-gray-700 px-4 py-2.5 rounded-[16px] text-[10px] font-black uppercase tracking-widest border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-2">
-                 <Smartphone className="w-4 h-4 text-gray-400" /> {profile?.phone || "N/A"}
-              </div>
+               <button 
+                 onClick={() => {
+                   setPhoneInput(profile?.phone || "");
+                   setShowPhonePopup(true);
+                 }}
+                 className="bg-white text-gray-700 px-4 py-2.5 rounded-[16px] text-[10px] font-black uppercase tracking-widest border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-2 hover:bg-gray-50 active:scale-95 transition-all cursor-pointer group"
+                 title="Change Phone Number"
+               >
+                  <Smartphone className="w-4 h-4 text-gray-400 group-hover:text-orange-500 transition-colors" /> 
+                  <span>{profile?.phone || "N/A"}</span>
+                  <Edit2 className="w-3 h-3 text-gray-400 group-hover:text-gray-900 ml-0.5" />
+               </button>
            </div>
         </div>
 
@@ -855,6 +869,77 @@ export const ProfileDetailsV2 = () => {
                className="w-full bg-black text-white py-5 rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-gray-900 transition-all active:scale-95"
             >
                Save Changes
+            </button>
+         </div>
+      </BottomPopup>
+
+      {/* Phone Number Popup */}
+      <BottomPopup 
+        isOpen={showPhonePopup} 
+        onClose={() => setShowPhonePopup(false)} 
+        title="Change Mobile Number" 
+        closeOnHandleClick={true} 
+        showCloseButton={false}
+      >
+         <div className="space-y-4 pb-10">
+            <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex flex-col gap-4">
+                <div className="flex items-center gap-4 w-full">
+                    <div className="w-8 h-8 flex items-center justify-center">
+                       <Smartphone className="w-5 h-5 text-orange-500" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Mobile Number</p>
+                        <input 
+                            type="tel" 
+                            value={phoneInput} 
+                            onChange={(e) => {
+                               const val = e.target.value.replace(/\D/g, "");
+                               if (val.length <= 10) setPhoneInput(val);
+                            }} 
+                            placeholder="Enter 10-digit mobile number"
+                            className="w-full bg-transparent text-lg font-black text-black outline-none border-b-2 border-transparent focus:border-orange-500 placeholder:text-gray-300"
+                            maxLength={10}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <button 
+               onClick={async () => {
+                 const cleanPhone = phoneInput.trim();
+                 if (!cleanPhone) return toast.error("Phone number is required");
+                 if (cleanPhone.length !== 10) return toast.error("Please enter a valid 10-digit phone number");
+
+                 setIsUpdatingPhone(true);
+                 try {
+                     await deliveryAPI.updateProfileDetails({ phone: cleanPhone });
+                     setProfile((prev) => (prev ? { ...prev, phone: cleanPhone } : prev));
+                     setShowPhonePopup(false);
+                     toast.success("Phone number updated successfully!");
+
+                     const profileRes = await deliveryAPI.getProfile();
+                     if (profileRes?.data?.success && profileRes?.data?.data?.profile) {
+                         setProfile(profileRes.data.data.profile);
+                         setPhoneInput(profileRes.data.data.profile.phone || cleanPhone);
+                     }
+                   } catch (e) { 
+                     const errorMsg = e?.response?.data?.message || e?.message || "Failed to update phone number";
+                     toast.error(errorMsg);
+                   } finally {
+                     setIsUpdatingPhone(false);
+                   }
+               }}
+               disabled={isUpdatingPhone}
+               className="w-full bg-black text-white py-5 rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-gray-900 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+               {isUpdatingPhone ? (
+                 <>
+                   <Loader2 className="w-5 h-5 animate-spin" />
+                   Saving...
+                 </>
+               ) : (
+                 "Save Changes"
+               )}
             </button>
          </div>
       </BottomPopup>

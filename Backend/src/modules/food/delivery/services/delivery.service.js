@@ -302,6 +302,38 @@ export const updateDeliveryPartnerDetails = async (userId, payload) => {
         if (vehicle.model !== undefined) partner.vehicleName = String(vehicle.model || '').trim();
     }
 
+    if (payload?.phone !== undefined || payload?.phoneNumber !== undefined || payload?.mobile !== undefined) {
+        const rawPhone = payload?.phone ?? payload?.phoneNumber ?? payload?.mobile;
+        const cleanPhone = String(rawPhone || '').trim();
+
+        if (!cleanPhone) {
+            throw new ValidationError('Phone number cannot be empty');
+        }
+
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(cleanPhone)) {
+            throw new ValidationError('Please enter a valid 10-digit phone number');
+        }
+
+        if (cleanPhone !== partner.phone) {
+            const activePhone = await FoodDeliveryPartner.findOne({ 
+                phone: cleanPhone,
+                _id: { $ne: userId },
+                status: { $ne: 'rejected' }
+            });
+            if (activePhone) {
+                throw new ValidationError('Phone number is already registered with another partner');
+            }
+
+            await FoodDeliveryPartner.deleteMany({ 
+                phone: cleanPhone, 
+                status: 'rejected' 
+            });
+
+            partner.phone = cleanPhone;
+        }
+    }
+
     if (payload?.profilePhoto !== undefined) {
         partner.profilePhoto = payload.profilePhoto ? String(payload.profilePhoto).trim() : '';
     }
