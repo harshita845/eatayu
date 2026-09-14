@@ -14,7 +14,7 @@ import { isGoogleOrderRoadDistanceEnabled } from '@food/utils/googleDistanceFeat
  * Client Directions is gated by admin Google Order / Pricing Road Distance toggle.
  */
 export const NewOrderModal = ({ order, onAccept, onReject, onMinimize, swapGuard = false }) => {
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(120);
   const [lockedOrder] = useState(() => order);
   const [distanceLabel, setDistanceLabel] = useState(null);
   const [etaMins, setEtaMins] = useState(null);
@@ -168,9 +168,13 @@ export const NewOrderModal = ({ order, onAccept, onReject, onMinimize, swapGuard
                 <h2 className="text-4xl font-black tracking-tighter">{Number(earnings || 0).toFixed(2)}</h2>
               </div>
             </div>
-            <div className="bg-black/15 border border-white/20 rounded-2xl px-4 py-2 text-white flex flex-col items-center min-w-[80px]">
+            <div className="bg-black/15 border border-white/20 rounded-2xl px-4 py-2 text-white flex flex-col items-center min-w-[90px]">
               <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Expires</span>
-              <span className="font-black text-2xl tabular-nums leading-none">{timeLeft}s</span>
+              <span className="font-black text-2xl tabular-nums leading-none">
+                {timeLeft >= 60 
+                  ? `${Math.floor(timeLeft / 60)}m ${String(timeLeft % 60).padStart(2, '0')}s` 
+                  : `${timeLeft}s`}
+              </span>
             </div>
           </div>
 
