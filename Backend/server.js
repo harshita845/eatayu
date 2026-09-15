@@ -2,6 +2,7 @@ import http from 'http';
 import crypto from 'crypto';
 import path from 'path';
 import { exec } from 'child_process';
+import mongoose from 'mongoose';
 
 import app from './src/app.js';
 import dns from "node:dns/promises";
@@ -64,6 +65,7 @@ const startBackgroundJobs = async () => {
     }
 
     const runExpire = async () => {
+        if (mongoose.connection.readyState !== 1) return;
         try {
             await expireExpiredOffers();
         } catch (err) {
@@ -74,6 +76,7 @@ const startBackgroundJobs = async () => {
     expireOffersInterval = setInterval(runExpire, 5 * 60 * 1000);
 
     const runFssaiExpirySync = async () => {
+        if (mongoose.connection.readyState !== 1) return;
         try {
             await syncExpiredFssaiNotifications();
         } catch (err) {
