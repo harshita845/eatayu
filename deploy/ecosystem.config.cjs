@@ -1,8 +1,11 @@
+const path = require('path');
+const backendDir = path.resolve(__dirname, '../Backend');
+
 module.exports = {
   apps: [
     {
       name: 'EatAyu-api',
-      cwd: './Backend',
+      cwd: backendDir,
       script: 'server.js',
       instances: 'max',
       exec_mode: 'cluster',
@@ -18,7 +21,7 @@ module.exports = {
     },
     {
       name: 'EatAyu-socket',
-      cwd: './Backend',
+      cwd: backendDir,
       script: 'socket-server.js',
       instances: 1,
       exec_mode: 'fork',
@@ -31,7 +34,7 @@ module.exports = {
     },
     {
       name: 'EatAyu-scheduler',
-      cwd: './Backend',
+      cwd: backendDir,
       script: 'scripts/run-scheduled-jobs.js',
       instances: 1,
       exec_mode: 'fork',
@@ -43,7 +46,7 @@ module.exports = {
     },
     {
       name: 'EatAyu-worker-otp',
-      cwd: './Backend',
+      cwd: backendDir,
       script: 'src/queues/workers/otp.worker.js',
       instances: 1,
       exec_mode: 'fork',
@@ -55,7 +58,7 @@ module.exports = {
     },
     {
       name: 'EatAyu-worker-notification',
-      cwd: './Backend',
+      cwd: backendDir,
       script: 'src/queues/workers/notification.worker.js',
       instances: 1,
       exec_mode: 'fork',
@@ -67,7 +70,7 @@ module.exports = {
     },
     {
       name: 'EatAyu-worker-order',
-      cwd: './Backend',
+      cwd: backendDir,
       script: 'src/queues/workers/order.worker.js',
       instances: 1,
       exec_mode: 'fork',
@@ -79,7 +82,7 @@ module.exports = {
     },
     {
       name: 'EatAyu-worker-tracking',
-      cwd: './Backend',
+      cwd: backendDir,
       script: 'src/queues/workers/tracking.worker.js',
       instances: 1,
       exec_mode: 'fork',
@@ -91,7 +94,7 @@ module.exports = {
     },
     {
       name: 'EatAyu-worker-payment',
-      cwd: './Backend',
+      cwd: backendDir,
       script: 'src/queues/workers/payment.worker.js',
       instances: 1,
       exec_mode: 'fork',
@@ -103,7 +106,7 @@ module.exports = {
     },
     {
       name: 'EatAyu-worker-maintenance',
-      cwd: './Backend',
+      cwd: backendDir,
       script: 'src/queues/workers/maintenance.worker.js',
       instances: 1,
       exec_mode: 'fork',
