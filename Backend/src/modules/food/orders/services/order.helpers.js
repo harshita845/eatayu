@@ -7,6 +7,9 @@ import {
   sendNotificationToOwner,
   sendNotificationToOwners,
 } from "../../../../core/notifications/firebase.service.js";
+import { FoodDeliveryWallet } from '../../delivery/models/deliveryWallet.model.js';
+import { FoodDeliveryCashDeposit } from '../../delivery/models/foodDeliveryCashDeposit.model.js';
+import { getDeliveryCashLimitSettings } from '../../admin/services/admin.service.js';
 import { getIO, rooms } from '../../../../config/socket.js';
 import { addOrderJob } from '../../../../queues/producers/order.producer.js';
 
@@ -493,3 +496,97 @@ export function isStatusAdvance(current, next) {
 
   return nextPrio > currentPrio;
 }
+
+/**
+ * Checks which delivery partners in a list have reached/exceeded their cash-in-hand limit.
+ * Returns a Set of partner ID strings.
+ */
+export async function getCashLimitExceededPartnerIds(partnerIds) {
+  if (!partnerIds || partnerIds.length === 0) return new Set();
+
+  try {
+    const cashLimitSettings = await getDeliveryCashLimitSettings();
+    const totalCashLimit = Number(cashLimitSettings?.deliveryCashLimit) || 0;
+    if (totalCashLimit <= 0) return new Set();
+
+    const objectIds = partnerIds.map(id => new mongoose.Types.ObjectId(id));
+
+    const [wallets, cashAgg, depositAgg] = await Promise.all([
+      FoodDeliveryWallet.find({ deliveryPartnerId: { $in: objectIds } })
+        .select('deliveryPartnerId cashInHand')
+        .lean(),
+      FoodOrder.aggregate([
+        {
+          $match: {
+            'dispatch.deliveryPartnerId': { $in: objectIds },
+            orderStatus: 'delivered',
+            $or: [{ paymentMethod: 'cash' }, { 'payment.method': 'cash' }]
+          }
+        },
+        {
+          $group: {
+            _id: '$dispatch.deliveryPartnerId',
+            total: { $sum: { $ifNull: ['$pricing.total', 0] } }
+          }
+        }
+      ]),
+      FoodDeliveryCashDeposit.aggregate([
+        {
+          $match: {
+            deliveryPartnerId: { $in: objectIds },
+            status: 'Completed'
+          }
+        },
+        {
+          $group: {
+            _id: '$deliveryPartnerId',
+            total: { $sum: { $ifNull: ['$amount', 0] } }
+          }
+        }
+      ])
+    ]);
+
+    const cashMap = new Map();
+    (cashAgg || []).forEach(row => {
+      if (row._id) cashMap.set(row._id.toString(), Number(row.total) || 0);
+    });
+
+    const depositMap = new Map();
+    (depositAgg || []).forEach(row => {
+      if (row._id) depositMap.set(row._id.toString(), Number(row.total) || 0);
+    });
+
+    const walletMap = new Map();
+    (wallets || []).forEach(w => {
+      if (w.deliveryPartnerId) {
+        walletMap.set(w.deliveryPartnerId.toString(), Number(w.cashInHand) || 0);
+      }
+    });
+
+    const exceededSet = new Set();
+    partnerIds.forEach(id => {
+      const idStr = id.toString();
+      const collected = cashMap.get(idStr) || 0;
+      const deposited = depositMap.get(idStr) || 0;
+      const computedCashInHand = Math.max(0, collected - deposited);
+      const walletCashInHand = walletMap.get(idStr) || 0;
+      const finalCashInHand = Math.max(computedCashInHand, walletCashInHand);
+
+      if (finalCashInHand >= totalCashLimit) {
+        exceededSet.add(idStr);
+      }
+    });
+
+    return exceededSet;
+  } catch (err) {
+    logger.warn(`getCashLimitExceededPartnerIds failed: ${err?.message || err}`);
+    return new Set();
+  }
+}
+
+export async function isPartnerCashLimitExceeded(partnerId) {
+  if (!partnerId) return false;
+  const set = await getCashLimitExceededPartnerIds([partnerId]);
+  return set.has(partnerId.toString());
+}
+

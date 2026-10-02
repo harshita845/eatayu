@@ -28,6 +28,7 @@ import {
   enqueueOrderEvent,
   generateFourDigitDeliveryOtp,
   haversineKm,
+  isPartnerCashLimitExceeded,
   notifyOwnerSafely,
   notifyOwnersSafely,
   partnerHasActiveDelivery,
@@ -399,6 +400,17 @@ export async function acceptOrderDelivery(orderId, deliveryPartnerId) {
     throw new ValidationError(
       'You already have an active delivery. Complete it before accepting another order.',
     );
+  }
+
+  const targetOrder = await FoodOrder.findOne(identity).select('payment paymentMethod').lean();
+  const paymentMethod = String(targetOrder?.payment?.method || targetOrder?.paymentMethod || 'cash').toLowerCase();
+  if (paymentMethod === 'cash' || paymentMethod === 'cod') {
+    const isExceeded = await isPartnerCashLimitExceeded(deliveryPartnerId);
+    if (isExceeded) {
+      throw new ValidationError(
+        'Your Cash in Hand limit has been reached. Please deposit cash to accept Cash on Delivery orders.',
+      );
+    }
   }
 
   const statusHistoryEntry = {

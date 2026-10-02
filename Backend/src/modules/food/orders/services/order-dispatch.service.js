@@ -11,6 +11,7 @@ import {
   buildDeliverySocketPayload,
   buildOrderIdentityFilter,
   getBusyDeliveryPartnerIds,
+  getCashLimitExceededPartnerIds,
   haversineKm,
   notifyOwnerSafely,
   notifyOwnersSafely,
@@ -247,10 +248,23 @@ export async function tryAutoAssign(orderId, options = {}) {
       }
     }
 
+    const paymentMethod = String(order.payment?.method || order.paymentMethod || 'cash').toLowerCase();
+    const isCashOrder = paymentMethod === 'cash' || paymentMethod === 'cod';
+
+    let cashExceededPartnerIds = new Set();
+    if (isCashOrder && partners.length > 0) {
+      const candidateIds = partners.map(p => p.partnerId);
+      cashExceededPartnerIds = await getCashLimitExceededPartnerIds(candidateIds);
+    }
+
     const eligible = partners.filter((partner) => {
       const partnerKey = partner.partnerId.toString();
       if (offeredIds.includes(partnerKey)) return false;
       if (busyPartnerIds.has(partnerKey)) return false;
+      if (isCashOrder && cashExceededPartnerIds.has(partnerKey)) {
+        logger.info(`tryAutoAssign: Partner ${partnerKey} excluded for COD order (Cash limit exceeded).`);
+        return false;
+      }
       return true;
     });
 
@@ -263,6 +277,7 @@ export async function tryAutoAssign(orderId, options = {}) {
         const partnerKey = partner.partnerId.toString();
         if (permanentlyExcludedIds.has(partnerKey)) return false;
         if (busyPartnerIds.has(partnerKey)) return false;
+        if (isCashOrder && cashExceededPartnerIds.has(partnerKey)) return false;
         return true;
       });
       if (io && reofferEligible.length > 0) {
