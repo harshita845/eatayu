@@ -86,7 +86,7 @@ export default function SignIn() {
       const response = await authAPI.sendOTP(fullPhone, "login", null)
       const otpCode = response?.data?.data?.otp || response?.data?.otp || response?.otp || ""
 
-      const ref = String(searchParams.get("ref") || "").trim()
+      const ref = String(searchParams.get("referrer") || searchParams.get("ref") || "").trim()
       const authData = {
         method: "phone",
         phone: fullPhone,

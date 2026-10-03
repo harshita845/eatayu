@@ -50,10 +50,16 @@ export const ProfileV2 = () => {
     }).catch(() => {});
   }, [])
 
+  const [referralCode, setReferralCode] = useState("")
+
   useEffect(() => {
     deliveryAPI.getReferralStats().then((res) => {
-      const reward = res?.data?.data?.stats?.rewardAmount
+      const stats = res?.data?.data?.stats
+      const reward = stats?.rewardAmount
       setReferralReward(Number(reward) || 0)
+      if (stats?.referralCode) {
+        setReferralCode(stats.referralCode)
+      }
     }).catch(() => {})
   }, [])
 
@@ -61,10 +67,12 @@ export const ProfileV2 = () => {
 
   const handleShareReferral = async () => {
     const rewardText = referralReward > 0 ? `₹${referralReward}` : "rewards"
-    const shareText = `Join as a delivery partner and earn ${rewardText}: ${playStoreDeliveryUrl}`
+    const refParam = referralCode ? `&referrer=${encodeURIComponent(referralCode)}` : ""
+    const shareUrl = `${playStoreDeliveryUrl}${refParam}`
+    const shareText = `Join as a delivery partner and earn ${rewardText}: ${shareUrl}`
     try {
       if (navigator.share) {
-        await navigator.share({ text: shareText })
+        await navigator.share({ title: "EatAyu Referral", text: shareText, url: shareUrl })
       } else {
         const fallbackUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
         window.open(fallbackUrl, "_blank", "noopener,noreferrer")

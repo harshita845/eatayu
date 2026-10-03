@@ -5594,7 +5594,9 @@ export async function approveDeliveryPartner(id) {
                 const limit = Math.max(0, Number(settingsDoc?.referralLimitDelivery) || 0);
                 const referrer = await FoodDeliveryPartner.findById(referrerId).select('_id referralCount status').lean();
 
-                if (referrer && referrer.status === 'approved' && reward > 0 && limit > 0 && Number(referrer.referralCount || 0) < limit) {
+                const isWithinLimit = limit <= 0 || Number(referrer?.referralCount || 0) < limit;
+
+                if (referrer && referrer.status === 'approved' && reward > 0 && isWithinLimit) {
                     const log = await FoodReferralLog.create({
                         referrerId: referrer._id,
                         refereeId: partner._id,
@@ -5617,7 +5619,7 @@ export async function approveDeliveryPartner(id) {
                         role: 'DELIVERY_PARTNER',
                         rewardAmount: reward,
                         status: 'rejected',
-                        reason: !referrer ? 'referrer_not_found' : reward <= 0 ? 'reward_disabled' : limit <= 0 ? 'limit_disabled' : 'limit_reached'
+                        reason: !referrer ? 'referrer_not_found' : reward <= 0 ? 'reward_disabled' : 'limit_reached'
                     });
                 }
             }
