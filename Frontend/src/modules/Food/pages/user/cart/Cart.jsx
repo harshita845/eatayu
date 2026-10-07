@@ -1785,50 +1785,54 @@ export default function Cart() {
       return
     }
 
-    // Validate with backend first; only set applied if backend accepts
-    if (cart.length > 0 && hasSavedAddress) {
-      try {
-        const items = cart.map(item => ({
-          itemId: item.itemId || item.id,
-          name: item.name,
-          price: item.price,
-          variantId: item.variantId || undefined,
-          variantName: item.variantName || undefined,
-          variantPrice: item.variantPrice || item.price,
-          quantity: item.quantity || 1,
-          image: item.image,
-          description: item.description,
-          isVeg: item.isVeg !== false
-        }))
+    if (cart.length === 0 || !hasSavedAddress) {
+      toast.error("Add items and delivery address first")
+      return
+    }
 
-        const response = await orderAPI.calculateOrder({
-          items,
-          restaurantId: restaurantData?.restaurantId || restaurantData?._id || restaurantId || null,
-          deliveryAddress: pricingAddress,
-          couponCode: coupon.code,
-          deliveryMode,
-        })
+    try {
+      const items = cart.map(item => ({
+        itemId: item.itemId || item.id,
+        name: item.name,
+        price: item.price,
+        variantId: item.variantId || undefined,
+        variantName: item.variantName || undefined,
+        variantPrice: item.variantPrice || item.price,
+        quantity: item.quantity || 1,
+        image: item.image,
+        description: item.description,
+        isVeg: item.isVeg !== false
+      }))
 
-        const pricingData = response?.data?.data?.pricing
-        if (!pricingData || !pricingData.appliedCoupon) {
-          toast.error("Coupon not applicable")
-          return
-        }
+      const response = await orderAPI.calculateOrder({
+        items,
+        restaurantId: restaurantData?.restaurantId || restaurantData?._id || restaurantId || null,
+        deliveryAddress: pricingAddress,
+        couponCode: coupon.code,
+        deliveryMode,
+      })
 
-        setPricing(pricingData)
-        setAppliedCoupon({ ...coupon, autoApplied: false })
-        setCouponCode(coupon.code)
-        setManualCouponCode(coupon.code)
-        markUserSelectedCoupon(
-          restaurantData?.restaurantId || restaurantData?._id || restaurantId || cart[0]?.restaurantId,
-          getCartSignature(cart),
-          coupon.code,
-        )
-        setShowOffersView(false)
-      } catch (error) {
-        debugError("Error recalculating pricing:", error)
-        toast.error("Failed to apply coupon")
+      const pricingData = response?.data?.data?.pricing
+      if (!pricingData || !pricingData.appliedCoupon) {
+        toast.error("Coupon not applicable")
+        return
       }
+
+      setPricing(pricingData)
+      setAppliedCoupon({ ...coupon, autoApplied: false })
+      setCouponCode(coupon.code)
+      setManualCouponCode(coupon.code)
+      markUserSelectedCoupon(
+        restaurantData?.restaurantId || restaurantData?._id || restaurantId || cart[0]?.restaurantId,
+        getCartSignature(cart),
+        coupon.code,
+      )
+      setShowOffersView(false)
+      toast.success("Coupon applied")
+    } catch (error) {
+      debugError("Error recalculating pricing:", error)
+      const serverMsg = error?.response?.data?.message || error?.message
+      toast.error(serverMsg || "Failed to apply coupon")
     }
   }
 
@@ -1911,7 +1915,8 @@ export default function Cart() {
       toast.success("Coupon applied")
     } catch (error) {
       debugError("Error applying coupon code:", error)
-      toast.error("Failed to apply coupon")
+      const serverMsg = error?.response?.data?.message || error?.message
+      toast.error(serverMsg || "Failed to apply coupon")
     }
   }
 
