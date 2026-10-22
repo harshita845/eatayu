@@ -849,8 +849,10 @@ export async function confirmReachedDropDelivery(orderId, deliveryPartnerId) {
     order.orderStatus ||
     '';
 
+  // Keep the OTP issued at pickup: the customer has been shown it since then, and
+  // rotating it here breaks the handover when their screen hasn't refreshed.
   const existingOtp = String(order.deliveryOtp || '').trim();
-  if (!alreadyAtDrop || !existingOtp) {
+  if (!existingOtp) {
     order.deliveryOtp = generateFourDigitDeliveryOtp();
     order.deliveryVerification = {
       ...(order.deliveryVerification?.toObject?.() ||
