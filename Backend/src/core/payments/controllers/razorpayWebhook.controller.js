@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { FoodOrder } from '../../../modules/food/orders/models/order.model.js';
-import * as foodTransactionService from '../../../modules/food/orders/services/foodTransaction.service.js';
+import { confirmOnlinePayment } from '../../../modules/food/orders/services/order.service.js';
 import { config } from '../../../config/env.js';
 import { logger } from '../../../utils/logger.js';
 
@@ -60,36 +60,20 @@ export const handleRazorpayWebhook = async (req, res) => {
                 }
             }
 
-            // Atomic update to mark as paid if not already
-            const order = await FoodOrder.findOneAndUpdate(
-                { 
-                    "payment.razorpay.orderId": rzOrderId, 
-                    "payment.status": { $ne: 'paid' } 
-                },
-                { 
-                    $set: { 
-                        "payment.status": 'paid', 
-                        "payment.razorpay.paymentId": rzPaymentId 
-                    } 
-                },
-                { new: true }
-            );
-
-            if (order) {
-                // ✅ UPDATED: Wrapped in try-catch to prevent secondary failures from breaking the webhook response
-                try {
-                    await foodTransactionService.updateTransactionStatus(order._id, 'captured', {
-                        status: 'captured',
-                        razorpayPaymentId: rzPaymentId,
-                        note: 'Payment status synced via Webhook (payment.captured)'
-                    });
-                } catch (ledgerErr) {
-                    logger.error(`Webhook Ledger Error (Order ${order.orderId}): ${ledgerErr.message}`);
-                }
-                logger.info(`Webhook [payment.captured]: Synced Order ${order.orderId} (Status=paid)`);
+            if (existingOrder) {
+                // Same confirmation path as client-side verify: moves the order out of
+                // pending_payment and notifies the restaurant, exactly once.
+                const { confirmed } = await confirmOnlinePayment(existingOrder._id, {
+                    razorpayPaymentId: rzPaymentId,
+                    byRole: 'SYSTEM',
+                });
+                logger.info(
+                    confirmed
+                        ? `Webhook [payment.captured]: Confirmed order ${existingOrder._id} (Status=created, paid)`
+                        : `Webhook [payment.captured]: Order ${existingOrder._id} already confirmed`,
+                );
             } else {
-                // ✅ ADDED: Log warn if order not found but payment was captured
-                logger.warn(`Webhook [payment.captured]: Order not found or already paid for RZ-Order: ${rzOrderId}`);
+                logger.warn(`Webhook [payment.captured]: Order not found for RZ-Order: ${rzOrderId}`);
             }
         }
 

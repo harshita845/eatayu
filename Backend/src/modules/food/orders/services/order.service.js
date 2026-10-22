@@ -709,6 +709,114 @@ export async function createOrder(userId, dto) {
   }
 }
 
+// ----- Confirm online payment -----
+/**
+ * Moves a paid online order out of `pending_payment` and runs the post-payment
+ * side effects (acceptance timer, ledger, coupon usage, notifications).
+ * Shared by client verification and the Razorpay webhook: the status change is
+ * atomic, so whichever caller arrives first confirms the order and the side
+ * effects run exactly once. Callers must have already validated the payment.
+ * @returns {Promise<{ order: object|null, confirmed: boolean }>} `confirmed` is false
+ *   when the order was already confirmed (or no longer exists).
+ */
+export async function confirmOnlinePayment(
+  orderMongoId,
+  { razorpayPaymentId, razorpaySignature = "", byRole = "SYSTEM", byId = null } = {},
+) {
+  const acceptanceWindowSeconds = await getOrderAcceptanceWindowSeconds();
+  const now = new Date();
+  const set = {
+    "payment.status": "paid",
+    "payment.razorpay.paymentId": razorpayPaymentId,
+    orderStatus: "created",
+    acceptanceWindowSeconds,
+    acceptanceDeadlineAt: buildAcceptanceDeadline(now, acceptanceWindowSeconds),
+  };
+  if (razorpaySignature) set["payment.razorpay.signature"] = razorpaySignature;
+
+  const order = await FoodOrder.findOneAndUpdate(
+    { _id: orderMongoId, orderStatus: "pending_payment" },
+    {
+      $set: set,
+      $push: {
+        statusHistory: {
+          at: now,
+          byRole,
+          byId: byId || undefined,
+          from: "pending_payment",
+          to: "created",
+          note: "Payment verified, order confirmed",
+        },
+      },
+    },
+    { new: true },
+  );
+  if (!order) {
+    return { order: await FoodOrder.findById(orderMongoId), confirmed: false };
+  }
+
+  const userId = String(order.userId);
+  void addOrderJob(
+    {
+      action: "ORDER_ACCEPTANCE_TIMEOUT_CHECK",
+      orderMongoId: order._id?.toString?.(),
+      orderId: order._id.toString(),
+    },
+    {
+      delay: acceptanceWindowSeconds * 1000,
+      removeOnComplete: true,
+      removeOnFail: true,
+      jobId: `order-accept-timeout-${order._id?.toString?.()}`,
+    },
+  ).catch((err) => {
+    logger.warn(`Failed to enqueue acceptance timeout check: ${err?.message || err}`);
+  });
+
+  try {
+    const transaction = await foodTransactionService.createInitialTransaction(order);
+    if (transaction && Number.isFinite(Number(transaction.amounts?.platformNetProfit))) {
+      order.platformProfit = Number(transaction.amounts.platformNetProfit);
+      await FoodOrder.updateOne(
+        { _id: order._id },
+        { $set: { platformProfit: order.platformProfit } },
+      );
+    }
+  } catch (err) {
+    logger.error(`[CRITICAL] Initial transaction failed for order ${order._id}: ${err.message}`);
+  }
+
+  await incrementCouponUsageForOrder(order, userId);
+
+  try {
+    await foodTransactionService.updateTransactionStatus(order._id, 'captured', {
+      status: 'captured',
+      razorpayPaymentId,
+      razorpaySignature: razorpaySignature || undefined,
+      recordedByRole: byRole,
+      recordedById: byId ? new mongoose.Types.ObjectId(String(byId)) : undefined,
+    });
+  } catch (err) {
+    logger.error(`Ledger capture update failed for order ${order._id}: ${err?.message || err}`);
+  }
+
+  // After online payment is confirmed, now notify restaurant about the new order.
+  await notifyRestaurantNewOrder(order);
+
+  // Notify Customer about payment success
+  await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
+    title: "Payment Successful! ✅",
+    body: `We have received your payment of ₹${order.payment.amountDue} for Order #${order._id.toString()}.`,
+    image: "https://i.ibb.co/5GzXz7r/EatAyu-Brand-Image.png",
+    data: {
+      type: "payment_success",
+      orderId: String(order._id.toString()),
+      orderMongoId: String(order._id),
+    },
+  });
+
+  return { order, confirmed: true };
+}
+
 // ----- Verify payment -----
 export async function verifyPayment(userId, dto) {
   const identity = buildOrderIdentityFilter(dto.orderId);
@@ -719,7 +827,9 @@ export async function verifyPayment(userId, dto) {
     userId: new mongoose.Types.ObjectId(userId),
   });
   if (!order) throw new NotFoundError("Order not found");
-  if (order.payment.status === "paid")
+  // Already confirmed (by an earlier verify call or the webhook). An order that is
+  // paid but still `pending_payment` falls through and gets confirmed below.
+  if (order.payment.status === "paid" && order.orderStatus !== "pending_payment")
     return { order: normalizeOrderForClient(order), payment: order.payment };
 
   if (String(dto.razorpayOrderId) !== String(order.payment?.razorpay?.orderId || "")) {
@@ -767,80 +877,14 @@ export async function verifyPayment(userId, dto) {
     throw new ValidationError("Payment verification failed");
   }
 
-  order.payment.status = "paid";
-  order.payment.razorpay.paymentId = dto.razorpayPaymentId;
-  order.payment.razorpay.signature = dto.razorpaySignature;
-
-  const from = order.orderStatus;
-  const acceptanceWindowSeconds = await getOrderAcceptanceWindowSeconds();
-  order.orderStatus = "created";
-  order.acceptanceWindowSeconds = acceptanceWindowSeconds;
-  order.acceptanceDeadlineAt = buildAcceptanceDeadline(new Date(), acceptanceWindowSeconds);
-
-  pushStatusHistory(order, {
-    byRole: "USER",
-    byId: userId,
-    from: from,
-    to: "created",
-    note: "Payment verified, order confirmed",
-  });
-  await order.save();
-  void addOrderJob(
-    {
-      action: "ORDER_ACCEPTANCE_TIMEOUT_CHECK",
-      orderMongoId: order._id?.toString?.(),
-      orderId: order._id.toString(),
-    },
-    {
-      delay: acceptanceWindowSeconds * 1000,
-      removeOnComplete: true,
-      removeOnFail: true,
-      jobId: `order-accept-timeout-${order._id?.toString?.()}`,
-    },
-  ).catch((err) => {
-    logger.warn(`Failed to enqueue acceptance timeout check: ${err?.message || err}`);
-  });
-
-  try {
-    const transaction = await foodTransactionService.createInitialTransaction(order);
-    if (transaction && Number.isFinite(Number(transaction.amounts?.platformNetProfit))) {
-      order.platformProfit = Number(transaction.amounts.platformNetProfit);
-      await FoodOrder.updateOne(
-        { _id: order._id },
-        { $set: { platformProfit: order.platformProfit } },
-      );
-    }
-  } catch (err) {
-    logger.error(`[CRITICAL] Initial transaction failed for order ${order._id}: ${err.message}`);
-  }
-
-  await incrementCouponUsageForOrder(order, userId);
-
-  await foodTransactionService.updateTransactionStatus(order._id, 'captured', {
-    status: 'captured',
+  const { order: confirmed } = await confirmOnlinePayment(order._id, {
     razorpayPaymentId: dto.razorpayPaymentId,
     razorpaySignature: dto.razorpaySignature,
-    recordedByRole: "USER",
-    recordedById: new mongoose.Types.ObjectId(userId)
+    byRole: "USER",
+    byId: userId,
   });
-
-  // After online payment is verified, now notify restaurant about the new order.
-  await notifyRestaurantNewOrder(order);
-
-  // Notify Customer about payment success
-  await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
-    title: "Payment Successful! ✅",
-    body: `We have received your payment of ₹${order.payment.amountDue} for Order #${order._id.toString()}.`,
-    image: "https://i.ibb.co/5GzXz7r/EatAyu-Brand-Image.png",
-    data: {
-      type: "payment_success",
-      orderId: String(order._id.toString()),
-      orderMongoId: String(order._id),
-    },
-  });
-
-
-  return { order: normalizeOrderForClient(order), payment: order.payment };
+  const result = confirmed || order;
+  return { order: normalizeOrderForClient(result), payment: result.payment };
 }
 
 export async function abandonOnlinePaymentOrder(userId, orderId) {

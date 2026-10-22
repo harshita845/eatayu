@@ -361,9 +361,14 @@ export async function tryAutoAssign(orderId, options = {}) {
 }
 
 
-export async function processDispatchTimeout(orderId, partnerId) {
+export async function processDispatchTimeout(orderId, partnerId, options = {}) {
   const order = await FoodOrder.findById(orderId);
   if (!order) return;
+
+  // The queued job carries the hunt round; offeredTo.length counts riders, not rounds.
+  const attempt = Number(options.attempt) > 0
+    ? Number(options.attempt)
+    : (order.dispatch?.offeredTo?.length || 0) + 1;
 
   const stillAssigned = order.dispatch?.status === 'assigned' &&
     String(order.dispatch?.deliveryPartnerId) === String(partnerId) &&
@@ -379,12 +384,10 @@ export async function processDispatchTimeout(orderId, partnerId) {
     order.dispatch.status = 'unassigned';
     order.dispatch.deliveryPartnerId = null;
     await order.save();
-    
-    const attempt = (order.dispatch?.offeredTo?.length || 0) + 1;
+
     await tryAutoAssign(orderId, { attempt });
   } else if (order.dispatch?.status === 'unassigned') {
     // If it's already unassigned (e.g. from a previous timeout), just keep hunting
-    const attempt = (order.dispatch?.offeredTo?.length || 0) + 1;
     await tryAutoAssign(orderId, { attempt });
   }
 }
