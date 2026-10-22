@@ -68,9 +68,12 @@ import {
 } from '../controllers/top10GourmetAdmin.controller.js';
 import { getPublicPageController } from '../../admin/controllers/pageContent.controller.js';
 import { getPublicReferralSettingsController } from '../controllers/publicReferralSettings.controller.js';
-import { cacheResponse } from '../../../../middleware/cache.js';
+import { cacheResponse, invalidateContentCachesOnWrite } from '../../../../middleware/cache.js';
 
 const router = express.Router();
+
+// Banner edits must show up on the public (cached) endpoints right away.
+router.use(['/hero-banners', '/top-banners'], invalidateContentCachesOnWrite);
 
 // Public CMS pages (About + legal). No auth required.
 router.get('/pages/:key', getPublicPageController);

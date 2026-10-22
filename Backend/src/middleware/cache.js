@@ -118,3 +118,31 @@ export const invalidateCache = async (pattern) => {
         logger.error(`Cache invalidation error: ${err.message}`);
     }
 };
+
+// Prefixes of public cached endpoints that serve admin-managed content (branding,
+// banners, categories, zones, fees, restaurant listings). These are not keyed by a
+// single entity, so a successful admin write clears all of them; admin writes are
+// rare and fresh content matters more than a few cache misses.
+const ADMIN_CONTENT_CACHE_PREFIXES = [
+    'biz_settings', 'power_scan', 'sub_settings', 'feat_settings', 'fee_settings',
+    'hero_banners', 'top_banners', 'under_250_banners', 'dining_banners', 'promo_banners',
+    'gourmet_banners', 'explore_icons', 'landing_settings',
+    'categories', 'dining_categories', 'dining_restaurants', 'search_categories_admin',
+    'zones_public', 'zones_nearby',
+    'restaurants', 'restaurant_detail', 'restaurant_menu', 'restaurant_timings', 'restaurant_addons', 'public_foods',
+];
+
+/**
+ * Clears admin-managed content caches after a successful non-GET request.
+ * @type {import('express').RequestHandler}
+ */
+export const invalidateContentCachesOnWrite = (req, res, next) => {
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+    res.on('finish', () => {
+        if (res.statusCode >= 400) return;
+        for (const prefix of ADMIN_CONTENT_CACHE_PREFIXES) {
+            void invalidateCache(`${prefix}:*`);
+        }
+    });
+    next();
+};

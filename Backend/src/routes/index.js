@@ -21,7 +21,7 @@ import searchRoutes from '../modules/food/search/routes/search.routes.js';
 import { config } from '../config/env.js';
 import { getRateLimitSummary } from '../middleware/rateLimit.js';
 
-import { cacheResponse } from '../middleware/cache.js';
+import { cacheResponse, invalidateContentCachesOnWrite } from '../middleware/cache.js';
 
 const router = express.Router();
 
@@ -56,7 +56,7 @@ router.get('/v1/food/admin/restaurant-subscription-settings/public', cacheRespon
 router.get('/v1/food/admin/feature-settings/public', cacheResponse(600, 'feat_settings', { browserTtlSeconds: 120 }), adminController.getFeatureSettings);
 router.get('/v1/food/admin/fee-settings/public', cacheResponse(600, 'fee_settings', { browserTtlSeconds: 120 }), adminController.getFeeSettings);
 
-router.use('/v1/food/admin', authMiddleware, requireRoles('ADMIN'), restaurantAdminRoutes);
+router.use('/v1/food/admin', authMiddleware, requireRoles('ADMIN'), invalidateContentCachesOnWrite, restaurantAdminRoutes);
 router.use('/v1/food/user', authMiddleware, requireRoles('USER'), userRoutes);
 router.use('/v1/food/notifications', authMiddleware, requireRoles('USER', 'RESTAURANT', 'DELIVERY_PARTNER'), notificationRoutes);
 router.use('/v1/food/orders', authMiddleware, requireRoles('USER'), orderUserRoutes);
