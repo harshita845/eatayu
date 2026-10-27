@@ -1,5 +1,6 @@
 import { config } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import { redactUrl } from '../utils/redact.js';
 
 const errorHandler = (err, req, res, next) => {
     let statusCode = err.statusCode || 500;
@@ -19,7 +20,7 @@ const errorHandler = (err, req, res, next) => {
     const requestId = req.requestId || '-';
 
     logger.error(
-        `[${requestId}] ${req.method} ${req.originalUrl} ${statusCode} - ${err.name || 'Error'} - ${message}`
+        `[${requestId}] ${req.method} ${redactUrl(req.originalUrl)} ${statusCode} - ${err.name || 'Error'} - ${message}`
     );
     if (config.nodeEnv === 'development' && err.stack) {
         logger.error(`[${requestId}] ${err.stack}`);

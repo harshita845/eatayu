@@ -24,8 +24,34 @@ export const validateConfig = () => {
         missing.push('REDIS_ENABLED=true (required when BULLMQ_ENABLED=true)');
     }
 
+    const missingCallMasking = getMissingCallMaskingVars(config);
+    if (missingCallMasking.length > 0) {
+        missing.push(`${missingCallMasking.join(', ')} (required when CALL_MASKING_ENABLED=true)`);
+    }
+
     if (missing.length > 0) {
         logger.error(`Missing required environment variables: ${missing.join(', ')}`);
         process.exit(1);
     }
+};
+
+/**
+ * Exotel settings are only required when call masking is switched on.
+ * @param {typeof config} cfg
+ * @returns {string[]} names of missing env vars
+ */
+export const getMissingCallMaskingVars = (cfg) => {
+    if (!cfg.callMaskingEnabled) return [];
+    const required = {
+        EXOTEL_ACCOUNT_SID: cfg.exotelAccountSid,
+        EXOTEL_API_KEY: cfg.exotelApiKey,
+        EXOTEL_API_TOKEN: cfg.exotelApiToken,
+        EXOTEL_SUBDOMAIN: cfg.exotelSubdomain,
+        EXOTEL_EXOPHONE: cfg.exotelExophone,
+        EXOTEL_WEBHOOK_SECRET: cfg.exotelWebhookSecret,
+        PUBLIC_API_BASE_URL: cfg.publicApiBaseUrl,
+    };
+    return Object.entries(required)
+        .filter(([, value]) => !String(value || '').trim())
+        .map(([name]) => name);
 };

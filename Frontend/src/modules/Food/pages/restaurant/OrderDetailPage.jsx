@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
+import MaskedCallButton from "@/shared/components/MaskedCallButton"
+import { isOrderCallable } from "@/shared/hooks/useMaskedCall"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   ArrowLeft, 
@@ -153,7 +155,6 @@ export default function OrderDetailPage({
   }) : "Date not available"
 
   const customerName = order.customerName || order.userId?.name || order.userId?.fullName || order.deliveryAddress?.fullName || order.deliveryAddress?.name || "Customer"
-  const customerPhone = order.customerPhone || order.userId?.phone || order.deliveryAddress?.phone || "No phone provided"
   const deliveryAddress = order.deliveryAddress?.formattedAddress || order.deliveryAddress?.address || 
                          (order.deliveryAddress?.street ? `${order.deliveryAddress.street}, ${order.deliveryAddress.city || ""}` : "Address not specified")
   const cookingNote = getRestaurantCookingNote(order)
@@ -209,14 +210,14 @@ export default function OrderDetailPage({
                 <p className="text-base font-black text-gray-900">{customerName}</p>
               </div>
             </div>
-            {customerPhone && customerPhone !== "No phone provided" && (
-              <a 
-                href={`tel:${customerPhone}`}
-                className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 active:scale-90 transition-transform"
-              >
-                <Phone className="w-5 h-5" />
-              </a>
-            )}
+            <MaskedCallButton
+              orderId={order._id || order.orderMongoId || id}
+              targetRole="customer"
+              contextModule="restaurant"
+              disabled={!isOrderCallable(order.orderStatus || order.status, order.deliveredAt)}
+              title="Call customer"
+              className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 active:scale-90 transition-transform"
+            />
           </div>
 
           <div className="pt-5 border-t border-gray-50 space-y-3">

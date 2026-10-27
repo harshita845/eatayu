@@ -2689,6 +2689,16 @@ export const uploadAPI = {
   },
 };
 /** Order API (user app – Bearer USER token). Minimal calls: single create/verify, list/details cached by caller. */
+/**
+ * Masked calls (Exotel). The server looks up both numbers, rings the caller first
+ * and bridges to the other party; neither side ever sees the other's real number.
+ */
+export const callAPI = {
+  getConfig: (contextModule) => apiClient.get("/calls/config", { contextModule }),
+  requestMaskedCall: (orderId, targetRole, contextModule) =>
+    apiClient.post("/calls/masked", { orderId: String(orderId), targetRole }, { contextModule }),
+};
+
 export const orderAPI = {
   calculateOrder: (payload) =>
     apiClient.post("/food/orders/calculate", payload ?? {}, {

@@ -14,6 +14,7 @@ import { responseTimeLogger } from './middleware/responseTimeLogger.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
 import { healthCheck } from './config/health.js';
 import { config } from './config/env.js';
+import { redactUrl } from './utils/redact.js';
 
 const app = express();
 
@@ -55,7 +56,9 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 app.use(cors());
-app.use(morgan('dev'));
+// Same as morgan 'dev' but with secret query params (webhook ?secret=) redacted.
+morgan.token('safe-url', (req) => redactUrl(req.originalUrl || req.url));
+app.use(morgan(':method :safe-url :status :response-time ms - :res[content-length]'));
 app.use(express.json({
     verify: (req, res, buf) => {
         // ✅ Store rawBody for signature verification (Razorpay Webhooks)

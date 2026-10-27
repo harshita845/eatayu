@@ -31,8 +31,57 @@ export function generateFourDigitDeliveryOtp() {
   return String(Math.floor(1000 + Math.random() * 9000));
 }
 
+const PARTY_PHONE_KEYS = [
+  "phone",
+  "phoneNumber",
+  "mobile",
+  "contactNumber",
+  "ownerPhone",
+  "ownerPhoneDigits",
+  "ownerPhoneLast10",
+  "primaryContactNumber",
+  "alternatePhone",
+];
+
+const withoutPhones = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  if (value._bsontype) return value; // plain ObjectId reference, nothing to strip
+  const copy = { ...value };
+  for (const key of PARTY_PHONE_KEYS) delete copy[key];
+  return copy;
+};
+
+/**
+ * Removes the other parties' real phone numbers from an order sent to a customer,
+ * rider or restaurant (calls go through masking instead). Admin views do not use this.
+ * @param {object} order plain order object (already serialized)
+ * @param {{ keepCustomerPhone?: boolean }} options keep the customer's own numbers in their own view
+ */
+export function stripPartyPhones(order, { keepCustomerPhone = false } = {}) {
+  if (!order || typeof order !== "object") return order;
+  const o = { ...order };
+  delete o.restaurantPhone;
+  if (!keepCustomerPhone) {
+    delete o.customerPhone;
+    delete o.userPhone;
+    if (o.deliveryAddress && typeof o.deliveryAddress === "object") {
+      o.deliveryAddress = withoutPhones(o.deliveryAddress);
+    }
+    o.userId = withoutPhones(o.userId);
+    o.user = withoutPhones(o.user);
+  }
+  o.restaurantId = withoutPhones(o.restaurantId);
+  o.restaurant = withoutPhones(o.restaurant);
+  o.deliveryPartnerId = withoutPhones(o.deliveryPartnerId);
+  o.deliveryPartner = withoutPhones(o.deliveryPartner);
+  if (o.dispatch && typeof o.dispatch === "object") {
+    o.dispatch = { ...o.dispatch, deliveryPartnerId: withoutPhones(o.dispatch.deliveryPartnerId) };
+  }
+  return o;
+}
+
 export function sanitizeOrderForExternal(orderDoc) {
-  const o = orderDoc?.toObject ? orderDoc.toObject() : { ...(orderDoc || {}) };
+  const o = stripPartyPhones(orderDoc?.toObject ? orderDoc.toObject() : { ...(orderDoc || {}) });
   delete o.deliveryOtp;
   const dv = o.deliveryVerification;
   if (dv && dv.dropOtp != null) {
@@ -327,7 +376,6 @@ export function buildDeliverySocketPayload(orderDoc, restaurantDoc = null) {
       restaurantLocation?.formattedAddress ||
       restaurant?.addressLine1 ||
       "",
-    restaurantPhone: restaurant?.phone || "",
     restaurantLocation: {
       latitude: Number.isFinite(restaurantLat) ? restaurantLat : undefined,
       longitude: Number.isFinite(restaurantLng) ? restaurantLng : undefined,
@@ -346,7 +394,7 @@ export function buildDeliverySocketPayload(orderDoc, restaurantDoc = null) {
       city: restaurantLocation?.city || restaurant?.city || "",
       state: restaurantLocation?.state || restaurant?.state || "",
     },
-    deliveryAddress: order?.deliveryAddress,
+    deliveryAddress: withoutPhones(order?.deliveryAddress),
     customerLocation: {
       latitude: Number.isFinite(customerLat) ? customerLat : undefined,
       longitude: Number.isFinite(customerLng) ? customerLng : undefined,
@@ -363,9 +411,7 @@ export function buildDeliverySocketPayload(orderDoc, restaurantDoc = null) {
     distanceKm: tripDistanceKm,
     customerAddress: customerAddressParts.length ? customerAddressParts.join(', ') : "",
     customerName: order?.customerName || order?.deliveryAddress?.fullName || order?.deliveryAddress?.name || order?.userId?.name || "",
-    customerPhone: order?.customerPhone || order?.deliveryAddress?.phone || order?.userId?.phone || "",
     userName: order?.customerName || order?.deliveryAddress?.fullName || order?.deliveryAddress?.name || order?.userId?.name || "",
-    userPhone: order?.customerPhone || order?.deliveryAddress?.phone || order?.userId?.phone || "",
     note: order?.deliveryInstructions || "",
     cookingNote: order?.note || "",
     deliveryInstructions: order?.deliveryInstructions || "",
@@ -394,7 +440,7 @@ export async function notifyRestaurantNewOrder(orderDoc) {
     const io = getIO();
     if (io) {
       const payload = {
-        ...orderDoc.toObject(),
+        ...sanitizeOrderForExternal(orderDoc),
         orderMongoId: orderDoc._id?.toString?.() || undefined,
         orderId: orderDoc.order_id || orderDoc._id?.toString?.(),
       };

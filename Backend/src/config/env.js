@@ -113,6 +113,22 @@ export const config = {
     razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET,
     razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET, // ✅ NEW
 
+    // Call masking (Exotel "connect two numbers"). Secrets stay server-side only.
+    callMaskingEnabled: process.env.CALL_MASKING_ENABLED === 'true',
+    exotelAccountSid: process.env.EXOTEL_ACCOUNT_SID || '',
+    exotelApiKey: process.env.EXOTEL_API_KEY || '',
+    exotelApiToken: process.env.EXOTEL_API_TOKEN || '',
+    exotelSubdomain: process.env.EXOTEL_SUBDOMAIN || 'api.exotel.com',
+    exotelExophone: process.env.EXOTEL_EXOPHONE || '',
+    exotelWebhookSecret: process.env.EXOTEL_WEBHOOK_SECRET || '',
+    exotelCallTimeLimitSeconds: Number(process.env.EXOTEL_CALL_TIME_LIMIT_SECONDS || 600),
+    exotelRingTimeoutSeconds: Number(process.env.EXOTEL_RING_TIMEOUT_SECONDS || 30),
+    exotelRecordCalls: process.env.EXOTEL_RECORD_CALLS === 'true',
+    publicApiBaseUrl: String(process.env.PUBLIC_API_BASE_URL || '').replace(/\/+$/, ''),
+    callMaskingPostDeliveryMinutes: Number(process.env.CALL_MASKING_POST_DELIVERY_MINUTES || 30),
+    callMaskingRateLimitMax: Number(process.env.CALL_MASKING_RATE_LIMIT_MAX || 5),
+    callMaskingRateLimitWindowSeconds: Number(process.env.CALL_MASKING_RATE_LIMIT_WINDOW_SECONDS || 600),
+
     // Email (SMTP) – for admin forgot password OTP etc.
     emailHost: process.env.EMAIL_HOST,
     emailPort: Number(process.env.EMAIL_PORT) || 587,

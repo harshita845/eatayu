@@ -18,6 +18,7 @@ import { requireRoles } from '../core/roles/role.middleware.js';
 import { getQueuesController } from '../controllers/admin.controller.js';
 import webhookRoutes from '../core/payments/routes/webhook.routes.js'; // ✅ NEW
 import searchRoutes from '../modules/food/search/routes/search.routes.js';
+import { callRoutes, exotelWebhookRoutes } from '../modules/food/calls/routes/call.routes.js';
 import { config } from '../config/env.js';
 import { getRateLimitSummary } from '../middleware/rateLimit.js';
 
@@ -62,6 +63,8 @@ router.use('/v1/food/notifications', authMiddleware, requireRoles('USER', 'RESTA
 router.use('/v1/food/orders', authMiddleware, requireRoles('USER'), orderUserRoutes);
 router.use('/v1/food/payments', authMiddleware, paymentRoutes);
 router.use('/v1/payments/webhook', webhookRoutes); // ✅ NEW: Public Webhook
+router.use('/v1/webhooks/exotel', exotelWebhookRoutes); // Public, secret-protected (call masking)
+router.use('/v1/calls', callRoutes);
 router.use('/v1/fcm-tokens', fcmRoutes);
 router.use('/fcm-tokens', fcmRoutes);
 

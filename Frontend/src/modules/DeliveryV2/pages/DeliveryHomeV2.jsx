@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import MaskedCallButton from "@/shared/components/MaskedCallButton";
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDeliveryStore } from '@/modules/DeliveryV2/store/useDeliveryStore';
 import { useProximityCheck } from '@/modules/DeliveryV2/hooks/useProximityCheck';
@@ -997,17 +998,13 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                               </div>
                             </div>
                             <div className="flex gap-2.5 shrink-0">
-                              {(() => {
-                                const customerPhone = activeOrder?.userPhone || activeOrder?.user?.phone || activeOrder?.deliveryAddress?.phone || activeOrder?.deliveryAddress?.contactNumber || '';
-                                return customerPhone ? (
-                                  <button
-                                    onClick={() => window.location.href = `tel:${customerPhone}`}
-                                    className="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors active:scale-90 shrink-0"
-                                  >
-                                    <Phone className="w-5 h-5" />
-                                  </button>
-                                ) : null;
-                              })()}
+                              <MaskedCallButton
+                                orderId={activeOrder?.orderMongoId || activeOrder?._id || activeOrder?.orderId}
+                                targetRole="customer"
+                                contextModule="delivery"
+                                title="Call customer"
+                                className="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors active:scale-90 shrink-0"
+                              />
                               {(() => {
                                 const customerAddress = resolveCustomerAddress(activeOrder);
                                 const cusLat = activeOrder?.customerLocation?.lat || activeOrder?.customerLocation?.latitude || activeOrder?.deliveryAddress?.latitude;

@@ -2,6 +2,7 @@ import { useParams, Link, useSearchParams } from "react-router-dom"
 import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
+import { useMaskedCall, isOrderCallable } from "@/shared/hooks/useMaskedCall"
 import {
   ArrowLeft,
   RefreshCw,
@@ -284,14 +285,6 @@ const transformOrderForTracking = (apiOrder, previousOrder = null, explicitResta
     mongoId: apiOrder?._id || null,
     orderId: apiOrder?.orderId || apiOrder?._id,
     restaurant: apiOrder?.restaurantName || previousOrder?.restaurant || 'Restaurant',
-    restaurantPhone:
-      apiOrder?.restaurantPhone ||
-      apiOrder?.restaurantId?.phone ||
-      apiOrder?.restaurantId?.ownerPhone ||
-      apiOrder?.restaurant?.phone ||
-      apiOrder?.restaurant?.ownerPhone ||
-      previousOrder?.restaurantPhone ||
-      '',
     restaurantAddress,
     restaurantId: apiOrder?.restaurantId || previousOrder?.restaurantId || null,
     userId: apiOrder?.userId || previousOrder?.userId || null,
@@ -331,7 +324,6 @@ const transformOrderForTracking = (apiOrder, previousOrder = null, explicitResta
     status: apiOrder?.orderStatus || apiOrder?.status || previousOrder?.status || 'pending',
     deliveryPartner: apiOrder?.deliveryPartnerId ? {
       name: apiOrder.deliveryPartnerId.name || apiOrder.deliveryPartnerId.fullName || 'Delivery Partner',
-      phone: apiOrder.deliveryPartnerId.phone || apiOrder.deliveryPartnerId.phoneNumber || '',
       avatar: apiOrder.deliveryPartnerId.avatar || apiOrder.deliveryPartnerId.profilePicture || null
     } : (previousOrder?.deliveryPartner || null),
     deliveryPartnerId: apiOrder?.deliveryPartnerId?._id || apiOrder?.deliveryPartnerId || apiOrder?.dispatch?.deliveryPartnerId?._id || apiOrder?.dispatch?.deliveryPartnerId || apiOrder?.assignmentInfo?.deliveryPartnerId || null,
@@ -446,6 +438,7 @@ function normalizeLookupId(value) {
 export default function OrderTracking() {
   const companyName = useCompanyName()
   const { orderId } = useParams()
+  const { enabled: maskedCallEnabled, callingRole, startCall } = useMaskedCall("user")
   const [searchParams] = useSearchParams()
   const confirmed = searchParams.get("confirmed") === "true"
   const { getOrderById } = useOrders()
@@ -743,69 +736,18 @@ export default function OrderTracking() {
     return `${minutes}:${String(seconds).padStart(2, '0')}`
   }, [editWindowRemainingMs])
 
+  // Calls go through call masking: the server rings the customer first, then connects.
+  const maskedCallOrderId = order?.mongoId || order?.orderId || orderId
+  const canCallFromTracking = maskedCallEnabled && isOrderCallable(order?.status, order?.deliveredAt)
+
   const handleCallRestaurant = (e) => {
-    // Prevent event bubbling if necessary
     if (e && e.stopPropagation) e.stopPropagation();
-
-    const rawPhone =
-      order?.restaurantPhone ||
-      order?.restaurantId?.phone ||
-      order?.restaurantId?.ownerPhone ||
-      order?.restaurantId?.contact?.phone ||
-      order?.restaurant?.phone ||
-      order?.restaurant?.ownerPhone ||
-      order?.restaurantId?.location?.phone ||
-      '';
-
-    const cleanPhone = String(rawPhone).replace(/[^\d+]/g, '');
-
-    if (!cleanPhone || cleanPhone.length < 5) {
-      toast.error('Restaurant phone number not available');
-      return;
-    }
-
-    debugLog('?? Attempting to call restaurant:', cleanPhone);
-
-    // Most compatible way to trigger dialer on overall mobile/web environments:
-    // Create a temporary hidden anchor and programmatically click it.
-    try {
-      const link = document.createElement('a');
-      link.href = `tel:${cleanPhone}`;
-      link.setAttribute('target', '_self');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      debugError('Call failed via link click:', err);
-      // Last-ditch fallback
-      window.location.assign(`tel:${cleanPhone}`);
-    }
+    startCall(maskedCallOrderId, 'restaurant');
   };
 
   const handleCallRider = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-
-    const rawPhone = order?.deliveryPartner?.phone || '';
-    const cleanPhone = String(rawPhone).replace(/[^\d+]/g, '');
-
-    if (!cleanPhone || cleanPhone.length < 5) {
-      toast.error('Rider phone number not available');
-      return;
-    }
-
-    debugLog('?? Attempting to call rider:', cleanPhone);
-
-    try {
-      const link = document.createElement('a');
-      link.href = `tel:${cleanPhone}`;
-      link.setAttribute('target', '_self');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      debugError('Call failed via link click:', err);
-      window.location.assign(`tel:${cleanPhone}`);
-    }
+    startCall(maskedCallOrderId, 'rider');
   };
 
   const customerDeliveryOtp = useMemo(() => {
@@ -1526,9 +1468,9 @@ export default function OrderTracking() {
                   </div>
                 </div>
               </div>
-              {!isDeliveredOrder && !isCancelledOrder && (
-                <motion.button className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center" onClick={handleCallRider}>
-                  <Phone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              {canCallFromTracking && order?.dispatch?.status === 'accepted' && (
+                <motion.button className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center" onClick={handleCallRider} disabled={Boolean(callingRole)} aria-label="Call rider">
+                  <Phone className={`w-5 h-5 text-blue-600 dark:text-blue-400 ${callingRole === 'rider' ? 'animate-pulse' : ''}`} />
                 </motion.button>
               )}
             </div>
@@ -1574,10 +1516,11 @@ export default function OrderTracking() {
               <p className="text-xs text-gray-500 dark:text-gray-400">{order.restaurantAddress || 'Location'}</p>
             </div>
           </div>
-            {!isDeliveredOrder && !isCancelledOrder && (
+            {canCallFromTracking && (
               <button
                 type="button"
                 onClick={handleCallRestaurant}
+                disabled={Boolean(callingRole)}
                 className="w-10 h-10 rounded-full border flex items-center justify-center shrink-0"
                 style={{
                   backgroundColor: `rgba(${themeRgb}, 0.12)`,
@@ -1585,7 +1528,7 @@ export default function OrderTracking() {
                 }}
                 aria-label="Call restaurant"
               >
-                <Phone className="w-4 h-4" style={{ color: themeColor }} />
+                <Phone className={`w-4 h-4 ${callingRole === 'restaurant' ? 'animate-pulse' : ''}`} style={{ color: themeColor }} />
               </button>
             )}
           </div>

@@ -17,6 +17,7 @@ import {
 import { orderAPI, restaurantAPI } from "@food/api"
 import { useCart } from "@food/context/CartContext"
 import { toast } from "sonner"
+import { useMaskedCall, isOrderCallable } from "@/shared/hooks/useMaskedCall"
 import { getCompanyNameAsync } from "@food/utils/businessSettings"
 import { getCartCompareItemTotal, getLineCompareUnitPrice } from "@food/utils/foodVariants"
 import { DualMoney } from "@food/components/user/FoodPriceDisplay"
@@ -30,6 +31,7 @@ export default function UserOrderDetails() {
   const goBack = useAppBackNavigation()
   const { replaceCart } = useCart()
   const { orderId } = useParams()
+  const { enabled: maskedCallEnabled, callingRole, startCall } = useMaskedCall("user")
   const [order, setOrder] = useState(null)
   const [restaurant, setRestaurant] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -214,21 +216,10 @@ export default function UserOrderDetails() {
       ? orderPayTotal + (displayCompareItemTotal - itemSubtotal)
       : orderPayTotal
 
-  // Restaurant phone (multiple fallbacks) - use fetched restaurant data first
-  const restaurantPhone =
-    restaurantObj.primaryContactNumber ||
-    restaurantObj.phone ||
-    restaurantObj.contactNumber ||
-    order.restaurantPhone ||
-    ""
-
-  const handleCallRestaurant = () => {
-    if (!restaurantPhone) {
-      toast.error("Restaurant phone number not available")
-      return
-    }
-    window.location.href = `tel:${restaurantPhone}`
-  }
+  // Calls go through call masking: the server rings the customer first, then connects the restaurant.
+  const canCallRestaurant =
+    maskedCallEnabled && isOrderCallable(order.orderStatus || order.status, order.deliveredAt)
+  const handleCallRestaurant = () => startCall(order._id || orderId, "restaurant")
 
   const handleDownloadSummary = async () => {
     try {
@@ -434,13 +425,17 @@ export default function UserOrderDetails() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleCallRestaurant}
-              className="w-8 h-8 rounded-full border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-[#EB590E] hover:bg-orange-50 dark:hover:bg-orange-950/30"
-            >
-              <Phone className="w-4 h-4" />
-            </button>
+            {canCallRestaurant && (
+              <button
+                type="button"
+                onClick={handleCallRestaurant}
+                disabled={Boolean(callingRole)}
+                aria-label="Call restaurant"
+                className="w-8 h-8 rounded-full border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-[#EB590E] hover:bg-orange-50 dark:hover:bg-orange-950/30"
+              >
+                <Phone className={`w-4 h-4 ${callingRole === "restaurant" ? "animate-pulse" : ""}`} />
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 mb-4">

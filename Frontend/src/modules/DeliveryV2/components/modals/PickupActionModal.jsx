@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import MaskedCallButton from "@/shared/components/MaskedCallButton";
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChefHat, MapPin, Phone, 
@@ -88,12 +89,6 @@ export const PickupActionModal = ({
     order.restaurantId?.location?.address ||
     order.restaurantLocation?.address ||
     'Address not available';
-  const restaurantPhone =
-    order.restaurantPhone ||
-    order.restaurant_phone ||
-    order.restaurant?.phone ||
-    order.restaurantId?.phone ||
-    '';
   const items = order.items || [];
   const restaurantLogo = order.restaurantImage || order.restaurant?.logo || order.restaurant?.profileImage || 'https://cdn-icons-png.flaticon.com/512/3170/3170733.png';
 
@@ -151,14 +146,13 @@ export const PickupActionModal = ({
               </div>
 
               <div className="flex gap-2.5">
-                {restaurantPhone && (
-                  <button
-                    onClick={() => window.location.href = `tel:${restaurantPhone}`}
-                    className="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors active:scale-90"
-                  >
-                    <Phone className="w-5 h-5" />
-                  </button>
-                )}
+                <MaskedCallButton
+                  orderId={order.orderMongoId || order._id || order.orderId}
+                  targetRole="restaurant"
+                  contextModule="delivery"
+                  title="Call restaurant"
+                  className="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors active:scale-90"
+                />
                 <button 
                   onClick={() => {
                     const resLat = order.restaurantLocation?.lat || order.restaurantLocation?.latitude || order.restaurant?.latitude || order.restaurantId?.latitude;

@@ -48,6 +48,7 @@ import {
   generateFourDigitDeliveryOtp,
   sanitizeOrderForExternal,
   sanitizeOrderForDeliveryPartner,
+  stripPartyPhones,
   emitDeliveryDropOtpToUser,
   notifyOwnersSafely,
   notifyOwnerSafely,
@@ -939,7 +940,7 @@ export async function listOrdersUser(userId, query) {
         "restaurantId",
         "restaurantName profileImage area city location rating totalRatings",
       )
-      .populate("dispatch.deliveryPartnerId", "name phone rating totalRatings")
+      .populate("dispatch.deliveryPartnerId", "name rating totalRatings")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -947,7 +948,7 @@ export async function listOrdersUser(userId, query) {
     FoodOrder.countDocuments(filter),
   ]);
   return buildPaginatedResult({
-    docs: docs.map((doc) => normalizeOrderForClient(doc)),
+    docs: docs.map((doc) => stripPartyPhones(normalizeOrderForClient(doc), { keepCustomerPhone: true })),
     total,
     page,
     limit,
@@ -1081,7 +1082,7 @@ export async function getOrderById(
   if (userId) {
     const drop = order.deliveryVerification?.dropOtp || {};
     const secret = String(order.deliveryOtp || "").trim();
-    const out = normalizeOrderForClient(order);
+    const out = stripPartyPhones(normalizeOrderForClient(order), { keepCustomerPhone: true });
     delete out.deliveryOtp;
     out.deliveryVerification = {
       ...(order.deliveryVerification || {}),
@@ -1180,7 +1181,7 @@ export async function resyncState(userId, role) {
       .lean();
 
     if (order) {
-      const out = normalizeOrderForClient(order);
+      const out = stripPartyPhones(normalizeOrderForClient(order), { keepCustomerPhone: true });
       // Re-add handover OTP if order is picked up
       if (
         (order.deliveryState?.currentPhase === "at_drop" || order.orderStatus === "picked_up") &&
@@ -1463,7 +1464,7 @@ export async function listOrdersRestaurant(restaurantId, query) {
 
   const [docs, total] = await Promise.all([
     FoodOrder.find(filter)
-      .populate("userId", "name phone email profileImage")
+      .populate("userId", "name email profileImage")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -1482,7 +1483,7 @@ export async function listOrdersRestaurant(restaurantId, query) {
   );
 
   const normalizedOrders = docs.map((doc) => {
-    const out = normalizeOrderForClient(doc);
+    const out = stripPartyPhones(normalizeOrderForClient(doc));
     out.finance = buildRestaurantFinanceViewSync(doc, txByOrderId.get(String(doc._id)) || null);
     return out;
   });
@@ -1733,7 +1734,7 @@ export async function updateOrderStatusRestaurant(
     await order.save();
   }
 
-  return normalizeOrderForClient(order);
+  return stripPartyPhones(normalizeOrderForClient(order));
 }
 
 /**

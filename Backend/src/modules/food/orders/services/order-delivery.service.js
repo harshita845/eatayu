@@ -66,12 +66,12 @@ const DELIVERY_ORDER_BASE_SELECT = [
 
 const DELIVERY_USER_POPULATE = {
   path: 'userId',
-  select: 'name phone email',
+  select: 'name',
 };
 
 const DELIVERY_RESTAURANT_POPULATE = {
   path: 'restaurantId',
-  select: 'restaurantName name phone ownerPhone location addressLine1 area city state profileImage',
+  select: 'restaurantName name location addressLine1 area city state profileImage',
 };
 
 const DELIVERY_TRANSACTION_SELECT = 'orderId payment paymentMethod pricing amounts status';
@@ -213,7 +213,7 @@ export async function getCurrentTripDelivery(deliveryPartnerId) {
   })
     .select(DELIVERY_ORDER_BASE_SELECT)
     .populate(DELIVERY_RESTAURANT_POPULATE)
-    .populate({ path: 'userId', select: 'name phone' })
+    .populate({ path: 'userId', select: 'name' })
     .sort({ createdAt: 1 })
     .lean();
 
@@ -681,7 +681,7 @@ export async function rejectOrderDelivery(orderId, deliveryPartnerId) {
       logger.error(`SmartDispatch: Auto-assign after reject failed: ${error.message}`),
     );
 
-  return order.toObject();
+  return sanitizeOrderForDeliveryPartner(order);
 }
 
 export async function confirmReachedPickupDelivery(orderId, deliveryPartnerId) {
@@ -702,7 +702,7 @@ export async function confirmReachedPickupDelivery(orderId, deliveryPartnerId) {
   const currentPhase = order.deliveryState?.currentPhase || '';
   const currentStatus = order.deliveryState?.status || '';
   if (currentPhase === 'at_pickup' || currentStatus === 'reached_pickup') {
-    return order.toObject();
+    return sanitizeOrderForDeliveryPartner(order);
   }
 
   const from = currentStatus || currentPhase || order.orderStatus;
@@ -763,7 +763,7 @@ export async function confirmReachedPickupDelivery(orderId, deliveryPartnerId) {
     deliveryPhase: order.deliveryState?.currentPhase,
     deliveryStatus: order.deliveryState?.status,
   });
-  return order.toObject();
+  return sanitizeOrderForDeliveryPartner(order);
 }
 
 export async function confirmPickupDelivery(orderId, deliveryPartnerId, billImageUrl) {
@@ -820,7 +820,7 @@ export async function confirmPickupDelivery(orderId, deliveryPartnerId, billImag
     deliveryPartnerId,
     billImageUrl: billImageUrl || null,
   });
-  return order.toObject();
+  return sanitizeOrderForDeliveryPartner(order);
 }
 
 export async function confirmReachedDropDelivery(orderId, deliveryPartnerId) {
@@ -1081,6 +1081,6 @@ export async function updateOrderStatusDelivery(orderId, deliveryPartnerId, orde
     from,
     to: orderStatus,
   });
-  return order.toObject();
+  return sanitizeOrderForDeliveryPartner(order);
 }
 

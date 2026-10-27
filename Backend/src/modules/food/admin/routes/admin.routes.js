@@ -19,6 +19,7 @@ import {
 import { FoodAdmin } from '../../../../core/admin/admin.model.js';
 import { requireAdminPermission, requireAnyAdminPermission } from '../../../../core/roles/adminPermission.middleware.js';
 import { invalidateCache } from '../../../../middleware/cache.js';
+import { listOrderCallsAdminController } from '../../calls/controllers/call.controller.js';
 
 const router = express.Router();
 
@@ -466,5 +467,8 @@ router.put('/pages-social-media/:key', upsertAdminPageController);
 
 router.get('/sidebar-badges', adminController.getSidebarBadges);
 router.get('/notifications/fssai-expired', adminController.getExpiredFssaiNotifications);
+
+// Masked-call history for an order (support/admin; masked numbers only)
+router.get('/orders/:orderId/calls', listOrderCallsAdminController);
 
 export default router;
