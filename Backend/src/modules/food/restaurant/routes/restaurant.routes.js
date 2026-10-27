@@ -75,7 +75,7 @@ import { authMiddleware, optionalAuth } from '../../../../core/auth/auth.middlew
 import { sendError } from '../../../../utils/response.js';
 import { getRestaurantFinanceController } from '../controllers/restaurantFinance.controller.js';
 
-import { cacheResponse, invalidateCache } from '../../../../middleware/cache.js';
+import { cacheResponse, invalidateCache, invalidateContentCachesOnWrite } from '../../../../middleware/cache.js';
 
 const router = express.Router();
 
@@ -93,6 +93,13 @@ const uploadFields = upload.fields([
     { name: 'fssaiImage', maxCount: 1 },
     { name: 'menuImages', maxCount: 10 }
 ]);
+
+// Content edits made from the restaurant app change what customers see, so clear the
+// public caches on success. Order and wallet routes are deliberately left out.
+router.use(
+    ['/profile', '/availability', '/dining-settings', '/outlet-timings', '/categories', '/menu', '/foods', '/addons', '/my-offers'],
+    invalidateContentCachesOnWrite
+);
 
 router.post('/register', uploadFields, registerRestaurantController);
 router.post('/onboarding-fee/order', createOnboardingFeeOrderController);

@@ -45,9 +45,13 @@ const buildCacheKey = (req, prefix, varyByUser = false) => {
  * @param {{ varyByUser?: boolean, browserTtlSeconds?: number }} options
  * @returns {import('express').RequestHandler}
  */
+const MAX_BROWSER_TTL_SECONDS = 30;
+
 export const cacheResponse = (ttlInSeconds = 300, prefix = 'api_cache', options = {}) => {
     const varyByUser = options?.varyByUser === true;
-    const browserTtlSeconds = Number(options?.browserTtlSeconds || 0);
+    // Browsers may reuse a public response for at most this long, so an image or
+    // banner changed by an admin shows up in the customer app within seconds.
+    const browserTtlSeconds = Math.min(Number(options?.browserTtlSeconds || 0), MAX_BROWSER_TTL_SECONDS);
 
     return async (req, res, next) => {
         if (!config.redisEnabled || req.method !== 'GET') return next();
@@ -59,8 +63,7 @@ export const cacheResponse = (ttlInSeconds = 300, prefix = 'api_cache', options 
 
         const applyHeaders = () => {
             if (browserTtlSeconds > 0) {
-                const staleWhileRevalidate = Math.min(browserTtlSeconds * 2, 86400);
-                res.setHeader('Cache-Control', `public, max-age=${browserTtlSeconds}, stale-while-revalidate=${staleWhileRevalidate}`);
+                res.setHeader('Cache-Control', `public, max-age=${browserTtlSeconds}`);
             }
         };
 
