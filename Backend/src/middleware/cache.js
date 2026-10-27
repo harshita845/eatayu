@@ -126,11 +126,11 @@ export const invalidateCache = async (pattern) => {
 // banners, categories, zones, fees, restaurant listings). These are not keyed by a
 // single entity, so a successful admin write clears all of them; admin writes are
 // rare and fresh content matters more than a few cache misses.
-const ADMIN_CONTENT_CACHE_PREFIXES = [
+export const ADMIN_CONTENT_CACHE_PREFIXES = [
     'biz_settings', 'power_scan', 'sub_settings', 'feat_settings', 'fee_settings',
     'hero_banners', 'top_banners', 'under_250_banners', 'dining_banners', 'promo_banners',
     'gourmet_banners', 'explore_icons', 'landing_settings',
-    'categories', 'dining_categories', 'dining_restaurants', 'search_categories_admin',
+    'categories', 'dining_categories', 'dining_restaurants', 'search_categories_admin', 'search_unified',
     'zones_public', 'zones_nearby',
     'restaurants', 'restaurant_detail', 'restaurant_menu', 'restaurant_timings', 'restaurant_addons', 'public_foods',
 ];
