@@ -24,10 +24,14 @@ const OptimizedImage = React.memo(({
   blurDataURL,
   onLoad,
   onError,
+  fallbackSrc, // shown when src is empty or fails to load
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
+  const [usingFallback, setUsingFallback] = useState(false)
+  const originalSrc = src
+  src = (!originalSrc || usingFallback) && fallbackSrc ? fallbackSrc : originalSrc
   const [isInView, setIsInView] = useState(priority) // Start visible if priority
   const imgRef = useRef(null)
   const observerRef = useRef(null)
@@ -108,9 +112,20 @@ const OptimizedImage = React.memo(({
   }
 
   const handleError = (e) => {
+    if (fallbackSrc && !usingFallback && originalSrc) {
+      setUsingFallback(true)
+      setIsLoaded(false)
+      return
+    }
     setHasError(true)
     if (onError) onError(e)
   }
+
+  // A new src gets a fresh attempt before falling back again.
+  useEffect(() => {
+    setUsingFallback(false)
+    setHasError(false)
+  }, [originalSrc])
 
   // Default blur placeholder (tiny gray square)
   const defaultBlurDataURL = blurDataURL || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjwvc3ZnPg=='

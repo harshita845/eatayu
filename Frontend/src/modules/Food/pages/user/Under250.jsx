@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom"
+import { foodImages } from "@food/constants/images"
 import { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { Star, Clock, MapPin, ArrowDownUp, Timer, ArrowRight, ChevronDown, Bookmark, Share2, Plus, Minus, X, Search, Mic, ShoppingCart, Wallet } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -1106,6 +1107,7 @@ export default function Under250() {
                     <div className={`w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md transition-all ${isActive ? 'ring-2 ring-[#EB590E] ring-offset-2' : ''}`}>
                       <OptimizedImage
                         src={category.image}
+                        fallbackSrc={foodImages[index % foodImages.length]}
                         alt={category.name}
                         className="w-full h-full bg-white rounded-full"
                         objectFit="cover"

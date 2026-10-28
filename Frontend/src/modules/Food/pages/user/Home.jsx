@@ -3092,6 +3092,7 @@ export default function Home() {
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 group-hover:border-[#EB590E] transition-colors">
                 <OptimizedImage
                   src={category.image}
+                  fallbackSrc={foodImages[index % foodImages.length]}
                   alt={category.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   sizes="80px"
