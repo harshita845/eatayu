@@ -102,7 +102,10 @@ export default function ProfessionalSearch() {
     localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newHistory))
   }
 
-  const performSearch = useCallback(async (searchTerm, catId) => {
+  const performSearch = useCallback(async (searchTerm, selectedCatId) => {
+    // The category chips are hidden while a word is typed, so a category chosen
+    // earlier must not silently narrow a typed search down to nothing.
+    const catId = searchTerm ? null : selectedCatId
     if (!searchTerm && !catId) {
       setResults({ restaurants: [], dishes: [] })
       return
@@ -143,7 +146,7 @@ export default function ProfessionalSearch() {
   useEffect(() => {
     performSearch(debouncedQuery, selectedCategoryId)
     if (debouncedQuery) {
-        setSearchParams({ q: debouncedQuery, ...(selectedCategoryId ? { cat: selectedCategoryId } : {}) }, { replace: true })
+        setSearchParams({ q: debouncedQuery }, { replace: true })
     }
   }, [debouncedQuery, selectedCategoryId, performSearch, setSearchParams])
 
