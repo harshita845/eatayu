@@ -61,6 +61,23 @@ function buildStatusCallbackUrl() {
 }
 
 /**
+ * Asks Exotel to connect two numbers, ringing `from` first. Exotel answers 5xx for some
+ * second legs (seen with numbers on DND) while the same pair connects the other way round,
+ * so on a 5xx we try once more with the legs swapped. Both phones still see the ExoPhone.
+ * @returns {Promise<{ result: { callSid: string, status: string }, legsSwapped: boolean }>}
+ */
+export async function connectWithLegFallback(exotelClient, params) {
+    try {
+        return { result: await exotelClient.connectTwoNumbers(params), legsSwapped: false };
+    } catch (err) {
+        if (!(err instanceof ExotelError) || !(err.httpStatus >= 500)) throw err;
+        logger.warn(`[CallMasking] Exotel ${err.httpStatus} on the normal leg order, retrying with legs swapped`);
+        const result = await exotelClient.connectTwoNumbers({ ...params, from: params.to, to: params.from });
+        return { result, legsSwapped: true };
+    }
+}
+
+/**
  * Starts a masked call from the authenticated user to another party of the order.
  * Never returns or logs real phone numbers.
  * @param {{ authUser: { userId: string, role: string }, orderId: string, targetRole: string }} input
@@ -116,7 +133,7 @@ export async function requestMaskedCall({ authUser, orderId, targetRole }, deps 
     });
 
     try {
-        const result = await exotelClient.connectTwoNumbers({
+        const { result, legsSwapped } = await connectWithLegFallback(exotelClient, {
             from: caller.phone,
             to: callee.phone,
             callerId: config.exotelExophone,
@@ -128,7 +145,7 @@ export async function requestMaskedCall({ authUser, orderId, targetRole }, deps 
         });
         await FoodCallLog.updateOne(
             { _id: callLog._id },
-            { $set: { exotelCallSid: result.callSid, exotelStatus: result.status, startedAt: new Date() } },
+            { $set: { exotelCallSid: result.callSid, exotelStatus: result.status, startedAt: new Date(), legsSwapped } },
         );
     } catch (err) {
         const safeMessage = err instanceof ExotelError ? err.message : 'Unexpected error while starting the call';

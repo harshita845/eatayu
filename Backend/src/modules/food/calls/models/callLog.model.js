@@ -24,6 +24,9 @@ const callLogSchema = new mongoose.Schema(
         durationSeconds: { type: Number, default: null },
         recordingUrl: { type: String, default: null },
         errorMessage: { type: String, default: '' },
+        // Exotel refused the normal order (it errors when the second number is on DND),
+        // so the callee's phone was rung first instead.
+        legsSwapped: { type: Boolean, default: false },
     },
     { collection: 'food_call_logs', timestamps: true },
 );

@@ -7,6 +7,7 @@ Customers, riders and restaurants can call each other about an order without see
 1. A user taps **Call** in the app. The app sends `POST /api/v1/calls/masked` with `{ orderId, targetRole }`.
 2. The server identifies the caller from their login token. It checks that they belong to the order, that the order is in a callable state, and that they are under the rate limit.
 3. The server looks up both real numbers in the database and asks Exotel to "connect two numbers": Exotel **rings the caller first**, then dials the other party once the caller answers.
+   - If Exotel answers with a server error (5xx), the server tries once more with the two numbers swapped, so the other party's phone rings first. Exotel was seen to fail this way when the second number is on DND, while the same pair connected the other way round. Both phones still see only the ExoPhone, and the call log records `legsSwapped: true`.
 4. Exotel reports the outcome to `POST /api/v1/webhooks/exotel/call-status`, which updates the `food_call_logs` record.
 
 Real numbers are never returned to the apps or written to logs. Call logs store only the last 4 digits (`******1234`).
