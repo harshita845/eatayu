@@ -42,7 +42,8 @@ export default function ProfessionalSearch() {
   const navigate = useNavigate()
   // Same location and zone the home page uses (the selected delivery address, else
   // the device location), so search shows the restaurants the customer can order from.
-  const { effectiveLocation: userCoords, zoneId, zoneStatus } = useDeliveryLocation()
+  const { effectiveLocation: userCoords, zoneId, zoneStatus, loading: locationLoading, zoneLoading } = useDeliveryLocation()
+  const locationSettling = Boolean(locationLoading || zoneLoading) || zoneStatus === "loading"
   
   const [query, setQuery] = useState(initialQuery)
   const debouncedQuery = useDebounce(query, 500)
@@ -148,12 +149,12 @@ export default function ProfessionalSearch() {
 
   useEffect(() => {
     // Wait for the zone so results are never briefly shown from every zone.
-    if (zoneStatus === "loading") return
+    if (locationSettling) return
     performSearch(debouncedQuery, selectedCategoryId)
     if (debouncedQuery) {
         setSearchParams({ q: debouncedQuery }, { replace: true })
     }
-  }, [debouncedQuery, selectedCategoryId, performSearch, setSearchParams, zoneStatus])
+  }, [debouncedQuery, selectedCategoryId, performSearch, setSearchParams, locationSettling])
 
   // Speech Recognition Implementation
   const handleVoiceSearch = () => {
