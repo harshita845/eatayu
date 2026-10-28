@@ -236,6 +236,12 @@ const RestaurantImageCarousel = React.memo(
 
     const [loadedBySrc, setLoadedBySrc] = useState({});
     const [, setAttemptedSrcs] = useState({});
+    // Slides whose image failed to load. They keep their position (the dish badge maps
+    // to the slide index) but the slider never lands on them.
+    const [failedSrcs, setFailedSrcs] = useState({});
+    const rootRef = useRef(null);
+    const [isOnScreen, setIsOnScreen] = useState(false);
+    const pauseUntilRef = useRef(0);
     const [isImageUnavailable, setIsImageUnavailable] = useState(false);
     const [showShimmer, setShowShimmer] = useState(true);
     const [lastGoodSrc, setLastGoodSrc] = useState("");
@@ -257,6 +263,7 @@ const RestaurantImageCarousel = React.memo(
       setCurrentIndex(0);
       setLoadedBySrc({});
       setAttemptedSrcs({});
+      setFailedSrcs({});
       setIsImageUnavailable(images.length === 0);
       setShowShimmer(images.length > 0);
     }, [restaurant?.id, restaurant?.slug, restaurant?.updatedAt, images]);
@@ -291,10 +298,42 @@ const RestaurantImageCarousel = React.memo(
       return () => clearTimeout(shimmerTimeout);
     }, [renderSrc]);
 
+    const workingCount = images.filter((src) => !failedSrcs[src]).length;
+    const stepTo = useCallback((direction) => {
+      setCurrentIndex((prev) => {
+        const n = images.length;
+        if (n === 0) return prev;
+        let next = prev;
+        for (let i = 0; i < n; i += 1) {
+          next = (next + direction + n) % n;
+          if (!failedSrcs[images[next]]) return next;
+        }
+        return prev;
+      });
+    }, [images, failedSrcs, setCurrentIndex]);
+
+    // If the slide on screen failed to load, move to the next working one.
+    useEffect(() => {
+      if (images.length > 1 && failedSrcs[images[safeIndex]] && workingCount > 0) stepTo(1);
+    }, [failedSrcs, safeIndex, images, workingCount, stepTo]);
+
+    // Only auto-slide while the card is on screen.
+    useEffect(() => {
+      const el = rootRef.current;
+      if (!el || typeof IntersectionObserver === "undefined") {
+        setIsOnScreen(true);
+        return undefined;
+      }
+      const observer = new IntersectionObserver(([entry]) => setIsOnScreen(entry.isIntersecting), { threshold: 0.4 });
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, []);
+
     // Handle touch events for swipe
     const handleTouchStart = (e) => {
       touchStartX.current = e.touches[0].clientX;
       isSwiping.current = false;
+      pauseUntilRef.current = Date.now() + 6000;
     };
 
     const handleTouchMove = (e) => {
@@ -312,16 +351,11 @@ const RestaurantImageCarousel = React.memo(
 
       touchEndX.current = e.changedTouches[0].clientX;
       const diff = touchStartX.current - touchEndX.current;
-      const minSwipeDistance = 85; // Keep card swipe less sensitive on mobile
+      const minSwipeDistance = 50;
 
       if (Math.abs(diff) > minSwipeDistance) {
-        if (diff > 0) {
-          // Swipe left - next image
-          setCurrentIndex((prev) => (prev + 1) % images.length);
-        } else {
-          // Swipe right - previous image
-          setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-        }
+        // Swipe left shows the next image, swipe right the previous one.
+        stepTo(diff > 0 ? 1 : -1);
       }
 
       // Reset
@@ -330,34 +364,26 @@ const RestaurantImageCarousel = React.memo(
       touchEndX.current = 0;
     };
 
-    // Auto-sliding for recommended items
+    // Auto-slide every card with more than one working image while it is on screen.
     useEffect(() => {
-      const hasRecommended = Array.isArray(restaurant.recommendedItems) && restaurant.recommendedItems.length > 0;
-      if (!hasRecommended || images.length <= 1) return;
+      if (workingCount <= 1 || !isOnScreen) return undefined;
 
       const interval = setInterval(() => {
         if (typeof document !== "undefined" && document.hidden) return;
-        setCurrentIndex((prev) => (prev + 1) % images.length);
-      }, 3000);
+        if (Date.now() < pauseUntilRef.current) return;
+        stepTo(1);
+      }, 3500);
 
-      const handleVisibilityChange = () => {
-        if (typeof document !== "undefined" && !document.hidden) {
-          setCurrentIndex((prev) => (prev + 1) % images.length);
-        }
-      };
-      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () => clearInterval(interval);
+    }, [workingCount, isOnScreen, stepTo]);
 
-      return () => {
-        clearInterval(interval);
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      };
-    }, [restaurant.recommendedItems, images.length, setCurrentIndex]);
-
-    const showMultipleImages = images.length > 1;
+    const showMultipleImages = workingCount > 1;
 
     return (
       <div
+        ref={rootRef}
         className={`relative ${className} w-full overflow-hidden ${roundedClass} flex-shrink-0 group`}
+        style={{ touchAction: "pan-y" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}>
@@ -390,16 +416,12 @@ const RestaurantImageCarousel = React.memo(
                   }
                 }}
                 onError={() => {
+                  setFailedSrcs((prev) => (prev[src] ? prev : { ...prev, [src]: true }));
                   setAttemptedSrcs((prev) => {
                     const next = { ...prev, [src]: true };
-                    const attemptedCount = Object.keys(next).length;
-
-                    if (attemptedCount >= images.length) {
+                    if (Object.keys(next).length >= images.length) {
                       setIsImageUnavailable(true);
-                    } else if (images.length > 1 && idx === safeIndex) {
-                      setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
                     }
-
                     return next;
                   });
                   if (images.length === 1) {
@@ -424,7 +446,8 @@ const RestaurantImageCarousel = React.memo(
             role="tablist"
             aria-label="Restaurant image pages"
           >
-            {images.map((_, index) => {
+            {images.map((src, index) => {
+              if (failedSrcs[src]) return null;
               const isActive = index === safeIndex;
               return (
                 <button
@@ -573,7 +596,7 @@ const RestaurantCard = React.memo(({
                   src={restaurant.profileImage}
                   alt=""
                   className="w-full h-full object-cover"
-                  onError={(e) => { e.target.style.display = 'none'; }}
+                  onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
                 />
               </div>
             )}
@@ -3291,7 +3314,7 @@ export default function Home() {
                                     src={restaurant.profileImage}
                                     alt=""
                                     className="w-full h-full object-cover"
-                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                    onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
                                   />
                                 </div>
                               )}

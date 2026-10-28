@@ -120,9 +120,11 @@ export default function HomeHeader({
   const touchEndXRef = useRef(0);
 
   const hasDynamicBanners = Array.isArray(topBanners) && topBanners.length > 0;
+  const slideCount = hasDynamicBanners ? topBanners.length : 0;
 
+  // Depends on the count, not the array: the parent passes a new array on many
+  // re-renders, which kept restarting the timer before it could ever fire.
   useEffect(() => {
-    const slideCount = hasDynamicBanners ? topBanners.length : 0;
 
     if (slideCount <= 1) {
       setCurrentSlide(0);
@@ -145,7 +147,7 @@ export default function HomeHeader({
       clearInterval(timer);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [hasDynamicBanners, topBanners]);
+  }, [slideCount]);
 
   const handleTouchStart = (event) => {
     touchStartXRef.current = event.touches[0]?.clientX || 0;
