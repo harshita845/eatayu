@@ -8,8 +8,7 @@ import {
 import { Card, CardContent } from "@food/components/ui/card"
 import { Button } from "@food/components/ui/button"
 import { Input } from "@food/components/ui/input"
-import { useLocation as useGeoLocation } from "@food/hooks/useLocation"
-import { useZone } from "@food/hooks/useZone"
+import { useDeliveryLocation } from "@food/context/DeliveryLocationContext"
 import { adminAPI, searchAPI } from "@/services/api"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -41,8 +40,9 @@ export default function ProfessionalSearch() {
   const [searchParams, setSearchParams] = useSearchParams()
   const initialQuery = searchParams.get("q") || ""
   const navigate = useNavigate()
-  const { location: userCoords } = useGeoLocation()
-  const { zoneId, zoneStatus } = useZone(userCoords)
+  // Same location and zone the home page uses (the selected delivery address, else
+  // the device location), so search shows the restaurants the customer can order from.
+  const { effectiveLocation: userCoords, zoneId, zoneStatus } = useDeliveryLocation()
   
   const [query, setQuery] = useState(initialQuery)
   const debouncedQuery = useDebounce(query, 500)
@@ -53,6 +53,7 @@ export default function ProfessionalSearch() {
   const [categories, setCategories] = useState([])
   const [selectedCategoryId, setSelectedCategoryId] = useState(searchParams.get("cat") || null)
   const [history, setHistory] = useState([])
+  const searchSeqRef = useRef(0)
 
   // Load search history
   useEffect(() => {
@@ -111,6 +112,7 @@ export default function ProfessionalSearch() {
       return
     }
     
+    const seq = ++searchSeqRef.current
     setLoading(true)
     try {
       const res = await searchAPI.unifiedSearch({
@@ -122,6 +124,7 @@ export default function ProfessionalSearch() {
         strictZone: catId ? "true" : "false",
       })
       
+      if (seq !== searchSeqRef.current) return // a newer search has started
       if (res.data?.success) {
         // Grouping results into Restaurants and potential Dishes
         const all = (res.data.data.restaurants || []).filter((row) => {
@@ -139,16 +142,18 @@ export default function ProfessionalSearch() {
     } catch (err) {
       console.error("Search failed", err)
     } finally {
-      setLoading(false)
+      if (seq === searchSeqRef.current) setLoading(false)
     }
   }, [userCoords, zoneId])
 
   useEffect(() => {
+    // Wait for the zone so results are never briefly shown from every zone.
+    if (zoneStatus === "loading") return
     performSearch(debouncedQuery, selectedCategoryId)
     if (debouncedQuery) {
         setSearchParams({ q: debouncedQuery }, { replace: true })
     }
-  }, [debouncedQuery, selectedCategoryId, performSearch, setSearchParams])
+  }, [debouncedQuery, selectedCategoryId, performSearch, setSearchParams, zoneStatus])
 
   // Speech Recognition Implementation
   const handleVoiceSearch = () => {
