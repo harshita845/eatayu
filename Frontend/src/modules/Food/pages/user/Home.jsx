@@ -299,6 +299,13 @@ const RestaurantImageCarousel = React.memo(
     }, [renderSrc]);
 
     const workingCount = images.filter((src) => !failedSrcs[src]).length;
+    // An image can fail before React attaches onError (e.g. a cached 404), so also
+    // check the element itself before landing on a slide.
+    const isBrokenSlide = useCallback((index) => {
+      if (failedSrcs[images[index]]) return true;
+      const img = rootRef.current?.querySelector(`img[data-slide="${index}"]`);
+      return Boolean(img && img.complete && img.naturalWidth === 0);
+    }, [images, failedSrcs]);
     const stepTo = useCallback((direction) => {
       setCurrentIndex((prev) => {
         const n = images.length;
@@ -306,11 +313,23 @@ const RestaurantImageCarousel = React.memo(
         let next = prev;
         for (let i = 0; i < n; i += 1) {
           next = (next + direction + n) % n;
-          if (!failedSrcs[images[next]]) return next;
+          if (!isBrokenSlide(next)) return next;
         }
         return prev;
       });
-    }, [images, failedSrcs, setCurrentIndex]);
+    }, [images, isBrokenSlide, setCurrentIndex]);
+
+    // Record images that failed before their error handler was attached.
+    useEffect(() => {
+      const el = rootRef.current;
+      if (!el || !isOnScreen) return;
+      const found = {};
+      el.querySelectorAll("img[data-slide]").forEach((img) => {
+        if (img.complete && img.naturalWidth === 0) found[images[Number(img.dataset.slide)]] = true;
+      });
+      const keys = Object.keys(found).filter((k) => k && !failedSrcs[k]);
+      if (keys.length) setFailedSrcs((prev) => ({ ...prev, ...Object.fromEntries(keys.map((k) => [k, true])) }));
+    }, [isOnScreen, safeIndex, images, failedSrcs]);
 
     // If the slide on screen failed to load, move to the next working one.
     useEffect(() => {
@@ -402,6 +421,7 @@ const RestaurantImageCarousel = React.memo(
               <img
                 key={src || idx}
                 ref={idx === safeIndex ? imageElementRef : null}
+                data-slide={idx}
                 src={src}
                 alt={`${restaurant.name} - Image ${idx + 1}`}
                 className="w-full h-full flex-shrink-0 object-cover"
