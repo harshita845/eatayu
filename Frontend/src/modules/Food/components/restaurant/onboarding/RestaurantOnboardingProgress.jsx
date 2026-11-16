@@ -6,7 +6,7 @@ export const ONBOARDING_STEPS = [
   { id: 1, title: "Restaurant details", subtitle: "Basic info & location" },
   { id: 2, title: "Operations", subtitle: "Menu, hours & media" },
   { id: 3, title: "Compliance", subtitle: "Legal & bank details" },
-  { id: 4, title: "Subscription", subtitle: "Plans & onboarding fee" },
+  { id: 4, title: "Onboarding Fee", subtitle: "One-time fee" },
 ]
 
 export default function RestaurantOnboardingProgress({ currentStep = 1, variant = "mobile" }) {

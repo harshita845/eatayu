@@ -160,7 +160,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
 
   const [searchQuery, setSearchQuery] = useState("")
   const [badges, setBadges] = useState({})
-  const [restaurantSubscriptionEnabled, setRestaurantSubscriptionEnabled] = useState(true)
+  const [restaurantSubscriptionEnabled, setRestaurantSubscriptionEnabled] = useState(false)
   const [codControlEnabled, setCodControlEnabled] = useState(true)
   const [adminAccessSectionEnabled, setAdminAccessSectionEnabled] = useState(true)
   const [rootLandingAndUnregisteredControlEnabled, setRootLandingAndUnregisteredControlEnabled] = useState(true)

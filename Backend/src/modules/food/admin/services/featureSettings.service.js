@@ -16,7 +16,7 @@ const DEFAULT_FEATURES = [
         key: FEATURE_KEYS.RESTAURANT_SUBSCRIPTION,
         name: 'Restaurant Subscription',
         description: 'Controls monthly GMV-based subscription billing, wallet locking against dues, and subscription UI. Never blocks restaurant login.',
-        isEnabled: true
+        isEnabled: false
     },
     {
         key: FEATURE_KEYS.COD_CONTROL,

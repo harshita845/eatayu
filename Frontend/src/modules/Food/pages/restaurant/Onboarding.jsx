@@ -3322,7 +3322,7 @@ export default function RestaurantOnboarding() {
             <h2 className={ONBOARDING_SECTION_TITLE}>One-time Onboarding Fee</h2>
             <p className={`${ONBOARDING_SECTION_DESC} mt-2`}>
               A one-time onboarding fee is required to activate your restaurant on the platform.
-              This is a one-time payment only — there are no monthly subscription charges.
+              This is a one-time payment only — there are no recurring monthly charges.
             </p>
           </div>
         </div>

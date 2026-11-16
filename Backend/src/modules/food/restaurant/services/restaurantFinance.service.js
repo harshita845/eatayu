@@ -166,17 +166,13 @@ export async function getRestaurantFinance(restaurantId, query = {}) {
                 }
             },
             { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]),
-        isRestaurantSubscriptionEnabled
-            ? getOutstandingSummary(restaurantId)
-            : Promise.resolve({ lockedAmount: 0, openInvoices: [], monthsLabel: '' })
+        ])
     ]);
     const totalCommittedWithdrawals = Number(committedWithdrawalsAgg?.[0]?.total || 0);
     const totalWalletDeductions = Number(walletDeductionsAgg?.[0]?.total || 0);
 
-    // Locked balance = total outstanding subscription dues (calendar-month postpaid invoices).
-    // The full balance stays visible; only withdrawal is limited to balance − locked.
-    const lockedAmount = Math.max(0, Number(outstandingSummary.lockedAmount || 0));
+    // No balance locking against subscriptions - full available balance is withdrawable
+    const lockedAmount = 0;
     const availableBalance = Math.max(
         0,
         totalEarnings - totalCommittedWithdrawals - totalWalletDeductions
@@ -187,7 +183,7 @@ export async function getRestaurantFinance(restaurantId, query = {}) {
         totalWithdrawn: totalCommittedWithdrawals,
         estimatedPayout: totalEarnings,
         withdrawableBalance: availableBalance,
-        netAvailable: Math.max(0, availableBalance - lockedAmount), // Net amount that is ACTUALLY withdrawable
+        netAvailable: availableBalance, // Full balance is withdrawable
         totalOrders: allCompletedOrders.length,
         payoutDate: null,
         orders: completedOrdersPage.orders,
@@ -229,17 +225,17 @@ export async function getRestaurantFinance(restaurantId, query = {}) {
             name: restaurant?.restaurantName || '',
             restaurantId: restaurant?._id ? `REST${restaurant._id.toString().slice(-6).padStart(6, '0')}` : 'N/A',
             address,
-            // Kept for backwards compatibility with existing clients: due = locked amount.
-            subscriptionDueAmount: lockedAmount,
-            subscriptionStatus: lockedAmount > 0 ? 'due' : 'paid',
+            // Subscription dues removed: due is always 0, status is paid.
+            subscriptionDueAmount: 0,
+            subscriptionStatus: 'paid',
         },
         subscription: {
-            lockedAmount,
-            lockedMonths: outstandingSummary.monthsLabel,
-            openInvoices: outstandingSummary.openInvoices,
+            lockedAmount: 0,
+            lockedMonths: '',
+            openInvoices: [],
         },
         features: {
-            restaurantSubscriptionEnabled: isRestaurantSubscriptionEnabled
+            restaurantSubscriptionEnabled: false
         },
         wallet,
         // Backward compatibility for existing clients

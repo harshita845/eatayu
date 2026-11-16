@@ -14,19 +14,10 @@ export const createWithdrawalRequestController = async (req, res, next) => {
         // Check if restaurant has enough balance
         const finance = await getRestaurantFinance(restaurantId);
 
-        const lockedAmount = Math.max(0, Number(finance?.subscription?.lockedAmount || 0));
-        const lockedMonths = String(finance?.subscription?.lockedMonths || '');
-        const netAvailable = Math.max(0, Number(finance?.wallet?.netAvailable ?? finance?.currentCycle?.netAvailable ?? 0));
+        const availableBalance = Math.max(0, Number(finance?.wallet?.withdrawableBalance ?? finance?.wallet?.netAvailable ?? 0));
 
-        if (amount > netAvailable) {
-            if (lockedAmount > 0) {
-                return sendError(
-                    res,
-                    400,
-                    `Withdrawal restricted. ₹${lockedAmount.toLocaleString('en-IN')} is locked against subscription dues${lockedMonths ? ` for ${lockedMonths}` : ''}. Available to withdraw: ₹${netAvailable.toLocaleString('en-IN')}`
-                );
-            }
-            return sendError(res, 400, `Insufficient balance. Available to withdraw: ₹${netAvailable.toLocaleString('en-IN')}`);
+        if (amount > availableBalance) {
+            return sendError(res, 400, `Insufficient balance. Available to withdraw: ₹${availableBalance.toLocaleString('en-IN')}`);
         }
 
         // Create the withdrawal request

@@ -6,7 +6,7 @@ const DEFAULT_THEME = "#EB590E"
 
 const HIGHLIGHTS = [
   { icon: UtensilsCrossed, text: "Manage menus, orders & outlet timings" },
-  { icon: TrendingUp, text: "Track earnings and subscription insights" },
+  { icon: TrendingUp, text: "Track earnings and payout insights" },
   { icon: Clock, text: "Go live faster with guided onboarding" },
 ]
 

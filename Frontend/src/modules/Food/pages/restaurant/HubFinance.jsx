@@ -107,21 +107,11 @@ export default function HubFinance() {
   const [withdrawalAmount, setWithdrawalAmount] = useState('')
   const [submittingWithdrawal, setSubmittingWithdrawal] = useState(false)
   const [withdrawalRequests, setWithdrawalRequests] = useState([])
-  const [subscriptionHistory, setSubscriptionHistory] = useState([])
-  const [loadingSubscriptionHistory, setLoadingSubscriptionHistory] = useState(false)
-  const isRestaurantSubscriptionEnabled = financeData?.features?.restaurantSubscriptionEnabled !== false
-  // Locked = total outstanding calendar-month subscription dues; the full balance stays visible.
-  const subscriptionDueAmount = Number(financeData?.subscription?.lockedAmount ?? financeData?.restaurant?.subscriptionDueAmount ?? 0)
-  const subscriptionLockedMonths = String(financeData?.subscription?.lockedMonths || '')
   const walletSummary = financeData?.wallet ?? financeData?.currentCycle ?? {}
   const walletAvailableBalance = Number(walletSummary?.withdrawableBalance ?? 0)
   const walletTotalEarnings = Number(walletSummary?.totalEarnings ?? walletSummary?.estimatedPayout ?? 0)
   const walletTotalWithdrawn = Number(walletSummary?.totalWithdrawn ?? 0)
-  const walletNetAvailable = Number(
-    walletSummary?.netAvailable ??
-    walletAvailableBalance
-  )
-  const lockedReasonText = `₹${subscriptionDueAmount.toLocaleString('en-IN')} is locked against your subscription due${subscriptionLockedMonths ? ` for ${subscriptionLockedMonths}` : ''}. It will be released once the due is settled or waived.`
+  const walletNetAvailable = walletAvailableBalance
 
   const [loadingWithdrawals, setLoadingWithdrawals] = useState(false)
   const [ordersPage, setOrdersPage] = useState(1)
@@ -178,24 +168,6 @@ export default function HubFinance() {
     fetchWithdrawals()
   }, [])
 
-  useEffect(() => {
-    const fetchSubscriptionHistory = async () => {
-      try {
-        setLoadingSubscriptionHistory(true)
-        const response = await restaurantAPI.getSubscriptionTransactions({ limit: 20 })
-        const list = Array.isArray(response?.data?.data?.transactions) ? response.data.data.transactions : []
-        setSubscriptionHistory(list)
-      } catch (error) {
-        if (error?.response?.status !== 401) {
-          debugError("Error fetching subscription history:", error)
-        }
-        setSubscriptionHistory([])
-      } finally {
-        setLoadingSubscriptionHistory(false)
-      }
-    }
-    fetchSubscriptionHistory()
-  }, [])
 
   // Fetch restaurant data for header display
   useEffect(() => {
@@ -785,62 +757,8 @@ export default function HubFinance() {
     }
   }, [showDownloadMenu])
 
-  const [showRestrictionModal, setShowRestrictionModal] = useState(false)
-
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:h-full md:overflow-hidden md:bg-[#e9edf2]">
-      {/* Restriction Modal */}
-      <AnimatePresence>
-        {showRestrictionModal && (
-          <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowRestrictionModal(false)}
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-8 overflow-hidden shadow-2xl"
-            >
-              {/* Background Glow */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 blur-3xl rounded-full -mr-16 -mt-16" />
-
-              {/* Close Button */}
-              <button
-                onClick={() => setShowRestrictionModal(false)}
-                className="absolute top-6 right-6 p-2 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 transition-colors z-10"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="relative flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mb-6 shadow-sm border border-amber-100">
-                  <Info className="w-8 h-8 text-amber-600" />
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Withdrawal Restricted</h3>
-                <p className="text-sm text-gray-600 leading-relaxed mb-8">
-                  {lockedReasonText} Available for withdrawal: <span className="font-bold text-gray-900">₹{walletNetAvailable.toLocaleString('en-IN')}</span>.
-                </p>
-
-                <div className="w-full space-y-3">
-                  <button
-                    onClick={() => setShowRestrictionModal(false)}
-                    className="w-full py-4 bg-gray-50 text-gray-500 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all"
-                  >
-                    Maybe Later
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Mobile header */}
       <div className="sticky bg-white top-0 z-40 px-4 py-3 border-b border-gray-200 md:hidden">
@@ -974,25 +892,6 @@ export default function HubFinance() {
       <div className="flex-1 overflow-y-auto px-4 pt-6 pb-28 md:px-8 md:pt-7 md:pb-8 md:min-h-0">
         {activeTab === "payouts" && (
           <div className="space-y-6 md:grid md:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] md:gap-8 md:space-y-0 md:items-start">
-            {/* Subscription Dues Banner */}
-            {isRestaurantSubscriptionEnabled && subscriptionDueAmount > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-4 mb-2 shadow-sm md:col-start-2 md:row-start-1 md:mb-0"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm border border-amber-100">
-                  <Info className="w-6 h-6 text-amber-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-bold text-amber-900">Subscription Due Pending</h3>
-                  <p className="text-[11px] text-amber-800 mt-1 leading-relaxed font-medium">
-                    ₹{subscriptionDueAmount.toLocaleString('en-IN')} is locked against your subscription due{subscriptionLockedMonths ? ` for ${subscriptionLockedMonths}` : ''}.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
             {/* Wallet balance — mobile card + desktop ink ledger hero */}
             <div className="md:col-start-1 md:row-start-1 md:row-span-4 md:sticky md:top-0">
               <h2 className="text-base font-bold text-gray-900 mb-3 md:hidden">Wallet balance</h2>
@@ -1015,22 +914,13 @@ export default function HubFinance() {
                     )}
                     {walletTotalWithdrawn <= 0 && <div className="mb-4" />}
                     <button
-                      onClick={() => {
-                        const netAvailable = walletNetAvailable;
-                        const hasDues = isRestaurantSubscriptionEnabled && subscriptionDueAmount > 0;
-
-                        if (hasDues && netAvailable <= 0) {
-                          setShowRestrictionModal(true);
-                          return;
-                        }
-                        setShowWithdrawalModal(true);
-                      }}
-                      disabled={!(walletNetAvailable > 0)}
-                      className={`w-full py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 mt-4 transition-colors ${walletNetAvailable > 0
+                      onClick={() => setShowWithdrawalModal(true)}
+                      disabled={!(walletAvailableBalance > 0)}
+                      className={`w-full py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 mt-4 transition-colors ${walletAvailableBalance > 0
                         ? "text-white"
                         : "bg-gray-200 text-gray-500 cursor-not-allowed"
                         }`}
-                      style={walletNetAvailable > 0 ? {
+                      style={walletAvailableBalance > 0 ? {
                         background: "linear-gradient(135deg, rgba(var(--module-theme-rgb, 37,99,235), 0.9), var(--module-theme-color, #2563EB))",
                         boxShadow: "0 10px 20px rgba(var(--module-theme-rgb, 37,99,235), 0.28)",
                       } : undefined}
@@ -1061,7 +951,7 @@ export default function HubFinance() {
                       <p className="mt-3 text-sm text-[#9aa7b6]">
                         Withdrawable{" "}
                         <span className="font-semibold text-[#d7e2ef]">
-                          ₹{walletNetAvailable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ₹{walletAvailableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </p>
 
@@ -1086,18 +976,10 @@ export default function HubFinance() {
 
                       <button
                         type="button"
-                        onClick={() => {
-                          const netAvailable = walletNetAvailable;
-                          const hasDues = isRestaurantSubscriptionEnabled && subscriptionDueAmount > 0;
-                          if (hasDues && netAvailable <= 0) {
-                            setShowRestrictionModal(true);
-                            return;
-                          }
-                          setShowWithdrawalModal(true);
-                        }}
-                        disabled={!(walletNetAvailable > 0)}
+                        onClick={() => setShowWithdrawalModal(true)}
+                        disabled={!(walletAvailableBalance > 0)}
                         className={`mt-6 w-full py-3.5 px-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${
-                          walletNetAvailable > 0
+                          walletAvailableBalance > 0
                             ? "bg-[#4f6f9a] text-white hover:bg-[#3f5a80] shadow-[0_16px_30px_-18px_rgba(79,111,154,0.9)]"
                             : "bg-white/10 text-white/40 cursor-not-allowed"
                         }`}
@@ -1414,43 +1296,7 @@ export default function HubFinance() {
               </div>
             </div>
 
-            {/* Subscription billing timeline */}
-            <div className="md:col-start-2">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base font-bold text-gray-900 md:text-lg md:tracking-tight">Subscription billing</h2>
-              </div>
-              <div className="bg-white rounded-lg p-4 md:rounded-2xl md:border md:border-[#d6dce4] md:shadow-[0_18px_40px_-34px_rgba(20,24,32,0.35)]">
-                {loadingSubscriptionHistory ? (
-                  <div className="py-6 text-center text-sm text-gray-500">Loading subscription billing...</div>
-                ) : subscriptionHistory.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-gray-500">No subscription billing activity yet.</div>
-                ) : (
-                  <div className="space-y-3">
-                    {subscriptionHistory.map((item, idx) => (
-                      <div key={item?._id || idx} className="border border-gray-200 rounded-lg p-3 md:rounded-xl md:border-[#e2e7ed] md:bg-[#f5f7fa]">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-gray-900 capitalize">
-                            {String(item?.type || "").replaceAll("_", " ")}
-                          </p>
-                          <p className="text-sm font-bold text-gray-900">
-                            ₹{Number(item?.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                        <p className="text-xs text-gray-600 mt-1">
-                          {item?.billingMonthLabel || item?.billingMonth || "-"} • Remaining due: ₹{Number(item?.outstandingAfter || 0).toLocaleString("en-IN")}
-                        </p>
-                        {item?.remarks ? (
-                          <p className="text-xs text-gray-500 mt-1">{item.remarks}</p>
-                        ) : null}
-                        <p className="text-xs text-gray-500 mt-1">
-                          {item?.createdAt ? new Date(item.createdAt).toLocaleString() : ""}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+
           </div>
         )}
 
@@ -1581,49 +1427,22 @@ export default function HubFinance() {
                 </div>
 
                 <div className="mb-4">
-                  <div className="rounded-xl border border-gray-200 divide-y divide-gray-100 mb-3">
-                    <div className="flex items-center justify-between px-3 py-2.5">
-                      <p className="text-sm text-gray-500">Total Wallet Balance</p>
-                      <p className="text-sm font-semibold text-gray-900">
+                  <div className="rounded-xl border border-gray-200 divide-y divide-gray-100 mb-4 bg-gray-50/60">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <p className="text-sm text-gray-600 font-medium">Available Wallet Balance</p>
+                      <p className="text-base font-bold text-gray-900">
                         ₹{walletAvailableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </p>
-                    </div>
-                    {isRestaurantSubscriptionEnabled && subscriptionDueAmount > 0 && (
-                      <div className="flex items-center justify-between px-3 py-2.5">
-                        <div>
-                          <p className="text-sm text-amber-700 font-medium">Subscription Due (Locked)</p>
-                          {subscriptionLockedMonths ? (
-                            <p className="text-[10px] text-amber-600">{subscriptionLockedMonths}</p>
-                          ) : null}
-                        </div>
-                        <p className="text-sm font-semibold text-amber-700">
-                          − ₹{subscriptionDueAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between px-3 py-2.5 bg-gray-50 rounded-b-xl">
-                      <p className="text-sm text-gray-900 font-bold">Available for Withdrawal</p>
-                      <p className="text-sm font-bold text-gray-900">
-                        ₹{walletNetAvailable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
                   </div>
 
-                  {isRestaurantSubscriptionEnabled && subscriptionDueAmount > 0 && (
-                    <div className="px-3 py-2.5 bg-amber-50/50 border border-amber-100 rounded-xl mb-4">
-                      <p className="text-[10px] text-amber-800 leading-relaxed font-medium">
-                        <span className="font-bold">Why is part of my balance locked?</span>{" "}
-                        {lockedReasonText}
-                      </p>
-                    </div>
-                  )}
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Enter Amount to Withdraw
                   </label>
                   <input
                     type="number"
                     min="0.01"
-                    max={walletNetAvailable}
+                    max={walletAvailableBalance}
                     step="0.01"
                     value={withdrawalAmount}
                     onChange={(e) => setWithdrawalAmount(e.target.value)}
@@ -1631,8 +1450,8 @@ export default function HubFinance() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none"
                     style={{ "--tw-ring-color": "rgba(var(--module-theme-rgb, 37,99,235), 0.25)" }}
                   />
-                  {withdrawalAmount && parseFloat(withdrawalAmount) > walletNetAvailable && (
-                    <p className="text-sm text-red-600 mt-1">Amount exceeds your withdrawable limit</p>
+                  {withdrawalAmount && parseFloat(withdrawalAmount) > walletAvailableBalance && (
+                    <p className="text-sm text-red-600 mt-1">Amount exceeds your withdrawable balance</p>
                   )}
                 </div>
 
@@ -1650,13 +1469,12 @@ export default function HubFinance() {
                     onClick={async () => {
                       const amount = parseFloat(withdrawalAmount)
                       if (!amount || amount <= 0) return
-                      if (amount > walletNetAvailable) return
+                      if (amount > walletAvailableBalance) return
 
                       try {
                         setSubmittingWithdrawal(true)
                         const response = await restaurantAPI.createWithdrawalRequest(amount)
                         if (response.data?.success) {
-                          // Professional success toast or similar would go here
                           setShowWithdrawalModal(false)
                           setWithdrawalAmount('')
                           // Refresh finance data
@@ -1673,28 +1491,19 @@ export default function HubFinance() {
                               : []
                           setWithdrawalRequests(withdrawalList)
                         } else {
-                          // Handle dues-related error professionally
-                          if (response.data?.message?.toLowerCase().includes('subscription due')) {
-                            setShowWithdrawalModal(false);
-                            setShowRestrictionModal(true);
-                          } else {
-                            console.error('Submission failed:', response.data?.message);
-                          }
+                          console.error('Submission failed:', response.data?.message);
                         }
                       } catch (error) {
                         debugError('Error submitting withdrawal request:', error)
                         const message = error.response?.data?.message || '';
-                        if (message.toLowerCase().includes('subscription due') || message.toLowerCase().includes('outstanding')) {
-                          setShowWithdrawalModal(false);
-                          setShowRestrictionModal(true);
-                        } else if (error.response?.status !== 401) {
+                        if (error.response?.status !== 401) {
                           console.error('Withdrawal error:', message);
                         }
                       } finally {
                         setSubmittingWithdrawal(false)
                       }
                     }}
-                    disabled={submittingWithdrawal || !withdrawalAmount || parseFloat(withdrawalAmount) <= 0 || parseFloat(withdrawalAmount) > walletNetAvailable}
+                    disabled={submittingWithdrawal || !withdrawalAmount || parseFloat(withdrawalAmount) <= 0 || parseFloat(withdrawalAmount) > walletAvailableBalance}
                     className="flex-1 px-4 py-3 text-white rounded-lg font-medium transition-all disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg"
                     style={{
                       background: "linear-gradient(135deg, rgba(var(--module-theme-rgb, 37,99,235), 0.9), var(--module-theme-color, #2563EB))",
@@ -1709,7 +1518,7 @@ export default function HubFinance() {
         )}
       </AnimatePresence>
 
-      {!showRestrictionModal && !showWithdrawalModal && <BottomNavOrders />}
+      {!showWithdrawalModal && <BottomNavOrders />}
     </div>
   )
 }

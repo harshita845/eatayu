@@ -287,7 +287,7 @@ export async function runMonthlyBilling(billingMonth, { generatedBy = "system" }
  * the worker was down, so this catches up on restart.
  */
 export async function runBillingCatchUp() {
-  const enabled = await isFeatureEnabled(FEATURE_KEYS.RESTAURANT_SUBSCRIPTION, true);
+  const enabled = await isFeatureEnabled(FEATURE_KEYS.RESTAURANT_SUBSCRIPTION, false);
   if (!enabled) {
     logger.info("[SUBSCRIPTION BILLING] Feature disabled — skipping billing run");
     return { skipped: true, reason: "feature_disabled" };
@@ -318,23 +318,8 @@ const OPEN_INVOICE_STATUSES = ["pending", "partially_settled"];
  * Total outstanding subscription due = wallet locked amount, plus per-invoice breakdown.
  */
 export async function getOutstandingSummary(restaurantId) {
-  if (!restaurantId || !mongoose.Types.ObjectId.isValid(String(restaurantId))) {
-    return { lockedAmount: 0, openInvoices: [], monthsLabel: "" };
-  }
-  const openInvoices = await FoodSubscriptionInvoice.find({
-    restaurantId: new mongoose.Types.ObjectId(String(restaurantId)),
-    status: { $in: OPEN_INVOICE_STATUSES },
-    outstandingAmount: { $gt: 0 },
-  })
-    .sort({ billingMonth: 1 })
-    .select("billingMonth planName totalAmount outstandingAmount status isLegacyCarryForward")
-    .lean();
-
-  const lockedAmount = round2(
-    openInvoices.reduce((sum, inv) => sum + (Number(inv.outstandingAmount) || 0), 0),
-  );
-  const monthsLabel = openInvoices.map((inv) => billingMonthLabel(inv.billingMonth)).join(", ");
-  return { lockedAmount, openInvoices, monthsLabel };
+  // Subscription feature removed/disabled: no balance locking
+  return { lockedAmount: 0, openInvoices: [], monthsLabel: "" };
 }
 
 // ---------- Settlement primitives ----------
