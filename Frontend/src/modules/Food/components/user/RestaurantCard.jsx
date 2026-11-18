@@ -2,11 +2,9 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion } from "framer-motion";
 import { Star, Clock, IndianRupee, Heart } from "lucide-react";
 import OptimizedImage from "@food/components/OptimizedImage";
-
-const WEBVIEW_SESSION_CACHE_BUSTER = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+import { foodImages } from "@food/constants/images";
 
 const RestaurantImageCarousel = React.memo(({ restaurant, priority = false, backendOrigin = "" }) => {
-  const webviewSessionKeyRef = useRef(WEBVIEW_SESSION_CACHE_BUSTER);
   const imageElementRef = useRef(null);
 
   const withCacheBuster = useCallback((url) => {
@@ -18,23 +16,7 @@ const RestaurantImageCarousel = React.memo(({ restaurant, priority = false, back
       ? `${backendOrigin.replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`
       : url;
 
-    const hasSignedParams =
-      /[?&](X-Amz-|Signature=|Expires=|AWSAccessKeyId=|GoogleAccessId=|token=|sig=|se=|sp=|sv=)/i.test(resolvedUrl);
-    if (hasSignedParams) return resolvedUrl;
-
-    try {
-      const parsed = new URL(resolvedUrl, window.location.origin);
-      const currentHost = typeof window !== "undefined" ? window.location.hostname : "";
-      const isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(parsed.hostname);
-      const isSameHost = currentHost && parsed.hostname === currentHost;
-
-      if (isLocalHost || isSameHost) {
-        parsed.searchParams.set("_wv", webviewSessionKeyRef.current);
-      }
-      return parsed.toString();
-    } catch {
-      return resolvedUrl;
-    }
+    return resolvedUrl;
   }, [backendOrigin]);
 
   const images = React.useMemo(() => {
@@ -131,15 +113,18 @@ const RestaurantImageCarousel = React.memo(({ restaurant, priority = false, back
       <OptimizedImage
         ref={imageElementRef}
         src={renderSrc}
+        fallbackSrc={foodImages[(restaurant?.name?.length || 0) % foodImages.length] || foodImages[0]}
         alt={restaurant.name}
         priority={priority}
-        className={`w-full h-full object-cover transform scale-100 group-hover:scale-110 transition-transform duration-700 ${
-          loadedBySrc[renderSrc] ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="w-full h-full object-cover transform scale-100 group-hover:scale-110 transition-transform duration-700"
         onLoad={() => {
           setLoadedBySrc((prev) => ({ ...prev, [renderSrc]: true }));
           setLastGoodSrc(renderSrc);
           setShowShimmer(false);
+        }}
+        onError={() => {
+          setShowShimmer(false);
+          setLoadedBySrc((prev) => ({ ...prev, [renderSrc]: true }));
         }}
       />
       

@@ -87,15 +87,31 @@ app.use('/api', responseTimeLogger);
 // API Routes
 app.use('/api', routes);
 
-// Serve uploaded files statically with cache headers. If missing locally, gracefully redirect to production CDN.
+// Serve uploaded files statically with cache headers.
 app.use('/uploads', (req, res, next) => {
-    const localPath = path.join(path.resolve(config.uploadStorageRoot), req.path);
-    fs.access(localPath, fs.constants.F_OK, (err) => {
+    const primaryRoot = path.resolve(config.uploadStorageRoot);
+    const primaryPath = path.join(primaryRoot, req.path);
+
+    fs.access(primaryPath, fs.constants.F_OK, (err) => {
         if (!err) {
-            next();
-        } else {
-            res.redirect(`https://eatayu.com/uploads${req.path}`);
+            return next();
         }
+        // Fallback check in relative uploads directory if primary was /var/www/uploads or vice versa
+        const fallbackRoot = primaryRoot.includes('var/www')
+            ? path.resolve('uploads')
+            : path.resolve('/var/www/uploads');
+        const fallbackPath = path.join(fallbackRoot, req.path);
+
+        fs.access(fallbackPath, fs.constants.F_OK, (fallbackErr) => {
+            if (!fallbackErr) {
+                return res.sendFile(fallbackPath);
+            }
+            // In development only, redirect missing local images to production
+            if (config.nodeEnv !== 'production' && !req.headers.host?.includes('eatayu.com')) {
+                return res.redirect(`https://eatayu.com/uploads${req.path}`);
+            }
+            res.status(404).send('File not found');
+        });
     });
 }, express.static(path.resolve(config.uploadStorageRoot), {
     maxAge: '7d',

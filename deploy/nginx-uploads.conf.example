@@ -13,20 +13,22 @@ server {
 
     client_max_body_size 6M;
 
-    # Static uploads — nginx serves files; backend is not involved for GET
+    # Static uploads — nginx serves files; falls back to Node if not found in root
     location /uploads/ {
-        alias /var/www/uploads/;
+        root /var/www;
         expires 30d;
         add_header Cache-Control "public, immutable";
         access_log off;
+        try_files $uri @EatAyu_fallback;
+    }
 
-        # Only allow image extensions
-        location ~* \.(jpg|jpeg|png|webp|gif)$ {
-            try_files $uri =404;
-        }
-
-        # Block everything else under /uploads/
-        return 404;
+    location @EatAyu_fallback {
+        proxy_pass http://EatAyu_api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     # API (upload POST + all other routes)

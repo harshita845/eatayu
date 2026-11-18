@@ -137,8 +137,6 @@ const placeholders = [
   'Search "dosa"',
 ];
 
-const WEBVIEW_SESSION_CACHE_BUSTER = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
 const getRestaurantDisplayName = (restaurant) => {
   const nameCandidates = [
     restaurant?.name,
@@ -165,7 +163,6 @@ const RestaurantImageCarousel = React.memo(
     externalIndex = null,
     onIndexChange = null,
   }) => {
-    const webviewSessionKeyRef = useRef(WEBVIEW_SESSION_CACHE_BUSTER);
     const imageElementRef = useRef(null);
 
     const withCacheBuster = useCallback(
@@ -180,31 +177,7 @@ const RestaurantImageCarousel = React.memo(
             ? `${backendOrigin.replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`
             : url;
 
-        // Do not mutate signed URLs (legacy S3/Cloudfront/Firebase links can break if query changes).
-        const hasSignedParams =
-          /[?&](X-Amz-|Signature=|Expires=|AWSAccessKeyId=|GoogleAccessId=|token=|sig=|se=|sp=|sv=)/i.test(
-            resolvedUrl,
-          );
-        if (hasSignedParams) return resolvedUrl;
-
-        try {
-          const parsed = new URL(resolvedUrl, window.location.origin);
-
-          // Apply cache-buster only to app/backend-hosted URLs to avoid third-party CDN signature issues.
-          const currentHost =
-            typeof window !== "undefined" ? window.location.hostname : "";
-          const isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(
-            parsed.hostname,
-          );
-          const isSameHost = currentHost && parsed.hostname === currentHost;
-
-          if (isLocalHost || isSameHost) {
-            parsed.searchParams.set("_wv", webviewSessionKeyRef.current);
-          }
-          return parsed.toString();
-        } catch {
-          return resolvedUrl;
-        }
+        return resolvedUrl;
       },
       [backendOrigin],
     );
@@ -435,7 +408,13 @@ const RestaurantImageCarousel = React.memo(
                     setShowShimmer(false);
                   }
                 }}
-                onError={() => {
+                onError={(e) => {
+                  const fallback = foodImages[(idx + (restaurant?.name?.length || 0)) % foodImages.length] || foodImages[0];
+                  if (e.currentTarget.src !== fallback) {
+                    e.currentTarget.src = fallback;
+                  }
+                  setShowShimmer(false);
+                  setLoadedBySrc((prev) => ({ ...prev, [src]: true }));
                   setFailedSrcs((prev) => (prev[src] ? prev : { ...prev, [src]: true }));
                   setAttemptedSrcs((prev) => {
                     const next = { ...prev, [src]: true };
@@ -454,8 +433,12 @@ const RestaurantImageCarousel = React.memo(
         </div>
 
         {isImageUnavailable && (
-          <div className="absolute inset-0 z-[2] flex items-center justify-center bg-gray-100">
-            <span className="text-xs text-gray-500">Image unavailable</span>
+          <div className="absolute inset-0 z-[2] overflow-hidden">
+            <img
+              src={foodImages[(restaurant?.name?.length || 0) % foodImages.length] || foodImages[0]}
+              alt={restaurant.name}
+              className="w-full h-full object-cover"
+            />
           </div>
         )}
 
@@ -603,7 +586,7 @@ const RestaurantCard = React.memo(({
           >
             <RestaurantImageCarousel
               restaurant={restaurant}
-              priority={index < 3}
+              priority={index < 4}
               backendOrigin={BACKEND_ORIGIN}
               externalIndex={slideIndex}
               onIndexChange={setSlideIndex}
