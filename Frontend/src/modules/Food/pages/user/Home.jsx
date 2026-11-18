@@ -3306,6 +3306,7 @@ export default function Home() {
                             <div className="relative h-28 sm:h-32 bg-gray-50 overflow-hidden">
                               <RestaurantImageCarousel
                                 restaurant={restaurant}
+                                priority={index < 4}
                                 backendOrigin={BACKEND_ORIGIN}
                                 className="h-full w-full object-cover"
                                 roundedClass="rounded-t-2xl"
