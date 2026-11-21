@@ -108,12 +108,18 @@ const sendSmsViaIndiaHub = async (phone, otp) => {
     }
 };
 
+/** True for the app store review numbers configured in REVIEW_LOGIN_PHONES. */
+export const isReviewLoginPhone = (phone, cfg = config) =>
+    Boolean(cfg.reviewLoginOtp) &&
+    cfg.reviewLoginPhones.includes(String(phone || '').replace(/\D/g, '').slice(-10));
+
 export const createOrUpdateOtp = async (phone) => {
     const existing = await FoodOtp.findOne({ phone });
     const now = new Date();
+    const reviewLogin = isReviewLoginPhone(phone);
 
-    // Rate Limiting Logic
-    if (existing) {
+    // Rate Limiting Logic (not for review numbers: reviewers retry often)
+    if (existing && !reviewLogin) {
         const windowMs = (config.otpRateWindow || 600) * 1000;
         const isInWindow = now - existing.lastRequestAt < windowMs;
 
@@ -130,7 +136,9 @@ export const createOrUpdateOtp = async (phone) => {
     }
 
     let otp;
-    if (config.useDefaultOtp) {
+    if (reviewLogin) {
+        otp = config.reviewLoginOtp;
+    } else if (config.useDefaultOtp) {
         otp = '1234';
         logger.info(`Default OTP mode enabled – OTP is ${otp} for phone ${phone}`);
     } else {
@@ -176,8 +184,8 @@ export const createOrUpdateOtp = async (phone) => {
         });
     }
 
-    // Only send SMS if not in default OTP mode
-    if (!config.useDefaultOtp) {
+    // Only send SMS if not in default OTP mode and not a review number
+    if (!config.useDefaultOtp && !reviewLogin) {
         await sendSmsViaIndiaHub(phone, otp);
     }
 

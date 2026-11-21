@@ -33,6 +33,13 @@ export const config = {
     otpRateLimit: Number(process.env.OTP_RATE_LIMIT || 3),
     otpRateWindow: Number(process.env.OTP_RATE_WINDOW || 600),
     useDefaultOtp: process.env.USE_DEFAULT_OTP === 'true',
+    // App store review logins: these numbers (last 10 digits, comma-separated) get
+    // REVIEW_LOGIN_OTP without an SMS. Everyone else is unaffected. Empty = off.
+    reviewLoginPhones: String(process.env.REVIEW_LOGIN_PHONES || '')
+        .split(',')
+        .map((p) => p.replace(/\D/g, '').slice(-10))
+        .filter((p) => p.length === 10),
+    reviewLoginOtp: /^\d{4}$/.test(String(process.env.REVIEW_LOGIN_OTP || '')) ? String(process.env.REVIEW_LOGIN_OTP) : '',
 
     // SMS India Hub
     smsIndiaHubUsername: process.env.SMS_INDIA_HUB_USERNAME,
